@@ -10,9 +10,9 @@ import type { FormState } from "@/app/actions/auth";
 
 const schema = z.object({
   full_name: z.string().trim().min(2, "Enter your full name").max(120),
-  company: z.string().trim().min(2, "Enter your agency or company").max(160),
+  company: z.string().trim().max(160).optional().transform((v) => v || null),
   job_title: z.string().trim().max(120).optional().transform((v) => v || null),
-  country: z.string().trim().min(2, "Choose your country"),
+  country: z.string().trim().max(80).optional().transform((v) => v || null),
   phone: z
     .string()
     .trim()

@@ -49,9 +49,8 @@ export async function signIn(_prev: FormState, formData: FormData): Promise<Form
 }
 
 const signUpSchema = z.object({
-  full_name: z.string().trim().min(2, "Enter your full name").max(120),
-  company: z.string().trim().min(2, "Enter your agency or company").max(160),
-  country: z.string().trim().min(2, "Choose your country"),
+  first_name: z.string().trim().min(1, "Enter your first name").max(60),
+  last_name: z.string().trim().min(1, "Enter your last name").max(60),
   email: z.string().trim().email("Enter a valid email address"),
   password: z.string().min(8, "Use at least 8 characters"),
   next: z.string().optional(),
@@ -60,14 +59,15 @@ const signUpSchema = z.object({
 export async function signUp(_prev: FormState, formData: FormData): Promise<FormState> {
   const parsed = signUpSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
-  const { email, password, full_name, company, country, next } = parsed.data;
+  const { email, password, first_name, last_name, next } = parsed.data;
   const supabase = await createClient();
   const nextPath = safeNext(next);
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: { full_name, company, country },
+      // Read by the shared handle_new_user() trigger into public.profiles.
+      data: { first_name, last_name, full_name: `${first_name} ${last_name}` },
       emailRedirectTo: `${await origin()}/auth/confirm?next=${encodeURIComponent(nextPath)}`,
     },
   });
@@ -80,6 +80,73 @@ export async function signUp(_prev: FormState, formData: FormData): Promise<Form
     return { message: `We sent a confirmation link to ${email}. Open it to finish creating your account.` };
   }
   redirect(nextPath);
+}
+
+const emailField = z.string().trim().email("Enter a valid email address");
+
+export async function sendMagicLink(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = z.object({ email: emailField, next: z.string().optional() }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithOtp({
+    email: parsed.data.email,
+    options: {
+      // Sign-in only: new accounts register with their name.
+      shouldCreateUser: false,
+      // Must carry a query string: the shared template appends &token_hash=….
+      emailRedirectTo: `${await origin()}/auth/confirm?next=${encodeURIComponent(safeNext(parsed.data.next))}`,
+    },
+  });
+  if (error?.code === "over_email_send_rate_limit") {
+    return { error: "We just sent you a link. Wait a minute, then try again." };
+  }
+  // Same answer whether or not the account exists.
+  return { message: `If ${parsed.data.email} has a TravelXM account, a sign-in link is on its way. It works once, for 1 hour.` };
+}
+
+const signUpWithLinkSchema = z.object({
+  first_name: z.string().trim().min(1, "Enter your first name").max(60),
+  last_name: z.string().trim().min(1, "Enter your last name").max(60),
+  email: emailField,
+  next: z.string().optional(),
+});
+
+/** Registers without a password. An existing account just gets a sign-in link. */
+export async function signUpWithLink(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = signUpWithLinkSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
+  const { first_name, last_name, email, next } = parsed.data;
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: true,
+      data: { first_name, last_name, full_name: `${first_name} ${last_name}` },
+      // Must carry a query string: the shared template appends &token_hash=….
+      emailRedirectTo: `${await origin()}/auth/confirm?next=${encodeURIComponent(safeNext(next))}`,
+    },
+  });
+  if (error?.code === "over_email_send_rate_limit") {
+    return { error: "We just sent you a link. Wait a minute, then try again." };
+  }
+  if (error) return { error: "We could not send the link. Try again in a few minutes." };
+  return { message: `We sent a link to ${email}. Open it to finish creating your account.` };
+}
+
+/** Finishes an account when Google or a sign-in link did not give us a full name. */
+export async function completeAccount(_prev: FormState, formData: FormData): Promise<FormState> {
+  const viewer = await getViewer();
+  if (!viewer) redirect("/login");
+  const parsed = signUpWithLinkSchema.omit({ email: true }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
+  const { first_name, last_name, next } = parsed.data;
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("profiles")
+    .update({ first_name, last_name, full_name: `${first_name} ${last_name}` })
+    .eq("id", viewer.id);
+  if (error) return { error: "We could not save your name. Try again." };
+  redirect(safeNext(next));
 }
 
 export async function signInWithGoogle(formData: FormData) {

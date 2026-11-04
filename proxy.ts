@@ -10,7 +10,7 @@ const PROTECTED = [
   "/resources",
   "/certificates",
   "/profile",
-  "/onboarding",
+  "/welcome",
   "/admin",
 ];
 const AUTH_PAGES = ["/login", "/register", "/forgot-password"];

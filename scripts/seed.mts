@@ -480,6 +480,11 @@ async function main() {
   // from supabase/seeds/portal.sql.
   console.log("· loading Agent Portal demo data");
   must(await supabase.rpc("portal_seed_demo", { p_agent: agentIds[0] }), "portal demo data");
+  // The portal is gated on an approved verification; the demo agent starts approved.
+  must(
+    await supabase.from("agent_verifications").upsert({ user_id: agentIds[0], status: "approved", reviewed_at: new Date().toISOString() }),
+    "demo agent verification",
+  );
 
   console.log("\nSeed complete.\n");
   console.log(`  Admin            admin@travelxm.test / ${PASSWORD}`);

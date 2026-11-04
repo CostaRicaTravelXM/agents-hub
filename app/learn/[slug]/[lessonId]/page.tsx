@@ -22,7 +22,7 @@ export const metadata: Metadata = { title: "Lesson" };
 export default async function LessonPage({ params }: PageProps<"/learn/[slug]/[lessonId]">) {
   const { slug, lessonId } = await params;
   const viewer = await requireViewer(`/learn/${slug}/${lessonId}`);
-  if (!viewer.profile.onboarded_at) redirect("/onboarding");
+  if (!viewer.profile.first_name || !viewer.profile.last_name) redirect("/welcome");
 
   const detail = await getCourseDetail(slug, viewer.id);
   if (!detail) notFound();

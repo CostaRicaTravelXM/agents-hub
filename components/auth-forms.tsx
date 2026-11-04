@@ -4,17 +4,19 @@ import Link from "next/link";
 import { useActionState, useState } from "react";
 import { CircleAlert, Eye, EyeOff, MailCheck, Send } from "lucide-react";
 import {
+  completeAccount,
   requestPasswordReset,
+  sendMagicLink,
   sendMyPasswordResetLink,
   signIn,
   signInWithGoogle,
   signUp,
+  signUpWithLink,
   updatePassword,
   type FormState,
 } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
-import { Field, Input, NativeSelect } from "@/components/ui/form";
-import { COUNTRIES } from "@/lib/countries";
+import { Field, Input } from "@/components/ui/form";
 
 export function FormError({ state }: { state: FormState }) {
   if (!state?.error) return null;
@@ -93,8 +95,35 @@ function OrDivider() {
   );
 }
 
+function MagicLinkForm({ next, onBack }: { next?: string; onBack: () => void }) {
+  const [state, action, pending] = useActionState(sendMagicLink, undefined);
+  if (state?.message)
+    return (
+      <SentNotice message={state.message}>
+        <p className="text-[14px] text-muted">{inboxTip}</p>
+      </SentNotice>
+    );
+  return (
+    <form action={action} className="space-y-5" noValidate>
+      <input type="hidden" name="next" value={next ?? ""} />
+      <FormError state={state} />
+      <Field label="Email" htmlFor="email" error={state?.fieldErrors?.email}>
+        <Input id="email" name="email" type="email" autoComplete="email" inputMode="email" required aria-invalid={!!state?.fieldErrors?.email} />
+      </Field>
+      <Button type="submit" block size="lg" loading={pending}>
+        <Send aria-hidden /> Email me a sign-in link
+      </Button>
+      <button type="button" onClick={onBack} className="xm-link block text-[15px]">
+        Use my password instead
+      </button>
+    </form>
+  );
+}
+
 export function LoginForm({ next, google }: { next?: string; google: boolean }) {
   const [state, action, pending] = useActionState(signIn, undefined);
+  const [useLink, setUseLink] = useState(false);
+  if (useLink) return <MagicLinkForm next={next} onBack={() => setUseLink(false)} />;
   return (
     <div className="space-y-6">
       {google ? (
@@ -124,13 +153,70 @@ export function LoginForm({ next, google }: { next?: string; google: boolean }) 
         <Button type="submit" block size="lg" loading={pending}>
           Sign in
         </Button>
+        <button type="button" onClick={() => setUseLink(true)} className="xm-link block text-[15px]">
+          Email me a sign-in link instead
+        </button>
       </form>
     </div>
   );
 }
 
+function RegisterWithLinkForm({ next, onBack }: { next?: string; onBack: () => void }) {
+  const [state, action, pending] = useActionState(signUpWithLink, undefined);
+  if (state?.message) return <SentNotice message={state.message} />;
+  const fe = state?.fieldErrors ?? {};
+  return (
+    <form action={action} className="space-y-5" noValidate>
+      <input type="hidden" name="next" value={next ?? ""} />
+      <FormError state={state} />
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field label="First name" htmlFor="first_name" error={fe.first_name}>
+          <Input id="first_name" name="first_name" autoComplete="given-name" required aria-invalid={!!fe.first_name} />
+        </Field>
+        <Field label="Last name" htmlFor="last_name" error={fe.last_name}>
+          <Input id="last_name" name="last_name" autoComplete="family-name" required aria-invalid={!!fe.last_name} />
+        </Field>
+      </div>
+      <Field label="Email" htmlFor="email" error={fe.email}>
+        <Input id="email" name="email" type="email" autoComplete="email" inputMode="email" required aria-invalid={!!fe.email} />
+      </Field>
+      <Button type="submit" block size="lg" loading={pending}>
+        <Send aria-hidden /> Email me a link
+      </Button>
+      <button type="button" onClick={onBack} className="xm-link block text-[15px]">
+        Use a password instead
+      </button>
+    </form>
+  );
+}
+
+/** Shown only when Google or a sign-in link did not give us a full name. */
+export function NameForm({ firstName, lastName, next }: { firstName?: string | null; lastName?: string | null; next?: string }) {
+  const [state, action, pending] = useActionState(completeAccount, undefined);
+  const fe = state?.fieldErrors ?? {};
+  return (
+    <form action={action} className="space-y-5" noValidate>
+      <input type="hidden" name="next" value={next ?? ""} />
+      <FormError state={state} />
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field label="First name" htmlFor="first_name" error={fe.first_name}>
+          <Input id="first_name" name="first_name" defaultValue={firstName ?? ""} autoComplete="given-name" required aria-invalid={!!fe.first_name} />
+        </Field>
+        <Field label="Last name" htmlFor="last_name" error={fe.last_name}>
+          <Input id="last_name" name="last_name" defaultValue={lastName ?? ""} autoComplete="family-name" required aria-invalid={!!fe.last_name} />
+        </Field>
+      </div>
+      <Button type="submit" block size="lg" loading={pending}>
+        Finish creating my account
+      </Button>
+    </form>
+  );
+}
+
 export function RegisterForm({ next, google }: { next?: string; google: boolean }) {
   const [state, action, pending] = useActionState(signUp, undefined);
+  const [useLink, setUseLink] = useState(false);
+  if (useLink) return <RegisterWithLinkForm next={next} onBack={() => setUseLink(false)} />;
   if (state?.message) return <SentNotice message={state.message} />;
   const fe = state?.fieldErrors ?? {};
   return (
@@ -145,24 +231,14 @@ export function RegisterForm({ next, google }: { next?: string; google: boolean 
         <input type="hidden" name="next" value={next ?? ""} />
         <FormError state={state} />
         <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Full name" htmlFor="full_name" error={fe.full_name}>
-            <Input id="full_name" name="full_name" autoComplete="name" required aria-invalid={!!fe.full_name} />
+          <Field label="First name" htmlFor="first_name" error={fe.first_name}>
+            <Input id="first_name" name="first_name" autoComplete="given-name" required aria-invalid={!!fe.first_name} />
           </Field>
-          <Field label="Agency or company" htmlFor="company" error={fe.company}>
-            <Input id="company" name="company" autoComplete="organization" required aria-invalid={!!fe.company} />
+          <Field label="Last name" htmlFor="last_name" error={fe.last_name}>
+            <Input id="last_name" name="last_name" autoComplete="family-name" required aria-invalid={!!fe.last_name} />
           </Field>
         </div>
-        <Field label="Country" htmlFor="country" error={fe.country}>
-          <NativeSelect id="country" name="country" defaultValue="" required aria-invalid={!!fe.country}>
-            <option value="" disabled>
-              Choose a country
-            </option>
-            {COUNTRIES.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </NativeSelect>
-        </Field>
-        <Field label="Work email" htmlFor="email" error={fe.email}>
+        <Field label="Email" htmlFor="email" error={fe.email}>
           <Input id="email" name="email" type="email" autoComplete="email" inputMode="email" required aria-invalid={!!fe.email} />
         </Field>
         <Field label="Password" htmlFor="password" error={fe.password} hint="At least 8 characters.">
@@ -171,6 +247,9 @@ export function RegisterForm({ next, google }: { next?: string; google: boolean 
         <Button type="submit" block size="lg" loading={pending}>
           Create account
         </Button>
+        <button type="button" onClick={() => setUseLink(true)} className="xm-link block text-[15px]">
+          Use an email link instead of a password
+        </button>
         <p className="text-[13px] text-muted">
           By creating an account you agree to receive course and certification emails from TravelXM.
         </p>

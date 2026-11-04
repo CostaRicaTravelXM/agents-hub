@@ -76,6 +76,72 @@ export type Database = {
           },
         ]
       }
+      agent_verifications: {
+        Row: {
+          answers: Json
+          created_at: string
+          crm_sync_error: string | null
+          crm_synced_at: string | null
+          current_step: number
+          logo_path: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          status: Database["public"]["Enums"]["agent_verification_status"]
+          submitted_at: string | null
+          updated_at: string
+          user_id: string
+          zoho_module: string | null
+          zoho_record_id: string | null
+        }
+        Insert: {
+          answers?: Json
+          created_at?: string
+          crm_sync_error?: string | null
+          crm_synced_at?: string | null
+          current_step?: number
+          logo_path?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["agent_verification_status"]
+          submitted_at?: string | null
+          updated_at?: string
+          user_id: string
+          zoho_module?: string | null
+          zoho_record_id?: string | null
+        }
+        Update: {
+          answers?: Json
+          created_at?: string
+          crm_sync_error?: string | null
+          crm_synced_at?: string | null
+          current_step?: number
+          logo_path?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["agent_verification_status"]
+          submitted_at?: string | null
+          updated_at?: string
+          user_id?: string
+          zoho_module?: string | null
+          zoho_record_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_verifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "agent_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_verifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           agent_id: string
@@ -1270,9 +1336,11 @@ export type Database = {
           country: string | null
           created_at: string
           email: string
+          first_name: string | null
           full_name: string | null
           id: string
           job_title: string | null
+          last_name: string | null
           last_seen_at: string | null
           onboarded_at: string | null
           phone: string | null
@@ -1285,9 +1353,11 @@ export type Database = {
           country?: string | null
           created_at?: string
           email: string
+          first_name?: string | null
           full_name?: string | null
           id: string
           job_title?: string | null
+          last_name?: string | null
           last_seen_at?: string | null
           onboarded_at?: string | null
           phone?: string | null
@@ -1300,9 +1370,11 @@ export type Database = {
           country?: string | null
           created_at?: string
           email?: string
+          first_name?: string | null
           full_name?: string | null
           id?: string
           job_title?: string | null
+          last_name?: string | null
           last_seen_at?: string | null
           onboarded_at?: string | null
           phone?: string | null
@@ -1702,6 +1774,16 @@ export type Database = {
     }
     Functions: {
       admin_overview: { Args: { p_from: string; p_to: string }; Returns: Json }
+      apply_verification_review: {
+        Args: {
+          p_email?: string
+          p_note?: string
+          p_status: Database["public"]["Enums"]["agent_verification_status"]
+          p_zoho_module?: string
+          p_zoho_record_id?: string
+        }
+        Returns: string
+      }
       assert_lesson_available: {
         Args: { p_lesson: string }
         Returns: {
@@ -1799,6 +1881,7 @@ export type Database = {
       get_quiz: { Args: { p_lesson: string }; Returns: Json }
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
+      is_verified_agent: { Args: never; Returns: boolean }
       join_group: {
         Args: { p_code: string }
         Returns: {
@@ -1883,6 +1966,31 @@ export type Database = {
           watch_pct: number
         }[]
       }
+      save_verification_draft: {
+        Args: { p_answers: Json; p_logo_path?: string; p_step: number }
+        Returns: {
+          answers: Json
+          created_at: string
+          crm_sync_error: string | null
+          crm_synced_at: string | null
+          current_step: number
+          logo_path: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          status: Database["public"]["Enums"]["agent_verification_status"]
+          submitted_at: string | null
+          updated_at: string
+          user_id: string
+          zoho_module: string | null
+          zoho_record_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "agent_verifications"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       start_lesson: {
         Args: { p_lesson: string }
         Returns: {
@@ -1908,6 +2016,31 @@ export type Database = {
         Args: { p_answers: Json; p_lesson: string }
         Returns: Json
       }
+      submit_verification: {
+        Args: never
+        Returns: {
+          answers: Json
+          created_at: string
+          crm_sync_error: string | null
+          crm_synced_at: string | null
+          current_step: number
+          logo_path: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          status: Database["public"]["Enums"]["agent_verification_status"]
+          submitted_at: string | null
+          updated_at: string
+          user_id: string
+          zoho_module: string | null
+          zoho_record_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "agent_verifications"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       verify_certificate: {
         Args: { p_code: string }
         Returns: {
@@ -1921,6 +2054,12 @@ export type Database = {
     }
     Enums: {
       agent_tier: "Bronze" | "Silver" | "Gold" | "Platinum"
+      agent_verification_status:
+        | "draft"
+        | "submitted"
+        | "changes_requested"
+        | "approved"
+        | "rejected"
       app_role: "agent" | "content_manager" | "admin"
       booking_status:
         | "pending"
@@ -2102,6 +2241,13 @@ export const Constants = {
   public: {
     Enums: {
       agent_tier: ["Bronze", "Silver", "Gold", "Platinum"],
+      agent_verification_status: [
+        "draft",
+        "submitted",
+        "changes_requested",
+        "approved",
+        "rejected",
+      ],
       app_role: ["agent", "content_manager", "admin"],
       booking_status: [
         "pending",

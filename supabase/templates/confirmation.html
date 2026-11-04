@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>Confirm your TravelXM account</title>
+  </head>
+  <!--
+    Supabase Auth sign-up confirmation (Academy and Agent Portal).
+    Links to /auth/confirm on the app that asked (RedirectTo) with a token
+    hash, so it works on any device, not only the browser that signed up.
+  -->
+  <body style="margin:0;padding:0;background:#FDF6E3;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FDF6E3;">
+      <tr>
+        <td align="center" style="padding:32px 16px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+            <tr>
+              <td style="padding:0 0 24px;">
+                <img src="{{ .SiteURL }}/brand/travelxm-logo.png" width="56" height="56" alt="TravelXM" style="display:block;border:0;" />
+              </td>
+            </tr>
+            <tr>
+              <td style="background:#FFFFFF;border-radius:8px;padding:32px;font-family:Arimo,Helvetica,Arial,sans-serif;color:#3D3733;">
+                <h1 style="margin:0 0 16px;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:24px;line-height:1.2;font-weight:600;color:#000000;">
+                  Confirm your email
+                </h1>
+                <p style="margin:0 0 24px;font-size:16px;line-height:1.55;">
+                  Press the button to finish creating your TravelXM account for {{ .Email }}. The same account works in the Academy and the Agent Portal.
+                </p>
+                <table role="presentation" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="border-radius:4px;background:#70A91B;">
+                      <a
+                        href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email"
+                        style="display:inline-block;padding:14px 28px;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:16px;font-weight:700;color:#FFFFFF;text-decoration:none;border-radius:4px;"
+                        >Confirm my email</a
+                      >
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin:24px 0 0;font-size:13px;line-height:1.55;color:#6B625C;">
+                  If you did not create this account, ignore this email.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:24px 0 0;font-family:Arimo,Helvetica,Arial,sans-serif;font-size:13px;line-height:1.55;color:#6B625C;">
+                TravelXM · San José, Costa Rica · Pura Vida
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

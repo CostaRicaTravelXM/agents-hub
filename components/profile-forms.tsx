@@ -24,17 +24,15 @@ export function ProfileForm({ profile, next, submitLabel = "Save changes" }: { p
       <Field label="Full name" htmlFor="full_name" error={fe.full_name} className="md:col-span-2">
         <Input id="full_name" name="full_name" defaultValue={profile.full_name ?? ""} autoComplete="name" required />
       </Field>
-      <Field label="Agency or company" htmlFor="company" error={fe.company}>
-        <Input id="company" name="company" defaultValue={profile.company ?? ""} autoComplete="organization" required />
+      <Field label="Agency or company" htmlFor="company" error={fe.company} optional>
+        <Input id="company" name="company" defaultValue={profile.company ?? ""} autoComplete="organization" />
       </Field>
       <Field label="Job title" htmlFor="job_title" error={fe.job_title} optional>
         <Input id="job_title" name="job_title" defaultValue={profile.job_title ?? ""} autoComplete="organization-title" />
       </Field>
-      <Field label="Country" htmlFor="country" error={fe.country}>
-        <NativeSelect id="country" name="country" defaultValue={profile.country ?? ""} required>
-          <option value="" disabled>
-            Choose a country
-          </option>
+      <Field label="Country" htmlFor="country" error={fe.country} optional>
+        <NativeSelect id="country" name="country" defaultValue={profile.country ?? ""}>
+          <option value="">Choose a country</option>
           {COUNTRIES.map((c) => (
             <option key={c}>{c}</option>
           ))}
