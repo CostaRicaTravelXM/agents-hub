@@ -11,7 +11,7 @@
     "test": "vitest run",
     "test:db": "supabase test db",
     "test:e2e": "playwright test",
-    "db:start": "supabase start -x vector,logflare,edge-runtime,realtime,imgproxy,postgres-meta",
+    "db:start": "supabase start -x vector,logflare,edge-runtime,imgproxy",
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > lib/database.types.ts",
     "storage:start": "docker compose -f docker-compose.dev.yml up -d",
