@@ -1,26 +1,505 @@
 @import "tailwindcss";
+@import "../styles/tokens.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* Tailwind theme mapped onto the brand tokens.
+   Default palettes, radii and shadows are reset so only brand values exist. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-white: var(--xm-white);
+  --color-black: var(--xm-black);
+
+  --color-page: var(--surface-page);
+  --color-card: var(--surface-card);
+  --color-sunken: var(--surface-sunken);
+  --color-inverse: var(--surface-inverse);
+  --color-ink: var(--text-display);
+  --color-body: var(--text-body);
+  --color-muted: var(--text-muted);
+  --color-on-accent: var(--text-on-accent);
+  --color-link: var(--text-link);
+  --color-link-hover: var(--text-link-hover);
+  --color-primary: var(--accent-primary);
+  --color-primary-hover: var(--accent-primary-hover);
+  --color-primary-press: var(--accent-primary-press);
+  --color-secondary: var(--accent-secondary);
+  --color-tertiary: var(--accent-tertiary);
+  --color-highlight: var(--accent-highlight);
+  --color-playful: var(--accent-playful);
+  --color-line: var(--border-subtle);
+  --color-line-strong: var(--border-strong);
+  --color-success: var(--feedback-success);
+  --color-info: var(--feedback-info);
+  --color-warning: var(--feedback-warning);
+  --color-danger: var(--feedback-danger);
+
+  --color-lime: var(--xm-lime-green);
+  --color-turquoise: var(--xm-turquoise);
+  --color-toucan: var(--xm-yellow-toucan);
+  --color-sunset: var(--xm-orange-sunset);
+  --color-rose: var(--xm-rose);
+  --color-olive: var(--xm-olive-green);
+  --color-cloudy: var(--xm-cloudy-white);
+  --color-stone: var(--xm-gray-volcanic-stone);
+
+  --font-*: initial;
+  --font-display: var(--font-title);
+  --font-serif: var(--font-title-serif);
+  --font-ui: var(--font-subtitle);
+  --font-sans: var(--font-body);
+  --font-alt: var(--font-body-alt);
+
+  --text-*: initial;
+  --text-micro: var(--fs-micro);
+  --text-caption: var(--fs-caption);
+  --text-ui: 15px;
+  --text-copy-sm: var(--fs-body-sm);
+  --text-copy: var(--fs-body);
+  --text-lead: var(--fs-lead);
+  --text-h4: var(--fs-subtitle-sm);
+  --text-h3: var(--fs-subtitle);
+  --text-h2: var(--fs-title-sm);
+  --text-h1: var(--fs-title);
+  --text-mega: var(--fs-display);
+  --text-hero: var(--fs-hero);
+
+  --radius-*: initial;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-pill: 999px;
+
+  --shadow-*: initial;
+  --shadow-card: 0 1px 2px rgba(61, 55, 51, 0.06), 0 8px 24px rgba(61, 55, 51, 0.08);
+  --shadow-raised: 0 2px 4px rgba(61, 55, 51, 0.08), 0 16px 40px rgba(61, 55, 51, 0.12);
+  --shadow-sticker: 0 6px 18px rgba(61, 55, 51, 0.22);
+  --shadow-media: inset 0 -80px 90px -40px rgba(43, 43, 43, 0.55);
+
+  --ease-standard: cubic-bezier(0.2, 0.6, 0.25, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    color-scheme: light;
+    background: var(--surface-page);
+    color: var(--text-body);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+    text-size-adjust: 100%;
+    scrollbar-color: #cfc6b1 transparent;
+  }
+  /* Nothing may widen the page sideways. On phones a single overflowing
+     element makes the browser zoom out the whole layout, which pushes the
+     sticky header and bottom tabs out of place. `clip` (not `hidden`) keeps
+     sticky positioning working. */
+  html,
+  body {
+    overflow-x: clip;
+  }
+  /* Grid items default to min-width: auto, so one long unbreakable line
+     (truncated titles, file names, URLs) stretches the whole column past the
+     screen. Zero specificity so any utility still wins. */
+  :where(.grid) > * {
+    min-width: 0;
+  }
+  body {
+    background: var(--surface-page);
+    min-height: 100dvh;
+    font-size: var(--fs-body-sm);
+    line-height: var(--leading-body);
+  }
+  ::selection {
+    background: var(--xm-yellow-toucan);
+    color: var(--xm-black);
+  }
+  :focus-visible {
+    outline: var(--border-medium) solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  button,
+  [role="button"] {
+    cursor: pointer;
+  }
+  :disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--text-display);
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ---------- Typography roles (branding §2.3) ---------- */
+@layer components {
+  .xm-hero {
+    font-family: var(--font-title);
+    font-weight: 400;
+    font-size: var(--fs-hero);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-title);
+    text-transform: uppercase;
+    color: var(--text-display);
+  }
+  .xm-display {
+    font-family: var(--font-title);
+    font-weight: 400;
+    font-size: var(--fs-display);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-title);
+    text-transform: uppercase;
+    color: var(--text-display);
+  }
+  .xm-title {
+    font-family: var(--font-title);
+    font-weight: 400;
+    font-size: var(--fs-title);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-title);
+    text-transform: uppercase;
+    color: var(--text-display);
+  }
+  .xm-title-sm {
+    font-family: var(--font-title);
+    font-weight: 400;
+    font-size: var(--fs-title-sm);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-title);
+    text-transform: uppercase;
+    color: var(--text-display);
+  }
+  .xm-title-serif {
+    font-family: var(--font-title-serif);
+    font-weight: 700;
+    font-style: italic;
+    font-size: var(--fs-title);
+    line-height: var(--leading-snug);
+    color: var(--text-display);
+  }
+  .xm-subtitle {
+    font-family: var(--font-subtitle);
+    font-weight: 500;
+    font-size: var(--fs-subtitle);
+    line-height: var(--leading-snug);
+    color: var(--text-display);
+  }
+  .xm-subtitle-sm {
+    font-family: var(--font-subtitle);
+    font-weight: 600;
+    font-size: var(--fs-subtitle-sm);
+    line-height: var(--leading-snug);
+    color: var(--text-display);
+  }
+  .xm-meta {
+    font-family: var(--font-subtitle);
+    font-weight: 600;
+    font-size: var(--fs-caption);
+    line-height: var(--leading-body);
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+    color: var(--xm-yellow-toucan);
+  }
+  .xm-micro {
+    font-family: var(--font-subtitle);
+    font-weight: 600;
+    font-size: var(--fs-micro);
+    line-height: var(--leading-body);
+    letter-spacing: var(--tracking-micro);
+    text-transform: uppercase;
+  }
+  .xm-lead {
+    font-family: var(--font-body);
+    font-size: var(--fs-lead);
+    line-height: var(--leading-body);
+    color: var(--text-body);
+  }
+  .xm-body {
+    font-family: var(--font-body);
+    font-size: var(--fs-body);
+    line-height: var(--leading-body);
+    color: var(--text-body);
+  }
+  .xm-body-sm {
+    font-family: var(--font-body);
+    font-size: var(--fs-body-sm);
+    line-height: var(--leading-body);
+    color: var(--text-body);
+  }
+  .xm-body-alt {
+    font-family: var(--font-body-alt);
+    font-size: var(--fs-body-sm);
+    line-height: var(--leading-body);
+    color: var(--text-body);
+  }
+  .xm-caption {
+    font-family: var(--font-body);
+    font-size: var(--fs-caption);
+    line-height: var(--leading-body);
+    color: var(--text-muted);
+  }
+  .xm-link {
+    color: var(--text-link);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    transition: color var(--duration-fast) var(--ease-standard);
+  }
+  .xm-link:hover {
+    color: var(--text-link-hover);
+  }
+
+  .xm-container {
+    width: 100%;
+    max-width: var(--container-max);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  /* Photo placeholder (branding §4.5) */
+  .xm-photo-slot {
+    position: relative;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background-color: var(--surface-sunken);
+    background-image: repeating-linear-gradient(45deg, rgba(61, 55, 51, 0.07) 0 12px, transparent 12px 24px);
+    color: var(--text-muted);
+  }
+  .xm-photo-slot__label {
+    font-family: var(--font-subtitle);
+    font-weight: 600;
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tracking-micro);
+    text-transform: uppercase;
+    padding: 0 var(--space-4);
+    text-align: center;
+  }
+  .xm-photo-slot.is-dark {
+    background-color: var(--xm-gray-volcanic-stone);
+    background-image: repeating-linear-gradient(45deg, rgba(253, 246, 227, 0.06) 0 12px, transparent 12px 24px);
+    color: rgba(253, 246, 227, 0.72);
+  }
+  .xm-photo-slot.is-forest {
+    background-color: #2f4a26;
+    background-image: repeating-linear-gradient(45deg, rgba(253, 246, 227, 0.06) 0 12px, transparent 12px 24px);
+    color: rgba(253, 246, 227, 0.72);
+  }
+
+  /* Protective veil under type over photography (branding §4.5) */
+  .xm-veil {
+    position: relative;
+  }
+  .xm-veil::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    box-shadow: var(--shadow-inset-media);
+    pointer-events: none;
+  }
+
+  /* Same bottom-up stone veil, deepened for tall hero panels where the
+     headline stack is taller than the 80px the base veil protects. */
+  .xm-veil-tall::after {
+    box-shadow: inset 0 -320px 240px -120px rgba(43, 43, 43, 0.62);
+  }
+
+  /* The only two translucent surfaces */
+  .xm-glass-header {
+    background: rgba(253, 246, 227, 0.92);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .xm-scrim {
+    background: rgba(61, 55, 51, 0.52);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+  }
+
+  .xm-cutout {
+    position: absolute;
+    pointer-events: none;
+    user-select: none;
+    filter: drop-shadow(0 6px 18px rgba(61, 55, 51, 0.22));
+  }
+
+  .xm-safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .xm-prose {
+    font-family: var(--font-body);
+    font-size: var(--fs-body-sm);
+    line-height: var(--leading-body);
+    color: var(--text-body);
+  }
+  .xm-prose > * + * {
+    margin-top: var(--space-4);
+  }
+  .xm-prose h2 {
+    font-family: var(--font-subtitle);
+    font-weight: 600;
+    font-size: var(--fs-subtitle-sm);
+    line-height: var(--leading-snug);
+    margin-top: var(--space-6);
+  }
+  .xm-prose h3 {
+    font-family: var(--font-subtitle);
+    font-weight: 600;
+    font-size: 18px;
+    line-height: var(--leading-snug);
+    margin-top: var(--space-5);
+  }
+  .xm-prose ul,
+  .xm-prose ol {
+    padding-left: var(--space-5);
+  }
+  .xm-prose ul {
+    list-style: disc;
+  }
+  .xm-prose ol {
+    list-style: decimal;
+  }
+  .xm-prose li + li {
+    margin-top: var(--space-2);
+  }
+  .xm-prose li::marker {
+    color: var(--text-muted);
+  }
+  .xm-prose a {
+    color: var(--text-link);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .xm-prose a:hover {
+    color: var(--text-link-hover);
+  }
+  .xm-prose blockquote {
+    border-left: var(--border-heavy) solid var(--accent-primary);
+    padding-left: var(--space-4);
+    font-style: italic;
+  }
+  .xm-prose strong {
+    font-weight: 700;
+    color: var(--text-display);
+  }
+  .xm-prose hr {
+    border: 0;
+    border-top: 1px solid var(--border-subtle);
+  }
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes xm-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes xm-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes xm-pop {
+  from {
+    opacity: 0;
+    scale: 0.98;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+@keyframes xm-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes xm-slide-left {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes xm-shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+.xm-reveal {
+  animation: xm-rise var(--duration-slow) var(--ease-standard) both;
+}
+
+/* Landing: the sample certificate settles onto the photo, once. */
+@keyframes xm-settle {
+  from {
+    opacity: 0;
+    translate: 0 24px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+.xm-settle {
+  animation: xm-settle var(--duration-slow) var(--ease-out) 160ms both;
+}
+@media (min-width: 1024px) {
+  .xm-settle {
+    rotate: -2deg;
+  }
+}
+.xm-skeleton {
+  background: linear-gradient(90deg, var(--surface-sunken) 0, #efeded 40%, var(--surface-sunken) 80%);
+  background-size: 800px 100%;
+  animation: xm-shimmer 1.4s linear infinite;
+  border-radius: var(--radius-md);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 200ms;
+  animation-timing-function: cubic-bezier(0.2, 0.6, 0.25, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

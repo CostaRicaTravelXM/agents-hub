@@ -1,0 +1,178 @@
+/* Travel XM — design tokens.
+   Source: Branding/# TRAVEL XM · Sistema de diseño.md, section 6.
+   Deviation (documented in DESIGN.md): font-size tokens are renamed from
+   --text-* to --fs-* because the original block declares --text-display and
+   --text-body twice (once as colour, once as size) and the size silently won.
+   Principal palette is the default. The premium block is kept for parity but
+   TravelXM Learning Phase 1 never applies it. */
+:root {
+  /* Principal · primaries */
+  --xm-lime-green: #70a91b;
+  --xm-turquoise: #00b4d8;
+  --xm-yellow-toucan: #ffc300;
+  --xm-orange-sunset: #f77f00;
+  --xm-rose: #ff477e;
+  --xm-olive-green: #489149;
+  /* Principal · secondaries */
+  --xm-cloudy-white: #fdf6e3;
+  --xm-gray-volcanic-stone: #3d3733;
+  /* Premium · primaries */
+  --xm-terracotta: #bf5b33;
+  --xm-moss-green: #4a6741;
+  --xm-gold: #c4a231;
+  --xm-dark-blue: #0b2889;
+  --xm-dark-purple: #7b4b94;
+  /* Premium · secondaries */
+  --xm-cream: #fefae0;
+  --xm-gray: #2b2b2b;
+  /* Neutrals */
+  --xm-black: #000000;
+  --xm-guideline-gray: #e7e5e5;
+  --xm-white: #ffffff;
+
+  /* Semantic aliases · Principal */
+  --text-display: var(--xm-black);
+  --text-body: var(--xm-gray-volcanic-stone);
+  --text-muted: #6b625c;
+  --text-on-accent: var(--xm-white);
+  --text-link: var(--xm-olive-green);
+  --text-link-hover: var(--xm-lime-green);
+  --surface-page: var(--xm-cloudy-white);
+  --surface-card: var(--xm-white);
+  --surface-sunken: var(--xm-guideline-gray);
+  --surface-inverse: var(--xm-gray-volcanic-stone);
+  --accent-primary: var(--xm-lime-green);
+  --accent-primary-hover: #5f9117;
+  --accent-primary-press: #4e7712;
+  --accent-secondary: var(--xm-turquoise);
+  --accent-tertiary: var(--xm-yellow-toucan);
+  --accent-highlight: var(--xm-orange-sunset);
+  --accent-playful: var(--xm-rose);
+  --border-subtle: #e3dccb;
+  --border-strong: var(--xm-gray-volcanic-stone);
+  --focus-ring: var(--xm-turquoise);
+  --feedback-success: var(--xm-olive-green);
+  --feedback-info: var(--xm-turquoise);
+  --feedback-warning: var(--xm-yellow-toucan);
+  --feedback-danger: var(--xm-terracotta);
+
+  /* Type families (next/font injects --nf-* on <html>) */
+  --font-title: var(--nf-anton), "Anton", "Arial Narrow", Helvetica, sans-serif;
+  --font-title-serif: var(--nf-playfair), "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-subtitle: var(--nf-montserrat), "Montserrat", Helvetica, Arial, sans-serif;
+  --font-body: var(--nf-arimo), "Arimo", Helvetica, Arial, sans-serif;
+  --font-body-alt: var(--nf-vietnam), "Be Vietnam Pro", Helvetica, Arial, sans-serif;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Type scale — desktop values are the branding values verbatim.
+     Mobile values (below 768px) are authored; see DESIGN.md. */
+  --fs-hero: 48px;
+  --fs-display: 40px;
+  --fs-title: 32px;
+  --fs-title-sm: 28px;
+  --fs-subtitle: 24px;
+  --fs-subtitle-sm: 20px;
+  --fs-lead: 19px;
+  --fs-body: 17px;
+  --fs-body-sm: 16px;
+  --fs-caption: 14px;
+  --fs-micro: 12px;
+  --leading-tight: 100%;
+  --leading-snug: 1.2;
+  --leading-body: 1.55;
+  --leading-loose: 1.7;
+  --tracking-title: 0.005em;
+  --tracking-eyebrow: 0.14em;
+  --tracking-micro: 0.12em;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+  --space-10: 128px;
+
+  /* Radii and rules */
+  --radius-none: 0px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-pill: 999px;
+  --border-hairline: 1px;
+  --border-medium: 2px;
+  --border-heavy: 4px;
+
+  /* Elevation — always volcanic-stone tinted, always two layers */
+  --shadow-none: none;
+  --shadow-card: 0 1px 2px rgba(61, 55, 51, 0.06), 0 8px 24px rgba(61, 55, 51, 0.08);
+  --shadow-raised: 0 2px 4px rgba(61, 55, 51, 0.08), 0 16px 40px rgba(61, 55, 51, 0.12);
+  --shadow-sticker: 0 6px 18px rgba(61, 55, 51, 0.22);
+  --shadow-inset-media: inset 0 -80px 90px -40px rgba(43, 43, 43, 0.55);
+
+  /* The only sanctioned Principal gradient: turquoise to lime, top to bottom */
+  --gradient-hero: linear-gradient(180deg, var(--xm-turquoise) 0%, var(--xm-lime-green) 100%);
+
+  /* Gold and collage (Premium only, unused in Phase 1) */
+  --gold-band: linear-gradient(180deg, #e4c96a 0%, #c4a231 46%, #9c7c1e 100%);
+  --gold-rule: linear-gradient(90deg, rgba(196, 162, 49, 0) 0%, #c4a231 18%, #e4c96a 50%, #c4a231 82%, rgba(196, 162, 49, 0) 100%);
+  --torn-split: polygon(0 0, 58% 0, 44% 100%, 0 100%);
+
+  /* Motion — one curve, three durations */
+  --ease-standard: cubic-bezier(0.2, 0.6, 0.25, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 340ms;
+
+  /* Layout */
+  --container-max: 1200px;
+  --container-wide: 1440px;
+  --gutter: 16px;
+  --section-y: 48px;
+  --header-h: 64px;
+  --tabbar-h: 64px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --fs-hero: 88px;
+    --fs-display: 64px;
+    --fs-title: 50px;
+    --fs-title-sm: 40px;
+    --fs-subtitle: 32px;
+    --fs-subtitle-sm: 24px;
+    --fs-lead: 22px;
+    --fs-body: 20px;
+    --fs-body-sm: 17px;
+    --gutter: 24px;
+    --section-y: 96px;
+  }
+}
+
+[data-theme="premium"] {
+  --text-body: var(--xm-gray);
+  --text-muted: #5b5751;
+  --text-link: var(--xm-moss-green);
+  --text-link-hover: var(--xm-terracotta);
+  --surface-page: var(--xm-cream);
+  --surface-card: var(--xm-white);
+  --surface-inverse: var(--xm-gray);
+  --accent-primary: var(--xm-moss-green);
+  --accent-primary-hover: #3d5636;
+  --accent-primary-press: #31462b;
+  --accent-secondary: var(--xm-terracotta);
+  --accent-tertiary: var(--xm-gold);
+  --accent-highlight: var(--xm-gold);
+  --accent-playful: var(--xm-dark-purple);
+  --border-subtle: #e6dfc8;
+  --border-strong: var(--xm-gray);
+  --focus-ring: var(--xm-gold);
+}

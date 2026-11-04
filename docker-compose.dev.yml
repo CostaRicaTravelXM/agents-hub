@@ -1,0 +1,20 @@
+# Local stand-in for Cloudflare R2. RustFS speaks the same S3 API, so the app
+# code is identical; only the R2_* environment variables change in production.
+#   docker compose -f docker-compose.dev.yml up -d
+#   npm run storage:setup      # creates buckets, public-read policy and CORS
+services:
+  storage:
+    image: rustfs/rustfs:latest
+    environment:
+      RUSTFS_ACCESS_KEY: academy
+      RUSTFS_SECRET_KEY: academy-dev-secret
+      RUSTFS_CONSOLE_ENABLE: "true"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - storage-data:/data
+    restart: unless-stopped
+
+volumes:
+  storage-data:
