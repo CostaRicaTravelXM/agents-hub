@@ -38,9 +38,9 @@ export function InterestPage({
         <div className="mt-8">
           <ZohoFormFrame src={formUrl} title={`${heading}: ${itemTitle}`} />
           <p className="mt-4 text-[15px] text-muted">
-            Form not showing?{" "}
+            Trouble with the form?{" "}
             <ExternalLink href={formUrl} className="xm-link inline-flex min-h-11 items-center font-semibold">
-              Open it in a new tab
+              Open it on its own page
             </ExternalLink>
           </p>
         </div>

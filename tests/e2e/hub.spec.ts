@@ -33,7 +33,7 @@ test("FAM trips: list, detail, and the pre-filled interest form", async ({ page 
   const frame = page.locator("iframe");
   await expect(frame).toHaveAttribute("src", /forms\.zohopublic\.com/);
   await expect(frame).toHaveAttribute("src", /Email=agent%40travelxm\.test/);
-  await expect(page.getByRole("link", { name: /Open it in a new tab/ })).toHaveAttribute("target", "_blank");
+  await expect(page.getByRole("link", { name: /Open it on its own page/ })).toHaveAttribute("target", "_blank");
 });
 
 test("with a Drive key, marketing assets browses the folder inside the Hub", async ({ page }) => {
