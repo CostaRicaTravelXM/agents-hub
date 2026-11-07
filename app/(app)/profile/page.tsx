@@ -18,7 +18,7 @@ function Section({ title, description, children }: { title: string; description?
     <section className="grid gap-5 border-t border-line py-8 md:grid-cols-[260px_minmax(0,1fr)] md:gap-10 md:py-10">
       <div>
         <h2 className="font-ui text-[18px] font-semibold text-ink">{title}</h2>
-        {description ? <p className="mt-1.5 text-[14px] text-muted">{description}</p> : null}
+        {description ? <p className="mt-1.5 text-[15px] text-muted">{description}</p> : null}
       </div>
       <div className="min-w-0">{children}</div>
     </section>
@@ -33,18 +33,18 @@ export default async function ProfilePage() {
 
   return (
     <Page className="max-w-[1040px]">
-      <PageHeader title="Your profile" lead="Keep your details up to date. Your name appears on your certificates exactly as it is here." />
+      <PageHeader title="Your profile" lead="Your name appears on your certificates exactly as it is here." />
 
-      <div className="mb-8 flex items-center gap-5 rounded-lg bg-card p-5 shadow-card md:p-6">
+      <div className="mb-8 flex items-center gap-4 rounded-lg bg-sunken p-5 md:gap-5 md:p-6">
         <Avatar name={p.full_name} url={p.avatar_url} size={64} />
         <div className="min-w-0 flex-1">
           <p className="truncate font-ui text-[20px] font-semibold text-ink">{p.full_name ?? viewer.email}</p>
-          <p className="truncate text-[15px] text-muted">
-            {[p.company, p.country].filter(Boolean).join(" · ")}
+          <p className="text-[15px] text-muted">
+            {[p.is_independent ? "Independent agent" : p.company, p.country].filter(Boolean).join(", ")}
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
-            <Badge tone={p.role === "agent" ? "neutral" : "inverse"}>{ROLE_LABEL[p.role]}</Badge>
-            <Badge tone="neutral">Member since {formatDate(p.created_at, { month: "short", year: "numeric" })}</Badge>
+            <Badge tone={p.role === "agent" ? "neutral" : "inverse"} className={p.role === "agent" ? "bg-white" : undefined}>{ROLE_LABEL[p.role]}</Badge>
+            <Badge tone="neutral" className="bg-white">Member since {formatDate(p.created_at, { month: "short", year: "numeric" })}</Badge>
           </div>
         </div>
       </div>
@@ -57,14 +57,14 @@ export default async function ProfilePage() {
         {groups?.length ? (
           <ul className="mb-6 space-y-2">
             {groups.map((g) => (
-              <li key={g.id} className="flex items-center gap-3 rounded-md bg-card p-4 shadow-card">
+              <li key={g.id} className="flex items-center gap-3 rounded-lg bg-sunken p-4">
                 <span className="grid size-10 place-items-center rounded-pill bg-toucan text-black">
                   <Users aria-hidden className="size-5 stroke-[1.75]" />
                 </span>
                 <div className="min-w-0">
                   <p className="font-ui text-[15px] font-semibold text-ink">{g.name}</p>
-                  <p className="text-[13px] text-muted">
-                    {g.description ? `${g.description} · ` : ""}Joined {formatDate(g.joined_at)}
+                  <p className="text-[15px] text-muted">
+                    {g.description ? `${g.description}. ` : ""}Joined {formatDate(g.joined_at)}
                   </p>
                 </div>
               </li>
@@ -82,7 +82,7 @@ export default async function ProfilePage() {
         </div>
       </Section>
 
-      <Section title="Sign out" description="Sign out of TravelXM Academy on this device.">
+      <Section title="Sign out" description="Sign out of the TravelXM Agents Hub on this device.">
         <form action={signOut}>
           <Button type="submit" variant="secondary">
             <LogOut aria-hidden /> Sign out

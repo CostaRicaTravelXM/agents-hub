@@ -14,7 +14,7 @@ export function CopyLink({ path, label = "Share with clients" }: { path: string;
         const url = `${window.location.origin}${path}`;
         try {
           if (navigator.share && window.matchMedia("(pointer: coarse)").matches) {
-            await navigator.share({ url, title: "TravelXM Academy certificate" });
+            await navigator.share({ url, title: "TravelXM certificate" });
             return;
           }
           await navigator.clipboard.writeText(url);

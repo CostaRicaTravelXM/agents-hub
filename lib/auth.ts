@@ -24,6 +24,11 @@ export async function requireViewer(next?: string): Promise<Viewer> {
   return viewer;
 }
 
+/** True until the account has a full name and has answered the agency question once. */
+export function needsWelcome(profile: Pick<Profile, "first_name" | "last_name" | "hub_onboarded_at"> | null | undefined) {
+  return !profile?.first_name || !profile?.last_name || !profile?.hub_onboarded_at;
+}
+
 export function isStaff(profile: Pick<Profile, "role"> | null | undefined) {
   return profile?.role === "admin" || profile?.role === "content_manager";
 }

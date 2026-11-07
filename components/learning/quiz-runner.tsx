@@ -77,15 +77,15 @@ export function QuizRunner({ lessonId, quiz, nextHref, courseHref }: { lessonId:
         <dl className="mt-6 grid grid-cols-3 gap-4 border-y border-line py-5">
           <div>
             <dt className="xm-micro text-muted">Questions</dt>
-            <dd className="mt-1 font-display text-[32px] leading-none text-ink">{total}</dd>
+            <dd className="mt-1 font-display font-bold text-[32px] leading-none text-ink">{total}</dd>
           </div>
           <div>
             <dt className="xm-micro text-muted">To pass</dt>
-            <dd className="mt-1 font-display text-[32px] leading-none text-ink">{quiz.passing_score}%</dd>
+            <dd className="mt-1 font-display font-bold text-[32px] leading-none text-ink">{quiz.passing_score}%</dd>
           </div>
           <div>
             <dt className="xm-micro text-muted">{quiz.best_score !== null ? "Best score" : "Attempts"}</dt>
-            <dd className="mt-1 font-display text-[32px] leading-none text-ink">
+            <dd className="mt-1 font-display font-bold text-[32px] leading-none text-ink">
               {quiz.best_score !== null ? `${Math.round(quiz.best_score)}%` : quiz.max_attempts ?? "∞"}
             </dd>
           </div>
@@ -131,7 +131,7 @@ export function QuizRunner({ lessonId, quiz, nextHref, courseHref }: { lessonId:
         <div className="rounded-lg bg-card p-6 shadow-card md:p-10">
           <div className="flex flex-col items-start gap-6 md:flex-row md:items-center">
             <ProgressRing value={result.score} size={112} stroke={8} label="Quiz score">
-              <span className="font-display text-[34px] leading-none text-ink">{Math.round(result.score)}%</span>
+              <span className="font-display font-bold text-[34px] leading-none text-ink">{Math.round(result.score)}%</span>
             </ProgressRing>
             <div>
               <Badge tone={result.passed ? "success" : "danger"}>{result.passed ? "Passed" : "Not passed yet"}</Badge>
@@ -188,15 +188,15 @@ export function QuizRunner({ lessonId, quiz, nextHref, courseHref }: { lessonId:
                     <p className="font-ui text-[15px] font-semibold text-ink">
                       {i + 1}. {qq.prompt}
                     </p>
-                    <p className="mt-1.5 text-[14px] text-body">
+                    <p className="mt-1.5 text-[15px] text-body">
                       Your answer: <span className="font-semibold">{text(r.given) || "No answer"}</span>
                     </p>
                     {!r.correct && r.correct_options ? (
-                      <p className="mt-1 text-[14px] text-body">
+                      <p className="mt-1 text-[15px] text-body">
                         Correct answer: <span className="font-semibold text-olive">{text(r.correct_options)}</span>
                       </p>
                     ) : null}
-                    {r.explanation && (r.correct || result.revealed) ? <p className="mt-2 text-[14px] text-muted italic">{r.explanation}</p> : null}
+                    {r.explanation && (r.correct || result.revealed) ? <p className="mt-2 text-[15px] text-muted italic">{r.explanation}</p> : null}
                   </div>
                 </div>
               </li>
@@ -234,12 +234,12 @@ export function QuizRunner({ lessonId, quiz, nextHref, courseHref }: { lessonId:
                 onClick={() => choose(o.id)}
                 className={cn(
                   "flex min-h-14 items-center gap-4 rounded-md border-2 px-4 py-3 text-left transition-[border-color,background-color] duration-120 ease-standard",
-                  selected ? "border-primary bg-primary/10" : "border-line bg-card hover:border-[#cfc6b1] hover:bg-page",
+                  selected ? "border-primary bg-primary/10" : "border-line bg-card hover:border-ink hover:bg-page",
                 )}
               >
                 <span
                   className={cn(
-                    "grid size-7 shrink-0 place-items-center border-2 font-ui text-[13px] font-semibold transition-colors duration-120",
+                    "grid size-7 shrink-0 place-items-center border-2 font-ui text-[15px] font-semibold transition-colors duration-120",
                     q.type === "multiple" ? "rounded-sm" : "rounded-pill",
                     selected ? "border-primary bg-primary text-white" : "border-line-strong/40 text-muted",
                   )}

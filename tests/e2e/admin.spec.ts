@@ -66,7 +66,7 @@ test.describe("admin CMS", () => {
   test("analytics and exports load for staff", async ({ page }) => {
     await signIn(page, "content@travelxm.test");
     await page.goto("/admin");
-    await expect(page.getByRole("heading", { name: "Academy overview" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Learning overview" })).toBeVisible();
     await expect(page.getByText("Registered agents")).toBeVisible();
     await expect(page.getByText("Certified agents")).toBeVisible();
     const csv = await page.request.get("/api/admin/export?type=agents");

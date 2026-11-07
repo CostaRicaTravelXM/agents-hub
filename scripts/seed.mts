@@ -122,7 +122,86 @@ async function makePdf(eyebrow: string, title: string, sections: Section[]) {
   return Buffer.from(await renderToBuffer(tree as never));
 }
 
+/** A book: one branded Letter page per chapter, so the reader has real pages to turn. */
+async function makeBookPdf(title: string, chapters: { title: string; sections: Section[] }[]) {
+  const logo = { data: readFileSync(path.join(root, "public/brand/travelxm-logo.png")), format: "png" as const };
+  const cover = h(
+    Page,
+    { key: "cover", size: "LETTER", style: pdfStyles.page },
+    h(Image, { src: logo, style: pdfStyles.logo }),
+    h(View, { style: { marginTop: 180 } }, h(Text, { style: pdfStyles.eyebrow }, "Advisor handbook"), h(Text, { style: { ...pdfStyles.title, fontSize: 44 } }, title)),
+    h(View, { style: pdfStyles.rule }),
+    h(Text, null, "Everything an advisor needs to quote, book and look after clients in Costa Rica."),
+  );
+  const pages = chapters.map((c, idx) =>
+    h(
+      Page,
+      { key: idx, size: "LETTER", style: pdfStyles.page },
+      h(Text, { style: pdfStyles.eyebrow }, `Chapter ${idx + 1}`),
+      h(Text, { style: pdfStyles.title }, c.title),
+      h(View, { style: pdfStyles.rule }),
+      ...c.sections.map((sec, j) =>
+        h(
+          View,
+          { key: j, wrap: false },
+          h(Text, { style: pdfStyles.h2 }, sec.heading),
+          ...(sec.paragraphs ?? []).map((t, k) => h(Text, { key: k, style: pdfStyles.p }, t)),
+          ...(sec.rows ?? []).map(([l, r], k) =>
+            h(View, { key: `r${k}`, style: pdfStyles.row }, h(Text, { style: pdfStyles.cellL }, l), h(Text, { style: pdfStyles.cellR }, r)),
+          ),
+        ),
+      ),
+      h(View, { style: pdfStyles.foot, fixed: true }, h(Text, null, title), h(Text, { render: ({ pageNumber }: { pageNumber: number }) => `Page ${pageNumber}` })),
+    ),
+  );
+  return Buffer.from(await renderToBuffer(h(Document, { title, author: "TravelXM" }, cover, ...pages) as never));
+}
+
+const BOOK_KEY = "documents/demo/working-with-travelxm-book.pdf";
+const makeDemoBook = () =>
+  makeBookPdf("Working with TravelXM", [
+    { title: "Who to call", sections: [
+      { heading: "Your contacts", rows: [["Sales and quotes", "sales@travelxm.com, reply within one business day"], ["Operations, 24/7", "WhatsApp line in the final documents"], ["Accounts", "Commission statements and invoices"]] },
+      { heading: "Before you write", paragraphs: ["Have the travel dates, the number of guests and their ages, and the budget per person. A complete request is quoted the same day."] },
+    ] },
+    { title: "Quoting a trip", sections: [
+      { heading: "What to send us", paragraphs: ["Dates, party size, room types, the pace your clients enjoy and anything they want to avoid.", "We reply with a day-by-day itinerary, two hotel levels and a net price with your commission shown."] },
+      { heading: "How long a quote holds", rows: [["Rates", "Valid 14 days from the quote date"], ["Rooms", "Not held until the deposit"], ["Changes", "As many as you need before booking"]] },
+    ] },
+    { title: "Booking terms", sections: [
+      { heading: "Payment", rows: [["Deposit", "30% confirms the booking, rooms held 72 h"], ["Balance", "45 days before arrival"], ["Final documents", "Within 48 h of the balance"], ["Commission", "Paid within 15 days of the clients' return"]] },
+    ] },
+    { title: "Cancellations", sections: [
+      { heading: "The rules", paragraphs: ["More than 60 days before arrival: deposit refunded less hotel penalties.", "Between 60 and 30 days: 50% of the package.", "Fewer than 30 days: non-refundable."] },
+      { heading: "Insurance", paragraphs: ["Recommend travel insurance at booking. It is the one thing clients thank you for when plans change."] },
+    ] },
+    { title: "Arenal and Monteverde", sections: [
+      { heading: "Arenal", rows: [["From San José", "3 h by road"], ["Nights", "3 recommended"], ["Signature", "Hot springs, hanging bridges, La Fortuna waterfall"]] },
+      { heading: "Monteverde", rows: [["From Arenal", "3 to 3.5 h"], ["Nights", "2 minimum"], ["Signature", "Reserve walk at 7:00, night walk, canopy bridges"]] },
+    ] },
+    { title: "The Pacific coast", sections: [
+      { heading: "Manuel Antonio", rows: [["From Monteverde", "4 h by road"], ["Park", "Closed on Tuesdays, timed tickets"], ["Nights", "3 recommended"]] },
+      { heading: "Guanacaste", rows: [["Airport", "Liberia, 45 min to most resorts"], ["Season", "Driest from December to April"], ["Signature", "Beach resorts, sailing, Rincón de la Vieja"]] },
+    ] },
+    { title: "Emergencies", sections: [
+      { heading: "If something goes wrong", paragraphs: ["If a client is delayed, injured or loses documents, contact operations first. We coordinate transfers, hotels and, if needed, the embassy."] },
+      { heading: "Afterwards", paragraphs: ["We send you a short written summary the next working day, so you can follow up with your clients with the facts in hand."] },
+    ] },
+  ]);
+
+/** Page count and shape, so the reader opens straight away. */
+async function inspectDemoBook(bytes: Buffer) {
+  const { pdf } = await import("pdf-to-img");
+  const sharp = (await import("sharp")).default;
+  const doc = await pdf(new Uint8Array(bytes), { scale: 0.4 });
+  const meta = await sharp(await doc.getPage(1)).metadata();
+  const page_count = doc.length;
+  await doc.destroy();
+  return { page_count, page_aspect: meta.width && meta.height ? Math.round((meta.width / meta.height) * 10000) / 10000 : null };
+}
+
 const pdfs: Record<string, () => Promise<Buffer>> = {
+  [BOOK_KEY]: makeDemoBook,
   "documents/demo/advisor-handbook.pdf": () =>
     makePdf("Advisor handbook", "Working with TravelXM", [
       { heading: "Who to call", rows: [["Sales and quotes", "sales@travelxm.com · reply within one business day"], ["Operations, 24/7", "WhatsApp line in the final documents"], ["Accounts", "Commission statements and invoices"]] },
@@ -191,15 +270,140 @@ async function createUser(u: { email: string; full_name: string; company: string
   must(
     await supabase
       .from("profiles")
-      .update({ onboarded_at: daysAgo(createdDaysAgo), created_at: daysAgo(createdDaysAgo), last_seen_at: daysAgo(Math.max(0, createdDaysAgo - 3)) })
+      .update({ onboarded_at: daysAgo(createdDaysAgo), hub_onboarded_at: daysAgo(createdDaysAgo), created_at: daysAgo(createdDaysAgo), last_seen_at: daysAgo(Math.max(0, createdDaysAgo - 3)) })
       .eq("id", id),
     "profile",
   );
   return id;
 }
 
+// ---------------------------------------------------------------- hub
+/** Two masterclasses, two offers and one book, reusing the generated demo media. */
+async function seedHub() {
+  const videoKeys = Object.keys(photoForVideo);
+  const posterFor = (key: string) => photoForVideo[key]?.replace(/^public/, "") ?? null;
+  const { data: category } = await supabase.from("categories").select("id").eq("slug", "masterclasses").single();
+  const masterclasses = [
+    {
+      slug: "selling-costa-rica-with-confidence",
+      title: "Selling Costa Rica with confidence",
+      speaker: "Andrea Solís, TravelXM",
+      description: "How to open the conversation, which three itineraries cover most clients, and the questions that close the sale.",
+      video: videoKeys[0],
+    },
+    {
+      slug: "arenal-and-monteverde-in-one-week",
+      title: "Arenal and Monteverde in one week",
+      speaker: "Diego Mora, TravelXM",
+      description: "Pacing, transfers and the hotels that make the classic loop feel effortless.",
+      video: videoKeys[1] ?? videoKeys[0],
+    },
+  ];
+  for (const [i, m] of masterclasses.entries()) {
+    const { data: course } = await supabase
+      .from("courses")
+      .upsert(
+        {
+          slug: m.slug,
+          title: m.title,
+          subtitle: m.speaker,
+          description: m.description,
+          cover_key: posterFor(m.video),
+          category_id: category!.id,
+          status: "published",
+          visibility: "public",
+          estimated_minutes: Math.ceil(VIDEO_SECONDS / 60),
+          certificate_enabled: false,
+          sort_order: 1000 + i,
+          published_at: new Date().toISOString(),
+        },
+        { onConflict: "slug" },
+      )
+      .select("id")
+      .single();
+    const { count } = await supabase.from("modules").select("id", { count: "exact", head: true }).eq("course_id", course!.id);
+    if (count) continue;
+    const { data: mod } = await supabase.from("modules").insert({ course_id: course!.id, title: "Masterclass", sort_order: 0 }).select("id").single();
+    must(
+      await supabase.from("lessons").insert({
+        module_id: mod!.id,
+        course_id: course!.id,
+        title: m.title,
+        summary: m.speaker,
+        type: "video",
+        sort_order: 0,
+        duration_seconds: VIDEO_SECONDS,
+        video_key: m.video,
+        poster_key: posterFor(m.video),
+      }),
+      "masterclass lesson",
+    );
+  }
+  const soon = new Date();
+  soon.setDate(soon.getDate() + 45);
+  must(
+    await supabase.from("hub_offers").insert([
+      {
+        slug: "green-season-arenal",
+        title: "Green season in Arenal: fourth night free",
+        excerpt: "Book four nights at a partner hot-springs resort and the fourth is on us. Travel May to November.",
+        image_key: "/photos/fortuna-lago-arenal-volcan.jpg",
+        valid_until: soon.toISOString().slice(0, 10),
+        file_key: "documents/demo/partner-rate-sheet.pdf",
+        file_name: "Green season rate sheet.pdf",
+        file_size: 60_000,
+        status: "published",
+        sort_order: 0,
+      },
+      {
+        slug: "expired-demo-offer",
+        title: "Expired demo offer",
+        excerpt: "Agents never see this one: it ended last week.",
+        valid_until: "2026-01-01",
+        status: "published",
+        sort_order: 1,
+      },
+    ]),
+    "offers",
+  );
+  const bytes = await makeDemoBook();
+  must(
+    await supabase.from("hub_books").insert({
+      slug: "working-with-travelxm",
+      title: "Working with TravelXM",
+      author: "TravelXM",
+      description: "The advisor handbook: who to call, booking terms, cancellations and what to do in an emergency.",
+      cover_key: "/photos/monteverde-puente-colgante-canopy.jpg",
+      file_key: BOOK_KEY,
+      file_name: "Working with TravelXM.pdf",
+      file_size: bytes.length,
+      ...(await inspectDemoBook(bytes)),
+      status: "published",
+    }),
+    "book",
+  );
+}
+
+/** `npm run seed -- --book`: replace only the demo book, for a database that must not be reset. */
+async function refreshDemoBook() {
+  const bytes = await makeDemoBook();
+  await upload(BOOK_KEY, bytes, "application/pdf");
+  const { data: row } = await supabase.from("hub_books").select("file_version").eq("slug", "working-with-travelxm").maybeSingle();
+  if (!row) throw new Error("The demo book row does not exist");
+  must(
+    await supabase
+      .from("hub_books")
+      .update({ file_key: BOOK_KEY, file_size: bytes.length, file_version: row.file_version + 1, ...(await inspectDemoBook(bytes)) })
+      .eq("slug", "working-with-travelxm"),
+    "book",
+  );
+  console.log("Demo book replaced.");
+}
+
 // ---------------------------------------------------------------- main
 async function main() {
+  if (process.argv.includes("--book")) return refreshDemoBook();
+
   const { count } = await supabase.from("courses").select("id", { count: "exact", head: true });
   if ((count ?? 0) > 0) {
     console.log("Courses already exist. Run `npx supabase db reset` first for a clean seed.");
@@ -217,6 +421,9 @@ async function main() {
   for (const [key, make] of Object.entries(pdfs)) {
     await upload(key, await make(), "application/pdf");
   }
+
+  console.log("· creating hub content");
+  await seedHub();
 
   console.log("· creating accounts");
   const staffIds: Record<string, string> = {};

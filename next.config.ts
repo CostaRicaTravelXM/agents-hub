@@ -5,9 +5,14 @@ const localMedia = mediaBase ? ["localhost", "127.0.0.1"].includes(mediaBase.hos
 
 const nextConfig: NextConfig = {
   turbopack: { root: process.cwd() },
+  devIndicators: false,
+  // Book pages are rendered on the server with pdf.js and a native canvas; these must not be bundled.
+  serverExternalPackages: ["pdf-to-img", "pdfjs-dist", "@napi-rs/canvas", "sharp"],
   images: {
     qualities: [75, 85],
-    formats: ["image/avif", "image/webp"],
+    // WebP only: every browser the audience uses reads it, older iPads do not read
+    // AVIF, and AVIF requests for some photo and width pairs hung in the optimizer.
+    formats: ["image/webp"],
     remotePatterns: mediaBase
       ? [
           {
@@ -24,6 +29,13 @@ const nextConfig: NextConfig = {
   // Brand fonts for the certificate PDF route.
   outputFileTracingIncludes: {
     "/api/certificates/[code]": ["./assets/fonts/**", "./public/brand/travelxm-logo.png"],
+  },
+  // Masterclasses live in Learning now. Old links, including the marketing site's, keep working.
+  async redirects() {
+    return [
+      { source: "/masterclasses", destination: "/courses?category=masterclasses", permanent: true },
+      { source: "/masterclasses/:slug", destination: "/courses/:slug", permanent: true },
+    ];
   },
   async headers() {
     return [

@@ -66,8 +66,8 @@ export default async function AdminOverview({ searchParams }: PageProps<"/admin"
   return (
     <>
       <AdminHeader
-        title="Academy overview"
-        description="The Phase 1 success metrics. Staff accounts are excluded from every number."
+        title="Learning overview"
+        description="How advisors use the courses. Staff accounts are excluded from every number."
         actions={
           <Button asChild variant="secondary" size="sm">
             <a href="/api/admin/export?type=agents">

@@ -14,7 +14,7 @@ export default function OfflinePage() {
       </span>
       <h1 className="xm-title mt-5">You are offline</h1>
       <p className="xm-lead mt-4 max-w-lg text-muted">
-        Reconnect to keep learning. Everything you finished before losing the connection is saved.
+        Reconnect to get back to the Hub. Everything you finished before losing the connection is saved.
       </p>
     </main>
   );

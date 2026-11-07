@@ -1,180 +1,120 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Award, BookOpen, PlayCircle } from "lucide-react";
+import { ChevronRight, PlayCircle } from "lucide-react";
 import { requireViewer } from "@/lib/auth";
-import { getCatalog, getCourseDetail, getLearningTime, getMyCertificates } from "@/lib/queries";
-import { LESSON_TYPE_LABEL, lessonHref, nextLesson } from "@/lib/course";
+import { getCatalog, getCourseDetail } from "@/lib/queries";
+import { hubCounts, listCurrentOffers, listFamTrips } from "@/lib/hub/queries";
+import { lessonHref, nextLesson } from "@/lib/course";
+import { HOME_MODULES } from "@/components/shell/nav-config";
 import { Page } from "@/components/shell/app-shell";
+import { ModuleTile } from "@/components/hub/module-tile";
 import { Button } from "@/components/ui/button";
-import { EmptyState, ProgressBar, SectionHeading } from "@/components/ui/surface";
+import { ProgressBar } from "@/components/ui/surface";
 import { Cover } from "@/components/learning/cover";
-import { CourseCard } from "@/components/learning/course-card";
-import { Stat } from "@/components/learning/stat";
-import { firstName, formatCompactDuration, formatDate, formatDuration } from "@/lib/utils";
+import { firstName, formatDate } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Dashboard" };
+export const metadata: Metadata = { title: "Home" };
+
+function SectionTitle({ id, title, href, label }: { id: string; title: string; href: string; label: string }) {
+  return (
+    <div className="mb-4 flex items-center justify-between gap-4">
+      <h2 id={id} className="xm-title-sm">
+        {title}
+      </h2>
+      <Link href={href} aria-label={label} className="inline-flex min-h-11 shrink-0 items-center font-ui text-[16px] font-semibold text-link hover:text-link-hover">
+        See all
+      </Link>
+    </div>
+  );
+}
 
 export default async function DashboardPage() {
   const viewer = await requireViewer();
-  const [catalog, certificates, time] = await Promise.all([
-    getCatalog(viewer.id),
-    getMyCertificates(viewer.id),
-    getLearningTime(viewer.id),
-  ]);
+  const [catalog, counts, trips, offers] = await Promise.all([getCatalog(viewer.id), hubCounts(), listFamTrips(), listCurrentOffers()]);
 
-  const enrolled = catalog.filter((c) => c.enrollment);
-  const inProgress = enrolled
-    .filter((c) => !c.enrollment!.completed_at)
+  const inProgress = catalog
+    .filter((c) => c.enrollment && !c.enrollment.completed_at)
     .sort((a, b) => (b.enrollment!.last_activity_at ?? b.enrollment!.enrolled_at).localeCompare(a.enrollment!.last_activity_at ?? a.enrollment!.enrolled_at));
-  const completed = enrolled.filter((c) => c.enrollment!.completed_at);
-  const recommended = catalog
-    .filter((c) => !c.enrollment)
-    .sort((a, b) => Number(b.featured) - Number(a.featured) || a.sort_order - b.sort_order)
-    .slice(0, 3);
-  const totalSeconds = time.reduce((s, t) => s + t.seconds, 0);
-
   const current = inProgress[0] ?? null;
   const currentDetail = current ? await getCourseDetail(current.slug, viewer.id) : null;
   const upNext = currentDetail ? nextLesson(currentDetail.modules, currentDetail.enrollment?.last_lesson_id) : null;
-  const moduleIndex = upNext ? upNext.moduleIndex : 0;
-  const featured = !current ? (catalog.find((c) => c.featured && !c.enrollment) ?? recommended[0] ?? null) : null;
+  const suggested = current ? null : (catalog.find((c) => c.featured && !c.enrollment) ?? catalog.find((c) => !c.enrollment) ?? null);
+
+  const countFor = (id: string) =>
+    id === "learning" ? catalog.length : id === "fam" ? counts.famTrips : id === "offers" ? counts.offers : id === "books" ? counts.books : null;
+
+  const lead = current && upNext ? current : suggested;
 
   return (
     <Page>
-      <header className="xm-reveal mb-8 md:mb-10">
-        <h1 className="xm-title">Welcome back, {firstName(viewer.profile.full_name)}</h1>
-        <p className="xm-lead mt-3 text-muted">
-          {current
-            ? "Pick up where you left off. Your place is saved on every device."
-            : enrolled.length
-              ? "You have finished every course you started. Choose your next one below."
-              : "Start with one short lesson. Your progress saves automatically."}
-        </p>
+      <header className="xm-reveal mb-5 md:mb-7">
+        <h1 className="xm-title">Hi {firstName(viewer.profile.full_name)}</h1>
+        <p className="xm-lead mt-1.5 text-muted">What would you like to do today?</p>
       </header>
 
-      {/* Continue learning */}
-      {current && currentDetail && upNext ? (
-        <section aria-labelledby="continue-heading" className="xm-reveal">
-          <div className="group relative isolate overflow-hidden rounded-lg bg-inverse shadow-raised">
-            <div className="xm-veil xm-veil-tall relative h-[340px] md:h-[400px]">
-              <Cover imageKey={current.cover_key} alt="" priority sizes="(min-width: 1024px) 900px, 100vw" tone="dark" zoomOnHover />
+      {/* The one main action on Home. */}
+      {lead ? (
+        <section aria-label={current && upNext ? "Continue learning" : "Start learning"} className="xm-reveal mb-8 md:mb-10">
+          <Link
+            href={current && upNext ? lessonHref(current.slug, upNext.id) : `/courses/${lead.slug}`}
+            className="group relative block h-[320px] overflow-hidden rounded-xl bg-inverse md:h-[360px]"
+          >
+            <div className="xm-veil xm-veil-tall absolute inset-0">
+              <Cover imageKey={lead.cover_key} alt="" priority sizes="(min-width: 1024px) 900px, 100vw" tone="dark" zoomOnHover />
             </div>
-            <div className="absolute inset-x-0 bottom-0 z-10 p-5 md:p-10">
-              <h2 id="continue-heading" className="max-w-2xl font-display text-[40px] leading-none tracking-[0.005em] text-white uppercase md:text-[64px]">
-                {current.title}
-              </h2>
-              <p className="xm-meta mt-3">
-                Module {moduleIndex + 1} of {currentDetail.modules.length} · {Math.round(current.enrollment!.progress_pct)}% complete
-              </p>
-              <div className="mt-3 max-w-md">
-                <ProgressBar value={current.enrollment!.progress_pct} tone="toucan" className="bg-white/25" label="Course progress" />
-              </div>
-              <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center">
-                <Button asChild size="lg">
-                  <Link href={lessonHref(current.slug, upNext.id)}>
-                    <PlayCircle aria-hidden /> Continue learning
-                  </Link>
-                </Button>
-                <p className="text-[15px] text-cloudy">
-                  Up next · <span className="font-semibold text-white">{upNext.title}</span>{" "}
-                  <span className="text-cloudy/80">
-                    ({LESSON_TYPE_LABEL[upNext.type]}
-                    {upNext.duration_seconds ? `, ${formatDuration(upNext.duration_seconds)}` : ""})
-                  </span>
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-      ) : featured ? (
-        <section aria-labelledby="start-heading" className="xm-reveal">
-          <div className="group relative isolate overflow-hidden rounded-lg bg-inverse shadow-raised">
-            <div className="xm-veil xm-veil-tall relative h-[340px] md:h-[400px]">
-              <Cover imageKey={featured.cover_key} alt="" priority sizes="(min-width: 1024px) 900px, 100vw" tone="dark" zoomOnHover />
-            </div>
-            <div className="absolute inset-x-0 bottom-0 z-10 p-5 md:p-10">
-              <h2 id="start-heading" className="max-w-2xl font-display text-[40px] leading-none tracking-[0.005em] text-white uppercase md:text-[64px]">
-                {featured.title}
-              </h2>
-              <p className="xm-meta mt-3">Start here · {featured.moduleCount} modules · Certificate included</p>
-              {featured.subtitle ? <p className="mt-3 max-w-lg text-[17px] text-cloudy">{featured.subtitle}</p> : null}
-              <Button asChild size="lg" className="mt-6">
-                <Link href={`/courses/${featured.slug}`}>
-                  View course <ArrowRight aria-hidden />
-                </Link>
+            <div className="absolute inset-x-0 bottom-0 z-10 p-5 md:p-8">
+              <h2 className="max-w-2xl font-ui text-[26px] leading-[1.15] font-bold tracking-[-0.02em] text-white md:text-[36px]">{lead.title}</h2>
+              {current && upNext ? (
+                <>
+                  <p className="mt-2 line-clamp-1 text-[16px] text-white/90">Up next: {upNext.title}</p>
+                  <div className="mt-3 flex max-w-md items-center gap-3">
+                    <ProgressBar value={current.enrollment!.progress_pct} label="Course progress" tone="cloudy" className="bg-white/30" />
+                    <span className="shrink-0 font-ui text-[15px] font-semibold text-white tabular-nums">{Math.round(current.enrollment!.progress_pct)}%</span>
+                  </div>
+                </>
+              ) : lead.subtitle ? (
+                <p className="mt-2 line-clamp-2 max-w-xl text-[16px] text-white/90">{lead.subtitle}</p>
+              ) : null}
+              <Button asChild size="lg" className="mt-4 w-full sm:w-auto">
+                <span>
+                  <PlayCircle aria-hidden /> {current && upNext ? "Continue learning" : "Start learning"}
+                </span>
               </Button>
             </div>
-          </div>
+          </Link>
         </section>
       ) : null}
 
-      {/* Stats */}
-      <section aria-label="Your numbers" className="mt-6 grid grid-cols-2 gap-3 md:mt-8 md:grid-cols-4 md:gap-5">
-        <Stat label="In progress" value={inProgress.length} detail={inProgress.length === 1 ? "course" : "courses"} />
-        <Stat label="Completed" value={completed.length} detail={completed.length === 1 ? "course" : "courses"} />
-        <Stat label="Certificates" value={certificates.length} detail="earned" />
-        <Stat label="Learning time" value={formatCompactDuration(totalSeconds)} detail="all time" />
+      {/* Every module, one tile each */}
+      <section aria-labelledby="modules-heading">
+        <h2 id="modules-heading" className="sr-only">
+          Everything in the Hub
+        </h2>
+        <ul className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-3">
+          {HOME_MODULES.map((item) => (
+            <li key={item.id}>
+              <ModuleTile item={item} count={countFor(item.id)} />
+            </li>
+          ))}
+        </ul>
       </section>
 
-      {/* My courses */}
-      <section aria-labelledby="mine-heading" className="mt-14 md:mt-20">
-        <SectionHeading
-          id="mine-heading"
-         
-          title="Your courses"
-          action={
-            <Link href="/progress" className="xm-link font-ui text-[14px] font-semibold">
-              See progress
-            </Link>
-          }
-        />
-        {enrolled.length ? (
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {[...inProgress, ...completed].map((c) => (
-              <CourseCard key={c.id} course={c} />
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            className="mt-6"
-            icon={<BookOpen aria-hidden />}
-            title="You have not started a course yet"
-            body="Start with the Costa Rica Specialist. It takes about two hours and ends with a certificate."
-            action={
-              <Button asChild>
-                <Link href="/courses">Browse courses</Link>
-              </Button>
-            }
-          />
-        )}
-      </section>
-
-      {/* Certificates */}
-      {certificates.length ? (
-        <section aria-labelledby="certs-heading" className="mt-14 md:mt-20">
-          <SectionHeading
-            id="certs-heading"
-           
-            title="Certificates"
-            action={
-              <Link href="/certificates" className="xm-link font-ui text-[14px] font-semibold">
-                View all
-              </Link>
-            }
-          />
-          <ul className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {certificates.slice(0, 3).map((c) => (
-              <li key={c.id}>
-                <Link
-                  href="/certificates"
-                  className="flex items-center gap-4 rounded-lg bg-card p-4 shadow-card transition-[transform,box-shadow] duration-200 ease-standard hover:-translate-y-[3px] hover:shadow-raised"
-                >
-                  <span className="grid size-12 shrink-0 place-items-center rounded-pill bg-toucan text-black">
-                    <Award aria-hidden className="size-5 stroke-[1.75]" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block truncate font-ui text-[15px] font-semibold text-ink">{c.course_title}</span>
-                    <span className="block text-[13px] text-muted">Issued {formatDate(c.issued_at)}</span>
+      {trips.length ? (
+        <section aria-labelledby="trips-heading" className="mt-10 md:mt-14">
+          <SectionTitle id="trips-heading" title="FAM trips" href="/fam-trips" label="See all FAM trips" />
+          {/* Phones scroll sideways with the next trip showing, and "See all" is always there. */}
+          <ul className="scrollbar-none -mx-4 flex snap-x gap-3 overflow-x-auto px-4 md:mx-0 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0">
+            {trips.slice(0, 6).map((t, i) => (
+              <li key={t.id} className={`w-[72%] max-w-[300px] shrink-0 snap-start md:w-auto md:max-w-none ${i > 2 ? "md:hidden" : ""}`}>
+                <Link href={`/fam-trips/${t.slug}`} className="group relative block aspect-[4/5] overflow-hidden rounded-lg bg-inverse">
+                  <div className="xm-veil xm-veil-tall absolute inset-0">
+                    <Cover imageKey={t.image_key} alt={t.image_alt ?? ""} label="Trip photo" tone="dark" sizes="(min-width: 768px) 300px, 72vw" zoomOnHover />
+                  </div>
+                  <span className="absolute inset-x-0 bottom-0 z-10 block p-4">
+                    <span className="block font-ui text-[18px] leading-[1.2] font-semibold text-white">{t.title}</span>
+                    <span className="mt-1 block text-[15px] text-white/90">
+                      {t.timing_label}, {t.nights} nights
+                    </span>
                   </span>
                 </Link>
               </li>
@@ -183,24 +123,27 @@ export default async function DashboardPage() {
         </section>
       ) : null}
 
-      {/* Recommended */}
-      {recommended.length ? (
-        <section aria-labelledby="rec-heading" className="mt-14 md:mt-20">
-          <SectionHeading
-            id="rec-heading"
-           
-            title="Next for you"
-            action={
-              <Link href="/courses" className="xm-link font-ui text-[14px] font-semibold">
-                All courses
-              </Link>
-            }
-          />
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {recommended.map((c) => (
-              <CourseCard key={c.id} course={c} />
+      {offers.length ? (
+        <section aria-labelledby="offers-heading" className="mt-10 md:mt-14">
+          <SectionTitle id="offers-heading" title="Current offers" href="/offers" label="See all current offers" />
+          <ul className="divide-y divide-line">
+            {offers.slice(0, 3).map((o) => (
+              <li key={o.id}>
+                <Link href={`/offers/${o.slug}`} className="group flex min-h-[96px] items-center gap-4 py-3">
+                  <span className="relative block size-[72px] shrink-0 overflow-hidden rounded-md bg-sunken">
+                    <Cover imageKey={o.image_key} alt="" label="Offer" sizes="72px" zoomOnHover />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="line-clamp-2 block font-ui text-[17px] leading-snug font-semibold text-ink">{o.title}</span>
+                    <span className="mt-1 block text-[15px] text-muted">
+                      {o.valid_until ? `Until ${formatDate(o.valid_until, { month: "short", day: "numeric" })}` : "No end date"}
+                    </span>
+                  </span>
+                  <ChevronRight aria-hidden className="size-5 shrink-0 stroke-[2] text-muted transition-[translate] duration-200 ease-standard group-hover:translate-x-0.5" />
+                </Link>
+              </li>
             ))}
-          </div>
+          </ul>
         </section>
       ) : null}
     </Page>

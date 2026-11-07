@@ -22,7 +22,7 @@ export function Card({
         "relative overflow-hidden rounded-lg",
         cardVariants[variant],
         interactive &&
-          "group transition-[transform,box-shadow] duration-200 ease-standard hover:-translate-y-[3px] hover:shadow-raised",
+          "group transition-[box-shadow] duration-200 ease-standard hover:shadow-raised",
         className,
       )}
       {...props}
@@ -34,18 +34,18 @@ export function CardBody({ className, ...props }: React.HTMLAttributes<HTMLDivEl
   return <div className={cn("p-5 md:p-6", className)} {...props} />;
 }
 
-/* ---------- Badge (rectangular, 2px radius) ---------- */
+/* ---------- Badge ---------- */
 type Tone = "neutral" | "primary" | "success" | "info" | "warning" | "highlight" | "playful" | "danger" | "inverse";
 const badgeTones: Record<Tone, string> = {
-  neutral: "bg-sunken text-body",
+  neutral: "bg-sunken text-ink",
   primary: "bg-primary text-white",
-  success: "bg-olive text-white",
+  success: "bg-olive/15 text-ink",
   info: "bg-turquoise text-black",
   warning: "bg-toucan text-black",
   highlight: "bg-sunset text-black",
   playful: "bg-rose text-black",
   danger: "bg-danger text-white",
-  inverse: "bg-inverse text-cloudy",
+  inverse: "bg-inverse text-white",
 };
 
 export function Badge({
@@ -56,7 +56,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex h-6 items-center gap-1 rounded-sm px-2 font-ui text-[11px] font-semibold tracking-[0.12em] uppercase [&_svg]:size-3.5 [&_svg]:stroke-[2]",
+        "inline-flex min-h-7 items-center gap-1 rounded-pill px-3 font-ui text-[15px] font-semibold [&_svg]:size-4 [&_svg]:stroke-[2]",
         badgeTones[tone],
         className,
       )}
@@ -74,8 +74,8 @@ export function Tag({
   return (
     <span
       className={cn(
-        "inline-flex h-8 items-center gap-1.5 rounded-pill border px-3.5 font-ui text-[13px] font-semibold transition-colors duration-120 ease-standard",
-        active ? "border-ink bg-ink text-cloudy" : "border-line bg-card text-body hover:border-line-strong",
+        "inline-flex min-h-9 items-center gap-1.5 rounded-pill px-3.5 py-1 font-ui text-[15px] font-medium transition-colors duration-120 ease-standard",
+        active ? "bg-ink text-white" : "bg-sunken text-ink",
         className,
       )}
       {...props}
@@ -84,7 +84,7 @@ export function Tag({
 }
 
 export function StatusDot({ tone = "success", className }: { tone?: "success" | "warning" | "danger" | "info" | "muted"; className?: string }) {
-  const map = { success: "bg-olive", warning: "bg-toucan", danger: "bg-danger", info: "bg-turquoise", muted: "bg-[#cfc6b1]" };
+  const map = { success: "bg-olive", warning: "bg-toucan", danger: "bg-danger", info: "bg-turquoise", muted: "bg-control" };
   return <span aria-hidden className={cn("inline-block size-2 rounded-pill", map[tone], className)} />;
 }
 
@@ -126,7 +126,7 @@ export function ProgressBar({
       aria-valuemax={100}
       aria-valuenow={Math.round(v)}
       aria-label={label ?? "Progress"}
-      className={cn("h-1.5 w-full overflow-hidden rounded-pill bg-black/10", className)}
+      className={cn("h-2 w-full overflow-hidden rounded-pill bg-black/10", className)}
     >
       <div
         className={cn("h-full rounded-pill transition-[width] duration-[340ms] ease-standard", fill)}
@@ -180,20 +180,20 @@ export function ProgressRing({
         />
       </svg>
       <div className="absolute inset-0 grid place-items-center">
-        {children ?? <span className="font-ui text-[13px] font-semibold text-ink">{Math.round(v)}%</span>}
+        {children ?? <span className="font-ui text-[15px] font-semibold text-ink">{Math.round(v)}%</span>}
       </div>
     </div>
   );
 }
 
 /* ---------- Section heading ---------- */
-export function SectionHeading({
+export function SectionHeading({
   title,
   action,
   className,
   id,
   as: As = "h2",
-}: {
+}: {
   title: string;
   action?: React.ReactNode;
   className?: string;
@@ -202,7 +202,7 @@ export function SectionHeading({
 }) {
   return (
     <div className={cn("flex items-end justify-between gap-4", className)}>
-      <div className="min-w-0">
+      <div className="min-w-0">
         <As id={id} className="xm-title-sm">
           {title}
         </As>
@@ -227,8 +227,8 @@ export function EmptyState({
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-col items-center rounded-lg border border-dashed border-[#d6cdb8] px-6 py-12 text-center", className)}>
-      {icon ? <div className="mb-4 grid size-12 place-items-center rounded-pill bg-sunken text-body [&_svg]:size-5 [&_svg]:stroke-[1.75]">{icon}</div> : null}
+    <div className={cn("flex flex-col items-center rounded-lg bg-sunken px-6 py-12 text-center", className)}>
+      {icon ? <div className="mb-4 grid size-12 place-items-center rounded-pill bg-white text-ink [&_svg]:size-5 [&_svg]:stroke-[1.75]">{icon}</div> : null}
       <p className="xm-subtitle-sm">{title}</p>
       {body ? <p className="mt-2 max-w-md text-copy-sm text-muted">{body}</p> : null}
       {action ? <div className="mt-6">{action}</div> : null}

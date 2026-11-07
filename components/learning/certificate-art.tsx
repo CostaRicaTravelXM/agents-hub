@@ -34,13 +34,13 @@ export function CertificateArt({
         <span aria-hidden className="mx-auto mt-3 block h-1 w-12 bg-primary" />
         <Title
           className={cn(
-            "font-display leading-none text-ink uppercase",
+            "font-certificate leading-none text-ink uppercase",
             compact ? "mt-3 text-[24px] sm:mt-4 sm:text-[28px] md:text-[32px]" : "mt-4 text-[28px] md:text-[32px]",
           )}
         >
           {courseTitle}
         </Title>
-        <p className={cn("text-[13px] text-muted", compact ? "mt-3 sm:mt-4" : "mt-4")}>{footer}</p>
+        <p className={cn("text-[15px] text-muted", compact ? "mt-3 sm:mt-4" : "mt-4")}>{footer}</p>
       </div>
     </div>
   );

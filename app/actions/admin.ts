@@ -3,41 +3,13 @@
 import { redirect } from "next/navigation";
 import { refresh } from "next/cache";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
-import { getViewer, isAdmin, isStaff } from "@/lib/auth";
+import { toEmbedUrl } from "@/lib/hub/video-embed";
+import { adminClient, fail, nullableText, staffClient, uuid, type Result } from "@/lib/actions";
 import { deleteObject } from "@/lib/storage";
 import { slugify } from "@/lib/utils";
 import type { Json } from "@/lib/database.types";
 
-export type Result<T = undefined> = { ok: true; data?: T } | { ok: false; error: string };
-
-async function staffClient() {
-  const viewer = await getViewer();
-  if (!viewer || !isStaff(viewer.profile)) throw new Error("Not allowed");
-  return { supabase: await createClient(), viewer };
-}
-async function adminClient() {
-  const viewer = await getViewer();
-  if (!viewer || !isAdmin(viewer.profile)) throw new Error("Only admins can do this");
-  return { supabase: await createClient(), viewer };
-}
-
-function fail(e: unknown): { ok: false; error: string } {
-  const msg = e instanceof z.ZodError ? e.issues[0]?.message : e instanceof Error ? e.message : String(e);
-  if (/duplicate key.*slug/i.test(msg ?? "")) return { ok: false, error: "That URL slug is already used by another course." };
-  if (/duplicate key.*join_code/i.test(msg ?? "")) return { ok: false, error: "That invite code is already in use." };
-  return { ok: false, error: msg ?? "Something went wrong" };
-}
-
-const uuid = z.string().uuid();
-const nullableText = (max: number) =>
-  z
-    .string()
-    .trim()
-    .max(max)
-    .optional()
-    .nullable()
-    .transform((v) => (v ? v : null));
+export type { Result } from "@/lib/actions";
 
 /* ================================================================ courses */
 const courseSchema = z.object({
@@ -194,7 +166,10 @@ export async function deleteModule(id: string): Promise<Result> {
   }
 }
 
-export async function reorder(table: "modules" | "lessons" | "resources" | "categories", ids: string[]): Promise<Result> {
+export async function reorder(
+  table: "modules" | "lessons" | "resources" | "categories" | "hub_fam_trips" | "hub_offers" | "hub_books" | "hub_links",
+  ids: string[],
+): Promise<Result> {
   try {
     const { supabase } = await staffClient();
     const list = z.array(uuid).max(500).parse(ids);
@@ -270,10 +245,12 @@ export async function updateLesson(id: string, input: z.input<typeof lessonSchem
   try {
     const { supabase } = await staffClient();
     const v = lessonSchema.parse(input);
-    const { data: before } = await supabase.from("lessons").select("video_key, poster_key, file_key").eq("id", id).single();
+    const { data: before } = await supabase.from("lessons").select("type, video_key, poster_key, file_key").eq("id", id).single();
+    // A video lesson can point to Google Drive or Wistia: keep the address that plays inside a page.
+    const external_url = before?.type === "video" ? toEmbedUrl(v.external_url) : v.external_url;
     const { error } = await supabase
       .from("lessons")
-      .update({ ...v, body: (v.body ?? null) as Json })
+      .update({ ...v, external_url, body: (v.body ?? null) as Json })
       .eq("id", uuid.parse(id));
     if (error) throw error;
     if (before) {

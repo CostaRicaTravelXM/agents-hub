@@ -21,7 +21,7 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
           <RotateCcw aria-hidden /> Try again
         </Button>
         <Button asChild size="lg" variant="secondary">
-          <Link href="/dashboard">Go to dashboard</Link>
+          <Link href="/dashboard">Go to Home</Link>
         </Button>
       </div>
     </main>

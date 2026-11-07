@@ -332,19 +332,19 @@ begin
 
   insert into public.payment_transactions (id, agent_id, booking_id, amount_cents, status, description, customer_email, created_at)
   values
-    ('pi_demo_' || b1041, p_agent, b1041, 1070000, 'succeeded', 'Maldives Overwater Dream — booking #' || b1041, 'james.whitfield@example.com', timestamptz '2026-08-13T16:40:00Z' + shift * interval '1 day'),
-    ('pi_demo_' || b1040, p_agent, b1040, 490000, 'succeeded', 'Bali Luxury Escape — booking #' || b1040, 'priya.sharma@example.com', timestamptz '2026-08-05T12:10:00Z' + shift * interval '1 day'),
-    ('pi_demo_' || b1039, p_agent, b1039, 2050000, 'requires_action', 'Dubai Luxury Week — booking #' || b1039, 'rahul.mehta@example.com', timestamptz '2026-08-13T11:12:00Z' + shift * interval '1 day'),
-    ('pi_demo_' || b1038, p_agent, b1038, 780000, 'succeeded', 'Swiss Alpine Tour — booking #' || b1038, 'marco.rossi@example.com', timestamptz '2026-07-27T09:45:00Z' + shift * interval '1 day'),
-    ('pi_demo_' || b1036, p_agent, b1036, 475000, 'processing', 'Kenya Safari Expedition — booking #' || b1036, 'daniel.okafor@example.com', timestamptz '2026-08-12T19:02:00Z' + shift * interval '1 day'),
-    ('pi_demo_' || b1034, p_agent, b1034, 640000, 'succeeded', 'Kyoto Cultural Journey — booking #' || b1034, 'sofia.almeida@example.com', timestamptz '2026-07-30T08:25:00Z' + shift * interval '1 day'),
+    ('pi_demo_' || b1041, p_agent, b1041, 1070000, 'succeeded', 'Papagayo Honeymoon Escape — booking #' || b1041, 'james.whitfield@example.com', timestamptz '2026-08-13T16:40:00Z' + shift * interval '1 day'),
+    ('pi_demo_' || b1040, p_agent, b1040, 490000, 'succeeded', 'Arenal & Manuel Antonio Classic — booking #' || b1040, 'priya.sharma@example.com', timestamptz '2026-08-05T12:10:00Z' + shift * interval '1 day'),
+    ('pi_demo_' || b1039, p_agent, b1039, 2050000, 'requires_action', 'Guanacaste Luxury Week — booking #' || b1039, 'rahul.mehta@example.com', timestamptz '2026-08-13T11:12:00Z' + shift * interval '1 day'),
+    ('pi_demo_' || b1038, p_agent, b1038, 780000, 'succeeded', 'Volcanoes, Cloud Forest & Coast — booking #' || b1038, 'marco.rossi@example.com', timestamptz '2026-07-27T09:45:00Z' + shift * interval '1 day'),
+    ('pi_demo_' || b1036, p_agent, b1036, 475000, 'processing', 'Osa Peninsula Wildlife Expedition — booking #' || b1036, 'daniel.okafor@example.com', timestamptz '2026-08-12T19:02:00Z' + shift * interval '1 day'),
+    ('pi_demo_' || b1034, p_agent, b1034, 640000, 'succeeded', 'Central Valley Culture & Coffee — booking #' || b1034, 'sofia.almeida@example.com', timestamptz '2026-07-30T08:25:00Z' + shift * interval '1 day'),
     ('pi_demo_' || b1033, p_agent, b1033, 645000, 'requires_payment_method', 'Costa Rica Rainforest Trail — booking #' || b1033, 'priya.sharma@example.com', timestamptz '2026-05-01T15:35:00Z' + shift * interval '1 day');
 
   insert into public.support_tickets (agent_id, subject, message, priority, category, status, created_at)
   values
     (p_agent, 'Cannot upload passport scans', 'The upload spinner runs forever on the customer profile page. Tried Chrome and Safari.', 'low', 'technical', 'closed', timestamptz '2026-07-28T17:50:00Z' + shift * interval '1 day'),
-    (p_agent, 'Commission rate on featured packages', 'The Maldives package shows 15% but my statement calculated 12%. Which rate applies for Gold tier?', 'medium', 'payment', 'resolved', timestamptz '2026-08-04T09:15:00Z' + shift * interval '1 day'),
-    (p_agent, 'Add a second traveler to booking #' || b1036, 'My client wants to bring a colleague on the Kenya safari. How do I add a traveler and re-quote without cancelling?', 'medium', 'booking', 'open', timestamptz '2026-08-09T14:05:00Z' + shift * interval '1 day'),
+    (p_agent, 'Commission rate on featured packages', 'The Papagayo package shows 15% but my statement calculated 12%. Which rate applies for Gold tier?', 'medium', 'payment', 'resolved', timestamptz '2026-08-04T09:15:00Z' + shift * interval '1 day'),
+    (p_agent, 'Add a second traveler to booking #' || b1036, 'My client wants to bring a colleague on the Osa expedition. How do I add a traveler and re-quote without cancelling?', 'medium', 'booking', 'open', timestamptz '2026-08-09T14:05:00Z' + shift * interval '1 day'),
     (p_agent, 'Payment link expired before customer paid', 'I generated a payment link for booking #' || b1039 || ' but my client says it had expired when they opened it two days later. Can links be extended?', 'high', 'payment', 'in_progress', timestamptz '2026-08-11T10:30:00Z' + shift * interval '1 day');
 
   insert into public.crm_sync_records (agent_id, entity_type, portal_id, crm_id, sync_status, last_synced_at)
@@ -365,7 +365,7 @@ begin
   insert into public.activity_events (agent_id, description, customer_name, amount, created_at)
   values
     (p_agent, 'Payment link opened by customer', 'Rahul Mehta', null, timestamptz '2026-08-13T11:15:00Z' + shift * interval '1 day'),
-    (p_agent, 'Itinerary sent for Swiss Alpine Tour', 'Marco Rossi', null, timestamptz '2026-08-11T15:20:00Z' + shift * interval '1 day'),
+    (p_agent, 'Itinerary sent for Volcanoes, Cloud Forest & Coast', 'Marco Rossi', null, timestamptz '2026-08-11T15:20:00Z' + shift * interval '1 day'),
     (p_agent, 'Support ticket resolved — seat upgrade request', 'Sofia Almeida', null, timestamptz '2026-08-10T12:55:00Z' + shift * interval '1 day');
 
   insert into public.notifications (agent_id, title, body, href, created_at)

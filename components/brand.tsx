@@ -20,17 +20,15 @@ export function LogoBadge({ size = 64, className, priority }: { size?: number; c
 export function Wordmark({ className, tone = "ink" }: { className?: string; tone?: "ink" | "cloudy" }) {
   return (
     <span className={cn("inline-flex flex-col leading-none", className)}>
-      <span className={cn("font-display text-[22px] tracking-[0.005em] uppercase", tone === "ink" ? "text-ink" : "text-cloudy")}>
-        Travel XM
-      </span>
-      <span className={cn("xm-micro mt-1", tone === "ink" ? "text-primary" : "text-toucan")}>Academy</span>
+      <span className={cn("font-ui text-[19px] font-bold tracking-[-0.02em]", tone === "ink" ? "text-ink" : "text-white")}>TravelXM</span>
+      <span className={cn("mt-1 font-ui text-[15px] font-medium", tone === "ink" ? "text-muted" : "text-white/85")}>Agents Hub</span>
     </span>
   );
 }
 
 export function BrandLink({ href = "/", className }: { href?: string; className?: string }) {
   return (
-    <Link href={href} className={cn("inline-flex items-center gap-3", className)} aria-label="TravelXM Academy home">
+    <Link href={href} className={cn("inline-flex items-center gap-3", className)} aria-label="TravelXM Agents Hub home">
       <LogoBadge size={56} />
       <Wordmark />
     </Link>

@@ -18,8 +18,10 @@ export function WeekBars({
 }) {
   const max = Math.max(1, ...data.map((d) => d.value));
   const peak = data.reduce((best, d, i) => (d.value > data[best].value ? i : best), 0);
+  const empty = data.every((d) => !d.value);
   return (
-    <figure className={cn("w-full", className)}>
+    <figure className={cn("relative w-full", className)}>
+      {empty ? <p className="absolute inset-x-0 top-0 grid h-44 place-items-center text-center text-[16px] text-muted">Nothing in these weeks yet</p> : null}
       <div className="relative flex h-44 items-end gap-0.5 border-b-2 border-line" role="list" aria-label={label}>
         {data.map((d, i) => {
           const showValue = (d.current || i === peak) && d.value > 0;
@@ -33,7 +35,7 @@ export function WeekBars({
             >
               <span
                 className={cn(
-                  "pointer-events-none mb-1 font-ui text-[12px] font-semibold text-ink tabular-nums transition-opacity duration-120",
+                  "pointer-events-none mb-1 font-ui text-[15px] font-semibold text-ink tabular-nums transition-opacity duration-120",
                   showValue ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100",
                 )}
               >
@@ -51,9 +53,10 @@ export function WeekBars({
         })}
       </div>
       <div className="mt-2 flex gap-0.5" aria-hidden>
-        {data.map((d) => (
-          <span key={d.label} className={cn("flex-1 text-center text-[11px]", d.current ? "font-semibold text-ink" : "text-muted")}>
-            {d.label}
+        {/* Every third date: at a readable size all eight do not fit on a phone. Each column still names its own date for screen readers. */}
+        {data.map((d, i) => (
+          <span key={d.label} className={cn("min-w-0 flex-1 text-center text-[15px] whitespace-nowrap", d.current ? "font-semibold text-ink" : "text-muted")}>
+            {(data.length - 1 - i) % 3 === 0 ? d.label : null}
           </span>
         ))}
       </div>
@@ -74,14 +77,14 @@ export function BarList({
   unit: string;
   empty?: string;
 }) {
-  if (!items.length) return <p className="py-6 text-[14px] text-muted">{empty}</p>;
+  if (!items.length) return <p className="py-6 text-[15px] text-muted">{empty}</p>;
   const max = Math.max(1, ...items.map((i) => i.value));
   return (
     <ul className="space-y-3.5" aria-label={`Ranked by ${unit}`}>
       {items.map((i) => (
         <li key={i.label} className="group">
           <div className="mb-1.5 flex items-baseline justify-between gap-3">
-            <span className="min-w-0 truncate text-[14px] font-semibold text-ink">
+            <span className="min-w-0 truncate text-[15px] font-semibold text-ink">
               {i.label}
               {i.sublabel ? <span className="ml-2 font-normal text-muted">{i.sublabel}</span> : null}
             </span>
@@ -93,7 +96,7 @@ export function BarList({
                 style={{ width: `${Math.max(1, (i.value / max) * 100)}%` }}
               />
             </div>
-            <span className="w-16 shrink-0 text-right font-ui text-[13px] font-semibold text-ink tabular-nums">
+            <span className="w-16 shrink-0 text-right font-ui text-[15px] font-semibold text-ink tabular-nums">
               {formatNumber(i.value)} <span className="font-normal text-muted">{unit}</span>
             </span>
           </div>

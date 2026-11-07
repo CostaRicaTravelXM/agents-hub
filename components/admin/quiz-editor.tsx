@@ -94,20 +94,20 @@ export function QuizEditor({
         {questions.map((q, i) => (
           <li key={i} className="rounded-lg border border-line bg-card p-4 md:p-5">
             <div className="mb-4 flex items-center gap-2">
-              <span className="font-display text-[22px] leading-none text-ink">Q{i + 1}</span>
+              <span className="font-display font-bold text-[22px] leading-none text-ink">Q{i + 1}</span>
               <span className="flex-1" />
               <NativeSelect aria-label={`Question ${i + 1} type`} value={q.type} onChange={(e) => setType(i, e.target.value as QType)} className="h-10 w-48">
                 <option value="single">One correct answer</option>
                 <option value="multiple">Several correct answers</option>
                 <option value="true_false">True or false</option>
               </NativeSelect>
-              <IconButton aria-label="Move up" size="sm" disabled={i === 0} onClick={() => move(i, -1)} type="button">
+              <IconButton aria-label="Move up" disabled={i === 0} onClick={() => move(i, -1)} type="button">
                 <ArrowUp aria-hidden />
               </IconButton>
-              <IconButton aria-label="Move down" size="sm" disabled={i === questions.length - 1} onClick={() => move(i, 1)} type="button">
+              <IconButton aria-label="Move down" disabled={i === questions.length - 1} onClick={() => move(i, 1)} type="button">
                 <ArrowDown aria-hidden />
               </IconButton>
-              <IconButton aria-label={`Delete question ${i + 1}`} size="sm" type="button" onClick={() => setQuestions((qs) => qs.filter((_, j) => j !== i))}>
+              <IconButton aria-label={`Delete question ${i + 1}`} type="button" onClick={() => setQuestions((qs) => qs.filter((_, j) => j !== i))}>
                 <Trash2 aria-hidden />
               </IconButton>
             </div>
@@ -147,7 +147,6 @@ export function QuizEditor({
                         <IconButton
                           type="button"
                           aria-label={`Remove answer ${oi + 1}`}
-                          size="sm"
                           onClick={() => update(i, { options: q.options.filter((x) => x.id !== o.id), correct: q.correct.filter((c) => c !== o.id) })}
                         >
                           <Trash2 aria-hidden />

@@ -29,7 +29,7 @@ export function ResourceLibrary({ groups }: { groups: { title: string; slug: str
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search fact sheets, handbooks…"
-          className="h-12 w-full rounded-md border-2 border-line bg-card pr-4 pl-11 text-[16px] text-ink placeholder:text-muted transition-colors duration-120 focus-visible:border-secondary focus-visible:outline-none"
+          className="h-12 w-full rounded-pill border border-control bg-card pr-4 pl-11 text-[16px] text-ink placeholder:text-muted transition-colors duration-120 focus-visible:border-ink focus-visible:outline-none"
         />
       </label>
 
@@ -41,7 +41,7 @@ export function ResourceLibrary({ groups }: { groups: { title: string; slug: str
                 <h2 id={`res-${g.slug}`} className="font-ui text-[17px] font-semibold text-ink">
                   {g.title}
                 </h2>
-                <Link href={`/courses/${g.slug}`} className="xm-link shrink-0 font-ui text-[13px] font-semibold">
+                <Link href={`/courses/${g.slug}`} className="xm-link shrink-0 font-ui text-[15px] font-semibold">
                   Course
                 </Link>
               </div>

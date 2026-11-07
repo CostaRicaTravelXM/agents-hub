@@ -57,27 +57,27 @@ export function LessonRow({
     <>
       <span
         className={cn(
-          "grid size-9 shrink-0 place-items-center rounded-md transition-colors duration-120",
-          active ? "bg-primary text-white" : "bg-sunken text-body",
+          "grid size-10 shrink-0 place-items-center rounded-md transition-colors duration-120",
+          active ? "bg-primary text-white" : "bg-sunken text-ink",
         )}
       >
         <Icon aria-hidden className="size-[18px] stroke-[1.75]" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className={cn("block font-ui text-[15px] leading-snug font-semibold", locked ? "text-muted" : "text-ink")}>{lesson.title}</span>
-        <span className="mt-0.5 block text-[13px] text-muted">{meta}</span>
+        <span className={cn("block font-ui text-[16px] leading-snug font-semibold", locked ? "text-muted" : "text-ink")}>{lesson.title}</span>
+        <span className="mt-0.5 block text-[15px] text-muted">{meta}</span>
       </span>
       <LessonStatusIcon lesson={lesson} locked={locked} />
     </>
   );
   const cls = cn(
-    "flex items-center gap-3.5 rounded-md transition-colors duration-120 ease-standard",
+    "flex min-h-14 items-center gap-3.5 rounded-md transition-colors duration-120 ease-standard",
     compact ? "px-3 py-2.5" : "px-3 py-3",
-    active && "bg-card shadow-card",
+    active && "bg-lime/15",
   );
   if (locked) {
     return (
-      <div className={cn(cls, "cursor-not-allowed opacity-80")} aria-disabled="true">
+      <div className={cn(cls, "cursor-not-allowed")} aria-disabled="true">
         {inner}
       </div>
     );
@@ -103,7 +103,7 @@ export function ModuleBadge({ index, module }: { index: number; module: Pick<Out
       </span>
     );
   return (
-    <span className="grid size-10 shrink-0 place-items-center rounded-pill bg-ink font-display text-[18px] text-cloudy">{index + 1}</span>
+    <span className="grid size-10 shrink-0 place-items-center rounded-pill bg-ink font-display font-bold text-[18px] text-cloudy">{index + 1}</span>
   );
 }
 
@@ -112,7 +112,7 @@ export function LockReason({ module }: { module: Pick<OutlineModule, "missing"> 
   const names = module.missing.map((m) => m.title);
   const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
   return (
-    <p className="flex items-start gap-2 text-[14px] text-body">
+    <p className="flex items-start gap-2 text-[15px] text-body">
       <Lock aria-hidden className="mt-0.5 size-4 shrink-0 stroke-[2] text-muted" />
       <span>
         Complete <span className="font-semibold text-ink">{list}</span> to unlock this module.
@@ -127,17 +127,17 @@ export function Syllabus({ courseSlug, modules }: { courseSlug: string; modules:
       {modules.map((m, i) => {
         const done = m.lessons.filter((l) => l.status === "completed").length;
         return (
-          <li key={m.id} className={cn("overflow-hidden rounded-lg bg-card shadow-card", !m.unlocked && "bg-card/70")}>
+          <li key={m.id} className={"overflow-hidden rounded-lg bg-card shadow-card"}>
             <Link
               href={`/courses/${courseSlug}/modules/${m.id}`}
-              className="flex items-start gap-4 p-5 transition-colors duration-120 ease-standard hover:bg-sunken/40 md:p-6"
+              className="flex items-start gap-4 p-5 transition-colors duration-120 ease-standard hover:bg-sunken md:p-6"
             >
               <ModuleBadge index={i} module={m} />
               <div className="min-w-0 flex-1">
-                <p className="xm-micro text-muted">
-                  Module {i + 1} · {done}/{m.lessons.length} lessons
+                <h3 className="font-ui text-[19px] leading-snug font-semibold text-ink">{m.title}</h3>
+                <p className="mt-0.5 text-[15px] text-muted">
+                  Module {i + 1}, {done} of {m.lessons.length} lessons done
                 </p>
-                <h3 className="mt-1 font-ui text-[19px] leading-snug font-semibold text-ink">{m.title}</h3>
                 {m.description ? <p className="mt-1.5 text-[15px] text-muted">{m.description}</p> : null}
                 {!m.unlocked ? (
                   <div className="mt-3">

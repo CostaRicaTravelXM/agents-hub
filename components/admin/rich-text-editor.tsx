@@ -66,7 +66,7 @@ export function RichTextEditor({ value, onChange, label }: { value: unknown; onC
   };
 
   return (
-    <div className="overflow-hidden rounded-md border-2 border-line bg-card focus-within:border-secondary">
+    <div className="overflow-hidden rounded-md border border-control bg-card focus-within:border-ink">
       <div className="flex flex-wrap items-center gap-0.5 border-b border-line bg-page p-1.5" role="toolbar" aria-label="Formatting">
         {btn(Heading2, "Heading", state?.h2, () => editor?.chain().focus().toggleHeading({ level: 2 }).run())}
         {btn(Heading3, "Subheading", state?.h3, () => editor?.chain().focus().toggleHeading({ level: 3 }).run())}
@@ -106,7 +106,7 @@ export function RichTextEditor({ value, onChange, label }: { value: unknown; onC
               if (e.key === "Escape") setLinkUrl(null);
             }}
             placeholder="https://"
-            className="h-9 flex-1 rounded-md border-2 border-line bg-card px-3 text-[14px] outline-none focus-visible:border-secondary"
+            className="h-9 flex-1 rounded-md border border-control bg-card px-3 text-[14px] outline-none focus-visible:border-ink"
           />
           <button
             type="button"

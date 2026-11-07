@@ -2,74 +2,50 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Award,
-  BookOpen,
-  ChartNoAxesColumn,
-  FolderOpen,
-  House,
-  LayoutDashboard,
-  Settings2,
-  UserRound,
-  type LucideIcon,
-} from "lucide-react";
+import { ExternalLink, LayoutGrid, Settings2, UserRound } from "lucide-react";
+import { HUB_NAV, isMoreActive, isNavActive, type HubNavItem } from "@/components/shell/nav-config";
+import { MoreSheet } from "@/components/shell/more-sheet";
+import { Avatar } from "@/components/shell/user-menu";
 import { cn } from "@/lib/utils";
 
-type Item = { href: string; label: string; icon: LucideIcon; match?: string[] };
-
-export const desktopNav: Item[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/courses", label: "Courses", icon: BookOpen, match: ["/courses", "/learn"] },
-  { href: "/progress", label: "Progress", icon: ChartNoAxesColumn },
-  { href: "/resources", label: "Resources", icon: FolderOpen },
-  { href: "/certificates", label: "Certificates", icon: Award },
-  { href: "/profile", label: "Profile", icon: UserRound },
-];
-
-const mobileNav: Item[] = [
-  { href: "/dashboard", label: "Home", icon: House },
-  { href: "/courses", label: "Courses", icon: BookOpen, match: ["/courses", "/learn"] },
-  { href: "/progress", label: "Progress", icon: ChartNoAxesColumn, match: ["/progress", "/certificates"] },
-  { href: "/resources", label: "Resources", icon: FolderOpen },
-  { href: "/profile", label: "Profile", icon: UserRound },
-];
-
-function isActive(pathname: string, item: Item) {
-  const prefixes = item.match ?? [item.href];
-  return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+function SidebarLink({ item, active }: { item: HubNavItem; active: boolean }) {
+  const Icon = item.icon;
+  const className = cn(
+    "group flex h-12 items-center gap-3 rounded-pill px-4 font-ui text-[16px] font-semibold transition-colors duration-120 ease-standard",
+    active ? "bg-ink text-white" : "text-body hover:bg-sunken hover:text-ink",
+  );
+  const icon = <Icon aria-hidden className={cn("size-5 shrink-0 stroke-[1.75] transition-colors duration-120", active ? "text-white" : "text-muted group-hover:text-ink")} />;
+  if (item.external) {
+    return (
+      <a href={item.href} target="_blank" rel="noopener noreferrer" className={className}>
+        {icon}
+        <span className="flex-1">{item.label}</span>
+        <ExternalLink aria-hidden className="size-4 shrink-0 stroke-[2] text-muted" />
+        <span className="sr-only">(opens in a new tab)</span>
+      </a>
+    );
+  }
+  return (
+    <Link href={item.href} aria-current={active ? "page" : undefined} className={className}>
+      {icon}
+      {item.label}
+    </Link>
+  );
 }
 
 export function SidebarNav({ showAdmin }: { showAdmin: boolean }) {
   const pathname = usePathname();
   return (
     <nav aria-label="Main" className="flex flex-col gap-1">
-      {desktopNav.map((item) => {
-        const active = isActive(pathname, item);
-        const Icon = item.icon;
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            aria-current={active ? "page" : undefined}
-            className={cn(
-              "group flex h-11 items-center gap-3 rounded-md px-3 font-ui text-[15px] font-semibold transition-colors duration-120 ease-standard",
-              active ? "bg-card text-ink shadow-card" : "text-body hover:bg-sunken hover:text-ink",
-            )}
-          >
-            <Icon
-              aria-hidden
-              className={cn("size-5 stroke-[1.75] transition-colors duration-120", active ? "text-primary" : "text-muted group-hover:text-ink")}
-            />
-            {item.label}
-          </Link>
-        );
-      })}
+      {HUB_NAV.map((item) => (
+        <SidebarLink key={item.id} item={item} active={isNavActive(pathname, item)} />
+      ))}
       {showAdmin ? (
         <>
           <div className="mx-3 my-3 h-px bg-line" />
           <Link
             href="/admin"
-            className="group flex h-11 items-center gap-3 rounded-md px-3 font-ui text-[15px] font-semibold text-body transition-colors duration-120 ease-standard hover:bg-sunken hover:text-ink"
+            className="group flex h-12 items-center gap-3 rounded-pill px-4 font-ui text-[16px] font-semibold text-body transition-colors duration-120 ease-standard hover:bg-sunken hover:text-ink"
           >
             <Settings2 aria-hidden className="size-5 stroke-[1.75] text-muted group-hover:text-ink" />
             Admin portal
@@ -80,37 +56,56 @@ export function SidebarNav({ showAdmin }: { showAdmin: boolean }) {
   );
 }
 
-export function BottomTabs() {
+const tabClass = "flex h-full w-full flex-col items-center justify-center gap-0.5 rounded-[24px] transition-colors duration-200 ease-standard active:scale-[.97]";
+const tabLabel = "font-ui text-[14px] leading-tight font-semibold max-[359px]:tracking-[-0.03em] min-[360px]:text-[15px]";
+
+function tabState(active: boolean) {
+  return active ? "bg-white text-ink" : "text-white/85 hover:text-white";
+}
+
+/**
+ * Phones and small tablets: there is no top bar, so the page runs to the top of the
+ * screen. A dark bar floats above the page with five large, always labelled tabs.
+ * Profile holds the sign out button; everything else is one tap away in "More".
+ */
+export function BottomTabs({ showAdmin, name, avatarUrl }: { showAdmin: boolean; name: string | null; avatarUrl?: string | null }) {
   const pathname = usePathname();
+  const tabs = HUB_NAV.filter((i) => i.mobile === "tab" && i.id !== "profile");
+  const profile = HUB_NAV.find((i) => i.id === "profile")!;
+  const moreActive = isMoreActive(pathname);
+  const profileActive = isNavActive(pathname, profile);
   return (
     <nav
       aria-label="Main"
-      className="xm-safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-line bg-page lg:hidden"
+      className="xm-on-dark fixed inset-x-2 bottom-[calc(12px+env(safe-area-inset-bottom))] z-40 mx-auto max-w-[520px] rounded-[28px] bg-ink p-1 shadow-raised sm:inset-x-3 lg:hidden"
     >
-      <ul className="mx-auto grid h-16 max-w-lg grid-cols-5">
-        {mobileNav.map((item) => {
-          const active = isActive(pathname, item);
+      <ul className="grid h-[64px] grid-cols-5">
+        {tabs.map((item) => {
+          const active = isNavActive(pathname, item);
           const Icon = item.icon;
           return (
-            <li key={item.href}>
-              <Link
-                href={item.href}
-                aria-current={active ? "page" : undefined}
-                className="flex h-full flex-col items-center justify-center gap-1 transition-colors duration-120 ease-standard active:translate-y-px"
-              >
-                <span
-                  className={cn(
-                    "grid h-7 w-12 place-items-center rounded-pill transition-colors duration-200 ease-standard",
-                    active ? "bg-primary/15" : "bg-transparent",
-                  )}
-                >
-                  <Icon aria-hidden className={cn("size-5 stroke-[1.75]", active ? "text-primary-press" : "text-muted")} />
-                </span>
-                <span className={cn("font-ui text-[12px] font-semibold", active ? "text-ink" : "text-muted")}>{item.label}</span>
+            <li key={item.id}>
+              <Link href={item.href} aria-current={active ? "page" : undefined} className={cn(tabClass, tabState(active))}>
+                <Icon aria-hidden className="size-[22px] stroke-[1.75]" />
+                <span className={tabLabel}>{item.tabLabel ?? item.label}</span>
               </Link>
             </li>
           );
         })}
+        <li>
+          <MoreSheet showAdmin={showAdmin}>
+            <button type="button" aria-haspopup="dialog" className={cn(tabClass, tabState(moreActive))}>
+              <LayoutGrid aria-hidden className="size-[22px] stroke-[1.75]" />
+              <span className={tabLabel}>More</span>
+            </button>
+          </MoreSheet>
+        </li>
+        <li>
+          <Link href={profile.href} aria-current={profileActive ? "page" : undefined} className={cn(tabClass, tabState(profileActive))}>
+            {avatarUrl ? <Avatar name={name} url={avatarUrl} size={24} /> : <UserRound aria-hidden className="size-[22px] stroke-[1.75]" />}
+            <span className={tabLabel}>{profile.label}</span>
+          </Link>
+        </li>
       </ul>
     </nav>
   );

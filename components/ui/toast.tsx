@@ -6,12 +6,6 @@ import { cn } from "@/lib/utils";
 
 type Tone = "success" | "info" | "warning" | "danger";
 
-const toneBar: Record<Tone, string> = {
-  success: "bg-olive",
-  info: "bg-turquoise",
-  warning: "bg-toucan",
-  danger: "bg-danger",
-};
 const toneGlyph: Record<Tone, string> = {
   success: "bg-olive text-white",
   info: "bg-turquoise text-black",
@@ -20,7 +14,7 @@ const toneGlyph: Record<Tone, string> = {
 };
 const icons = { success: CircleCheck, info: Info, warning: TriangleAlert, danger: CircleAlert };
 
-/** Brand toast: 5px tone bar on the left, circular tone glyph (branding §4.2). */
+/** Brand toast: a circular tone glyph and plain words. */
 function BrandToast({
   id,
   tone,
@@ -36,14 +30,13 @@ function BrandToast({
 }) {
   const Icon = icons[tone];
   return (
-    <div className="relative flex w-[min(380px,calc(100vw-32px))] items-start gap-3 overflow-hidden rounded-lg bg-card py-3.5 pr-4 pl-5 shadow-raised">
-      <span aria-hidden className={cn("absolute inset-y-0 left-0 w-[5px]", toneBar[tone])} />
+    <div className="relative flex w-[min(440px,calc(100vw-32px))] items-start gap-3 overflow-hidden rounded-lg bg-card py-3.5 pr-4 pl-4 shadow-raised">
       <span aria-hidden className={cn("mt-0.5 grid size-6 shrink-0 place-items-center rounded-pill", toneGlyph[tone])}>
         <Icon className="size-4 stroke-[2]" />
       </span>
       <div className="min-w-0 flex-1">
         <p className="font-ui text-[15px] font-semibold text-ink">{title}</p>
-        {description ? <p className="mt-0.5 text-[14px] leading-snug text-muted">{description}</p> : null}
+        {description ? <p className="mt-0.5 text-[15px] leading-snug text-muted">{description}</p> : null}
       </div>
       {action ? (
         <button
@@ -52,7 +45,7 @@ function BrandToast({
             action.onClick();
             sonner.dismiss(id);
           }}
-          className="shrink-0 self-center rounded-md px-2 py-1 font-ui text-[14px] font-semibold text-link hover:text-link-hover"
+          className="inline-flex min-h-11 shrink-0 items-center self-center rounded-md px-2 font-ui text-[15px] font-semibold text-link hover:text-link-hover"
         >
           {action.label}
         </button>
@@ -61,9 +54,10 @@ function BrandToast({
   );
 }
 
-function show(tone: Tone, title: string, opts?: { description?: string; action?: { label: string; onClick: () => void }; duration?: number }) {
+function show(tone: Tone, title: string, opts?: { description?: string; action?: { label: string; onClick: () => void }; duration?: number; position?: "top-center" | "bottom-center" }) {
   return sonner.custom((id) => <BrandToast id={id} tone={tone} title={title} description={opts?.description} action={opts?.action} />, {
     duration: opts?.duration ?? 4200,
+    position: opts?.position,
   });
 }
 
@@ -75,5 +69,5 @@ export const notify = {
 };
 
 export function Toaster() {
-  return <Sonner position="bottom-center" offset={24} mobileOffset={{ bottom: 88 }} toastOptions={{ unstyled: true }} />;
+  return <Sonner position="bottom-center" offset={{ bottom: 96 }} mobileOffset={{ bottom: 96 }} toastOptions={{ unstyled: true }} />;
 }

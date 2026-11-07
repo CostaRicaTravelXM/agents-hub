@@ -6,7 +6,8 @@ import { KeyRound, Users } from "lucide-react";
 import { saveProfile } from "@/app/actions/profile";
 import { joinGroup } from "@/app/actions/learning";
 import { Button } from "@/components/ui/button";
-import { Field, Input, NativeSelect } from "@/components/ui/form";
+import { Field, Input, NativeSelect, keepValues } from "@/components/ui/form";
+import { AgencyFields } from "@/components/auth-forms";
 import { notify } from "@/components/ui/toast";
 import { COUNTRIES } from "@/lib/countries";
 import type { Profile } from "@/lib/auth";
@@ -19,14 +20,19 @@ export function ProfileForm({ profile, next, submitLabel = "Save changes" }: { p
     if (state?.error) notify.error("Your profile was not saved", { description: state.error });
   }, [state]);
   return (
-    <form action={action} className="grid gap-5 md:grid-cols-2" noValidate>
+    <form
+      action={action}
+      onSubmit={keepValues(action)}
+      className="grid gap-5 md:grid-cols-2"
+      noValidate
+    >
       {next !== undefined ? <input type="hidden" name="next" value={next} /> : null}
       <Field label="Full name" htmlFor="full_name" error={fe.full_name} className="md:col-span-2">
         <Input id="full_name" name="full_name" defaultValue={profile.full_name ?? ""} autoComplete="name" required />
       </Field>
-      <Field label="Agency or company" htmlFor="company" error={fe.company} optional>
-        <Input id="company" name="company" defaultValue={profile.company ?? ""} autoComplete="organization" />
-      </Field>
+      <div className="md:col-span-2">
+        <AgencyFields company={profile.company} isIndependent={profile.is_independent} error={fe.company} />
+      </div>
       <Field label="Job title" htmlFor="job_title" error={fe.job_title} optional>
         <Input id="job_title" name="job_title" defaultValue={profile.job_title ?? ""} autoComplete="organization-title" />
       </Field>
@@ -91,7 +97,7 @@ export function JoinGroupForm() {
 
 export function PasswordHint() {
   return (
-    <p className="flex items-center gap-2 text-[14px] text-muted">
+    <p className="flex items-center gap-2 text-[15px] text-muted">
       <KeyRound aria-hidden className="size-4 stroke-[2]" /> Use at least 8 characters.
     </p>
   );

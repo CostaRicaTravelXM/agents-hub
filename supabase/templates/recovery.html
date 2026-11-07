@@ -11,7 +11,7 @@
     The button goes to /auth/confirm with a token hash (not the default PKCE
     link), so it works on any device. /auth/confirm verifies it, signs the
     agent in and opens /reset-password with a 15-minute window.
-    Academy and Agent Portal share these accounts, so the link goes back to
+    Agents Hub and Agent Portal share these accounts, so the link goes back to
     whichever app asked (RedirectTo, e.g. https://learn.travelxm.com/auth/confirm?next=/reset-password).
     RedirectTo must already carry a query string and be in additional_redirect_urls.
   -->
@@ -31,7 +31,7 @@
                   Reset your password
                 </h1>
                 <p style="margin:0 0 24px;font-size:17px;line-height:1.55;">
-                  Someone asked to change the password of the TravelXM account for {{ .Email }} (Agent Portal and Academy). If it was you, press the button and choose a new password.
+                  Someone asked to change the password of the TravelXM account for {{ .Email }} (Agents Hub and Agent Portal). If it was you, press the button and choose a new password.
                 </p>
                 <table role="presentation" cellpadding="0" cellspacing="0">
                   <tr>

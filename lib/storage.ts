@@ -1,5 +1,5 @@
 import "server-only";
-import { GetObjectCommand, PutObjectCommand, S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /**
@@ -81,6 +81,19 @@ export async function putObject(bucket: BucketKind, key: string, body: Uint8Arra
       CacheControl: bucket === "public" ? "public, max-age=31536000, immutable" : undefined,
     }),
   );
+}
+
+/** Reads an object into memory. Null when it does not exist. Only for server-side rendering jobs (book pages). */
+export async function getObjectBytes(bucket: BucketKind, key: string): Promise<Uint8Array | null> {
+  try {
+    const res = await s3().send(new GetObjectCommand({ Bucket: buckets[bucket], Key: key }));
+    if (!res.Body) return null;
+    return await res.Body.transformToByteArray();
+  } catch (e) {
+    const name = (e as { name?: string })?.name;
+    if (name === "NoSuchKey" || name === "NotFound") return null;
+    throw e;
+  }
 }
 
 export async function deleteObject(bucket: BucketKind, key: string | null | undefined) {

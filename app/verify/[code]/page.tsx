@@ -28,10 +28,10 @@ export default async function VerifyPage({ params }: PageProps<"/verify/[code]">
               <span className="grid size-14 place-items-center rounded-pill bg-olive text-white">
                 <BadgeCheck aria-hidden className="size-7 stroke-[1.75]" />
               </span>
-              <p className="mt-6 inline-flex items-center gap-2 font-ui text-[15px] font-semibold text-olive">This certificate is genuine</p>
+              <p className="mt-6 inline-flex items-center gap-2 font-ui text-[15px] font-semibold text-success">This certificate is genuine</p>
               <h1 className="mt-3 font-serif text-[34px] leading-tight font-bold text-ink italic">{cert.recipient_name}</h1>
               <p className="mt-2 text-[17px] text-body">has completed</p>
-              <p className="mt-2 font-display text-[36px] leading-none text-ink uppercase md:text-[44px]">{cert.course_title}</p>
+              <p className="mt-2 font-certificate text-[36px] leading-none text-ink uppercase md:text-[44px]">{cert.course_title}</p>
               <dl className="mt-8 grid grid-cols-2 gap-6 border-t border-line pt-6">
                 <div>
                   <dt className="xm-micro text-muted">Issued</dt>
@@ -44,7 +44,7 @@ export default async function VerifyPage({ params }: PageProps<"/verify/[code]">
                   <dd className="mt-1 font-ui text-[15px] font-semibold text-ink">{cert.code}</dd>
                 </div>
               </dl>
-              <p className="mt-6 text-[14px] text-muted">
+              <p className="mt-6 text-[15px] text-muted">
                 Issued by TravelXM Academy, the training program of TravelXM, a Costa Rican tour operator based in San José.
               </p>
               <Button asChild variant="secondary" className="mt-6">

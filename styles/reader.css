@@ -1,0 +1,117 @@
+/* Book reader. The page turn is the one sanctioned exception to the three
+   brand durations: 400–420ms on the brand curve, no bounce. Everything else
+   in the reader uses the standard tokens. */
+.xm-reader {
+  --reader-paper: #fffdf7;
+  background: var(--surface-page);
+}
+
+.xm-book-stage {
+  perspective: 2200px;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.xm-page {
+  background: var(--reader-paper);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+.xm-page img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  -webkit-user-drag: none;
+}
+
+/* Hairline shadow in the gutter of a spread. */
+.xm-spine::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 50%;
+  width: 24px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, rgba(61, 55, 51, 0) 0%, rgba(61, 55, 51, 0.1) 50%, rgba(61, 55, 51, 0) 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.xm-leaf {
+  position: absolute;
+  top: 0;
+  transform-style: preserve-3d;
+  will-change: transform;
+  z-index: 5;
+}
+.xm-leaf__face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.xm-leaf__face--back {
+  transform: rotateY(180deg);
+}
+/* The leaf darkens as it lifts: a stone-tinted gradient, never a flat black. */
+.xm-leaf__shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--leaf-shade, 0);
+  background: linear-gradient(90deg, rgba(61, 55, 51, 0) 20%, rgba(61, 55, 51, 0.22) 100%);
+}
+.xm-leaf--left .xm-leaf__shade {
+  background: linear-gradient(270deg, rgba(61, 55, 51, 0) 20%, rgba(61, 55, 51, 0.22) 100%);
+}
+
+/* The page slider: a 44px thumb for fingers, brand colours, no default styling. */
+.xm-reader-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 44px;
+  background: transparent;
+  cursor: pointer;
+}
+.xm-reader-range:focus-visible {
+  outline: var(--border-medium) solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-md);
+}
+.xm-reader-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.12);
+}
+.xm-reader-range::-moz-range-track {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.12);
+}
+.xm-reader-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  margin-top: -11px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-primary);
+  border: 3px solid var(--surface-card);
+  box-shadow: var(--shadow-sticker);
+}
+.xm-reader-range::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-primary);
+  border: 3px solid var(--surface-card);
+  box-shadow: var(--shadow-sticker);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xm-leaf {
+    display: none;
+  }
+}

@@ -48,11 +48,21 @@ export async function signIn(_prev: FormState, formData: FormData): Promise<Form
   redirect(safeNext(parsed.data.next));
 }
 
+/** Agency is optional; ticking "independent" clears it. Checkbox values arrive as "on". */
+const agencyFields = {
+  company: z.string().trim().max(160).optional(),
+  is_independent: z.preprocess((v) => v === "on" || v === "true" || v === true, z.boolean()),
+};
+function agency(v: { company?: string; is_independent: boolean }) {
+  return { company: v.is_independent ? null : v.company || null, is_independent: v.is_independent };
+}
+
 const signUpSchema = z.object({
   first_name: z.string().trim().min(1, "Enter your first name").max(60),
   last_name: z.string().trim().min(1, "Enter your last name").max(60),
   email: z.string().trim().email("Enter a valid email address"),
   password: z.string().min(8, "Use at least 8 characters"),
+  ...agencyFields,
   next: z.string().optional(),
 });
 
@@ -67,7 +77,7 @@ export async function signUp(_prev: FormState, formData: FormData): Promise<Form
     password,
     options: {
       // Read by the shared handle_new_user() trigger into public.profiles.
-      data: { first_name, last_name, full_name: `${first_name} ${last_name}` },
+      data: { first_name, last_name, full_name: `${first_name} ${last_name}`, ...agency(parsed.data), hub_signup: true },
       emailRedirectTo: `${await origin()}/auth/confirm?next=${encodeURIComponent(nextPath)}`,
     },
   });
@@ -108,6 +118,7 @@ const signUpWithLinkSchema = z.object({
   first_name: z.string().trim().min(1, "Enter your first name").max(60),
   last_name: z.string().trim().min(1, "Enter your last name").max(60),
   email: emailField,
+  ...agencyFields,
   next: z.string().optional(),
 });
 
@@ -121,7 +132,7 @@ export async function signUpWithLink(_prev: FormState, formData: FormData): Prom
     email,
     options: {
       shouldCreateUser: true,
-      data: { first_name, last_name, full_name: `${first_name} ${last_name}` },
+      data: { first_name, last_name, full_name: `${first_name} ${last_name}`, ...agency(parsed.data), hub_signup: true },
       // Must carry a query string: the shared template appends &token_hash=….
       emailRedirectTo: `${await origin()}/auth/confirm?next=${encodeURIComponent(safeNext(next))}`,
     },
@@ -133,7 +144,7 @@ export async function signUpWithLink(_prev: FormState, formData: FormData): Prom
   return { message: `We sent a link to ${email}. Open it to finish creating your account.` };
 }
 
-/** Finishes an account when Google or a sign-in link did not give us a full name. */
+/** Finishes an account that arrived without a full name or the agency answer (Google, a sign-in link, the Portal). */
 export async function completeAccount(_prev: FormState, formData: FormData): Promise<FormState> {
   const viewer = await getViewer();
   if (!viewer) redirect("/login");
@@ -143,7 +154,7 @@ export async function completeAccount(_prev: FormState, formData: FormData): Pro
   const supabase = await createClient();
   const { error } = await supabase
     .from("profiles")
-    .update({ first_name, last_name, full_name: `${first_name} ${last_name}` })
+    .update({ first_name, last_name, full_name: `${first_name} ${last_name}`, ...agency(parsed.data), hub_onboarded_at: new Date().toISOString() })
     .eq("id", viewer.id);
   if (error) return { error: "We could not save your name. Try again." };
   redirect(safeNext(next));
@@ -181,7 +192,7 @@ export async function requestPasswordReset(_prev: FormState, formData: FormData)
     return { error: "We just sent you a link. Wait a minute, then try again." };
   }
   // Same answer whether or not the account exists.
-  return { message: `If ${email.data} has an Academy account, a reset link is on its way. It works for 1 hour.` };
+  return { message: `If ${email.data} has a TravelXM account, a reset link is on its way. It works for 1 hour.` };
 }
 
 /** Profile page: send the reset link to the signed-in agent's own address. */

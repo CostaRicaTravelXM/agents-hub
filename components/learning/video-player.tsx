@@ -6,16 +6,23 @@ import { Check, Maximize, Minimize, Pause, PictureInPicture2, Play, RotateCcw, V
 import { notify } from "@/components/ui/toast";
 import { cn, formatClock } from "@/lib/utils";
 
-type Props = {
+/** Lesson progress: the player sends heartbeats and shows the completion rule. */
+export type PlayerProgress = {
   lessonId: string;
-  src: string;
-  poster?: string | null;
-  title: string;
   startAt: number;
   initialWatchPct: number;
   requiredPct: number;
   completed: boolean;
   nextHref?: string | null;
+};
+
+type Props = {
+  src: string;
+  poster?: string | null;
+  title: string;
+  /** Called when the signed URL expires; must answer `{ url }`. */
+  refreshUrl: string;
+  progress: PlayerProgress;
 };
 
 const RATES = [1, 1.25, 1.5, 2];
@@ -44,7 +51,8 @@ function coveragePct(video: HTMLVideoElement, priorEnd: number): number {
 }
 
 export function VideoPlayer(props: Props) {
-  const { lessonId, poster, title, startAt, initialWatchPct, requiredPct, nextHref } = props;
+  const { poster, title, refreshUrl, progress } = props;
+  const { lessonId, startAt, initialWatchPct, requiredPct, nextHref } = progress;
   const router = useRouter();
   const wrapRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -59,14 +67,14 @@ export function VideoPlayer(props: Props) {
   const [fullscreen, setFullscreen] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [watchPct, setWatchPct] = useState(initialWatchPct);
-  const [completed, setCompleted] = useState(props.completed);
+  const [completed, setCompleted] = useState(progress.completed);
   const [ended, setEnded] = useState(false);
   const [pipSupported, setPipSupported] = useState(false);
 
   const priorEnd = useRef(0);
   const playingSince = useRef<number | null>(null);
   const pendingSeconds = useRef(0);
-  const completedRef = useRef(props.completed);
+  const completedRef = useRef(progress.completed);
   const inFlight = useRef(false);
   const retried = useRef(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -228,7 +236,7 @@ export function VideoPlayer(props: Props) {
     if (retried.current) return;
     retried.current = true;
     const at = videoRef.current?.currentTime ?? 0;
-    const res = await fetch(`/api/media/lesson/${lessonId}?kind=video`);
+    const res = await fetch(refreshUrl);
     if (!res.ok) return notify.error("This video could not be loaded", { description: "Refresh the page to try again." });
     const { url } = (await res.json()) as { url: string };
     setSrc(url);
@@ -242,6 +250,8 @@ export function VideoPlayer(props: Props) {
 
   return (
     <div>
+      <div className="xm-theatre">
+      <div className="xm-theatre-frame">
       <div
         ref={wrapRef}
         tabIndex={0}
@@ -251,8 +261,7 @@ export function VideoPlayer(props: Props) {
         onPointerMove={showControls}
         onPointerDown={showControls}
         className={cn(
-          "group/player relative aspect-video w-full overflow-hidden bg-black select-none md:rounded-lg",
-          fullscreen && "md:rounded-none",
+          "group/player xm-on-dark relative aspect-video w-full overflow-hidden bg-black select-none",
           !controlsVisible && playing && "cursor-none",
         )}
       >
@@ -324,7 +333,7 @@ export function VideoPlayer(props: Props) {
         ) : null}
 
         {!started && startAt > 3 ? (
-          <p className="absolute top-4 left-4 rounded-md bg-inverse px-3 py-1.5 font-ui text-[13px] font-semibold text-cloudy">
+          <p className="absolute top-4 left-4 rounded-md bg-inverse px-3 py-1.5 font-ui text-[15px] font-semibold text-cloudy">
             Resumes at {formatClock(startAt)}
           </p>
         ) : null}
@@ -346,14 +355,14 @@ export function VideoPlayer(props: Props) {
               if (v && duration) v.currentTime = (p / 100) * duration;
             }}
           />
-          <div className="mt-1.5 flex items-center gap-1 text-cloudy">
+          <div className="flex items-center gap-1 text-cloudy">
             <CtrlButton label={playing ? "Pause" : "Play"} onClick={toggle}>
               {playing ? <Pause aria-hidden className="fill-current" /> : <Play aria-hidden className="fill-current" />}
             </CtrlButton>
             <CtrlButton label={muted ? "Unmute" : "Mute"} onClick={() => videoRef.current && (videoRef.current.muted = !muted)}>
               {muted ? <VolumeX aria-hidden /> : <Volume2 aria-hidden />}
             </CtrlButton>
-            <span className="ml-1 font-ui text-[13px] font-semibold tabular-nums">
+            <span className="ml-1 font-ui text-[15px] font-semibold tabular-nums">
               {formatClock(time)} <span className="text-cloudy/70">/ {formatClock(duration)}</span>
             </span>
             <span className="flex-1" />
@@ -364,7 +373,7 @@ export function VideoPlayer(props: Props) {
                 if (videoRef.current) videoRef.current.playbackRate = next;
               }}
               aria-label={`Playback speed ${rate}x`}
-              className="h-9 min-w-12 rounded-md px-2 font-ui text-[13px] font-semibold transition-colors duration-120 hover:bg-white/15"
+              className="h-11 min-w-12 rounded-md px-2 font-ui text-[15px] font-semibold transition-colors duration-120 hover:bg-white/15"
             >
               {rate}x
             </button>
@@ -388,11 +397,13 @@ export function VideoPlayer(props: Props) {
           </div>
         </div>
       </div>
+      </div>
+      </div>
 
       {/* Completion rule */}
-      <div className="mt-3 flex items-center gap-3 px-4 md:px-0" aria-live="polite">
+      <div className="mx-auto mt-4 flex w-full max-w-[900px] items-center gap-3 px-4 md:px-8" aria-live="polite">
         {completed ? (
-          <p className="flex items-center gap-2 font-ui text-[14px] font-semibold text-olive">
+          <p className="flex items-center gap-2 font-ui text-[15px] font-semibold text-success">
             <span className="grid size-5 place-items-center rounded-pill bg-olive text-white">
               <Check aria-hidden className="size-3.5 stroke-[3]" />
             </span>
@@ -403,7 +414,7 @@ export function VideoPlayer(props: Props) {
             <div className="h-1.5 w-28 overflow-hidden rounded-pill bg-black/10" aria-hidden>
               <div className="h-full rounded-pill bg-primary transition-[width] duration-[340ms] ease-standard" style={{ width: `${Math.min(100, (watchPct / requiredPct) * 100)}%` }} />
             </div>
-            <p className="text-[14px] text-muted">
+            <p className="text-[15px] text-muted">
               Watched {Math.floor(watchPct)}% · watch {requiredPct}% to complete
               {needed > 0 && duration ? ` (${formatClock((needed / 100) * duration)} to go)` : ""}
             </p>
@@ -431,7 +442,7 @@ function CtrlButton({
       aria-label={label}
       onClick={onClick}
       className={cn(
-        "grid size-10 place-items-center rounded-md transition-colors duration-120 ease-standard hover:bg-white/15 [&_svg]:size-5 [&_svg]:stroke-[1.75]",
+        "grid size-11 place-items-center rounded-md transition-colors duration-120 ease-standard hover:bg-white/15 [&_svg]:size-5 [&_svg]:stroke-[1.75]",
         className,
       )}
     >
@@ -472,7 +483,7 @@ function Scrubber({
       aria-valuemax={Math.round(duration)}
       aria-valuenow={Math.round((value / 100) * duration)}
       aria-valuetext={`${formatClock((value / 100) * duration)} of ${formatClock(duration)}`}
-      className="group/scrub relative flex h-5 cursor-pointer items-center touch-none"
+      className="group/scrub relative -mt-6 flex h-11 cursor-pointer items-center touch-none"
       onPointerDown={(e) => {
         (e.target as HTMLElement).setPointerCapture(e.pointerId);
         setDragging(true);
@@ -496,7 +507,7 @@ function Scrubber({
       />
       {hover !== null && duration ? (
         <span
-          className="absolute -top-8 -translate-x-1/2 rounded-md bg-inverse px-2 py-1 font-ui text-[12px] font-semibold text-cloudy tabular-nums"
+          className="absolute -top-5 -translate-x-1/2 rounded-md bg-inverse px-2 py-1 font-ui text-[15px] font-semibold text-cloudy tabular-nums"
           style={{ left: `${hover}%` }}
         >
           {formatClock((hover / 100) * duration)}

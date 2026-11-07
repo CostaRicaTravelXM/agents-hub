@@ -1,7 +1,7 @@
-/* TravelXM Academy service worker.
+/* TravelXM Agents Hub service worker.
    Keeps the app installable and shows a branded offline page when the network
    drops. Learning data always comes from the network so progress is never stale. */
-const CACHE = "xm-academy-v1";
+const CACHE = "xm-hub-v1";
 const OFFLINE = "/offline";
 const PRECACHE = [OFFLINE, "/brand/travelxm-logo.png", "/icons/icon-192.png"];
 

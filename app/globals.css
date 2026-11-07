@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "../styles/tokens.css";
+@import "../styles/reader.css";
 
 /* Tailwind theme mapped onto the brand tokens.
    Default palettes, radii and shadows are reset so only brand values exist. */
@@ -29,6 +30,7 @@
   --color-playful: var(--accent-playful);
   --color-line: var(--border-subtle);
   --color-line-strong: var(--border-strong);
+  --color-control: var(--border-control);
   --color-success: var(--feedback-success);
   --color-info: var(--feedback-info);
   --color-warning: var(--feedback-warning);
@@ -40,7 +42,7 @@
   --color-sunset: var(--xm-orange-sunset);
   --color-rose: var(--xm-rose);
   --color-olive: var(--xm-olive-green);
-  --color-cloudy: var(--xm-cloudy-white);
+  --color-cloudy: var(--xm-white);
   --color-stone: var(--xm-gray-volcanic-stone);
 
   --font-*: initial;
@@ -49,6 +51,7 @@
   --font-ui: var(--font-subtitle);
   --font-sans: var(--font-body);
   --font-alt: var(--font-body-alt);
+  --font-certificate: var(--font-certificate);
 
   --text-*: initial;
   --text-micro: var(--fs-micro);
@@ -65,15 +68,16 @@
   --text-hero: var(--fs-hero);
 
   --radius-*: initial;
-  --radius-sm: 2px;
-  --radius-md: 4px;
-  --radius-lg: 8px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
   --radius-pill: 999px;
 
   --shadow-*: initial;
-  --shadow-card: 0 1px 2px rgba(61, 55, 51, 0.06), 0 8px 24px rgba(61, 55, 51, 0.08);
-  --shadow-raised: 0 2px 4px rgba(61, 55, 51, 0.08), 0 16px 40px rgba(61, 55, 51, 0.12);
-  --shadow-sticker: 0 6px 18px rgba(61, 55, 51, 0.22);
+  --shadow-card: 0 0 0 1px #ebe9e6, 0 1px 2px rgba(29, 26, 24, 0.03);
+  --shadow-raised: 0 2px 6px rgba(29, 26, 24, 0.08), 0 16px 40px rgba(29, 26, 24, 0.14);
+  --shadow-sticker: 0 6px 18px rgba(29, 26, 24, 0.22);
   --shadow-media: inset 0 -80px 90px -40px rgba(43, 43, 43, 0.55);
 
   --ease-standard: cubic-bezier(0.2, 0.6, 0.25, 1);
@@ -90,7 +94,7 @@
     -moz-osx-font-smoothing: grayscale;
     -webkit-tap-highlight-color: transparent;
     text-size-adjust: 100%;
-    scrollbar-color: #cfc6b1 transparent;
+    scrollbar-color: #cfccc8 transparent;
   }
   /* Nothing may widen the page sideways. On phones a single overflowing
      element makes the browser zoom out the whole layout, which pushes the
@@ -144,38 +148,34 @@
 @layer components {
   .xm-hero {
     font-family: var(--font-title);
-    font-weight: 400;
+    font-weight: 700;
     font-size: var(--fs-hero);
     line-height: var(--leading-tight);
     letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
     color: var(--text-display);
   }
   .xm-display {
     font-family: var(--font-title);
-    font-weight: 400;
+    font-weight: 700;
     font-size: var(--fs-display);
     line-height: var(--leading-tight);
     letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
     color: var(--text-display);
   }
   .xm-title {
     font-family: var(--font-title);
-    font-weight: 400;
+    font-weight: 700;
     font-size: var(--fs-title);
     line-height: var(--leading-tight);
     letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
     color: var(--text-display);
   }
   .xm-title-sm {
     font-family: var(--font-title);
-    font-weight: 400;
+    font-weight: 700;
     font-size: var(--fs-title-sm);
     line-height: var(--leading-tight);
     letter-spacing: var(--tracking-title);
-    text-transform: uppercase;
     color: var(--text-display);
   }
   .xm-title-serif {
@@ -202,20 +202,16 @@
   }
   .xm-meta {
     font-family: var(--font-subtitle);
-    font-weight: 600;
+    font-weight: 500;
     font-size: var(--fs-caption);
     line-height: var(--leading-body);
-    letter-spacing: var(--tracking-eyebrow);
-    text-transform: uppercase;
-    color: var(--xm-yellow-toucan);
+    color: var(--xm-white);
   }
   .xm-micro {
     font-family: var(--font-subtitle);
-    font-weight: 600;
+    font-weight: 500;
     font-size: var(--fs-micro);
     line-height: var(--leading-body);
-    letter-spacing: var(--tracking-micro);
-    text-transform: uppercase;
   }
   .xm-lead {
     font-family: var(--font-body);
@@ -277,22 +273,20 @@
   }
   .xm-photo-slot__label {
     font-family: var(--font-subtitle);
-    font-weight: 600;
+    font-weight: 500;
     font-size: var(--fs-micro);
-    letter-spacing: var(--tracking-micro);
-    text-transform: uppercase;
     padding: 0 var(--space-4);
     text-align: center;
   }
   .xm-photo-slot.is-dark {
     background-color: var(--xm-gray-volcanic-stone);
-    background-image: repeating-linear-gradient(45deg, rgba(253, 246, 227, 0.06) 0 12px, transparent 12px 24px);
-    color: rgba(253, 246, 227, 0.72);
+    background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.06) 0 12px, transparent 12px 24px);
+    color: rgba(255, 255, 255, 0.72);
   }
   .xm-photo-slot.is-forest {
     background-color: #2f4a26;
-    background-image: repeating-linear-gradient(45deg, rgba(253, 246, 227, 0.06) 0 12px, transparent 12px 24px);
-    color: rgba(253, 246, 227, 0.72);
+    background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.06) 0 12px, transparent 12px 24px);
+    color: rgba(255, 255, 255, 0.72);
   }
 
   /* Protective veil under type over photography (branding §4.5) */
@@ -310,26 +304,37 @@
   /* Same bottom-up stone veil, deepened for tall hero panels where the
      headline stack is taller than the 80px the base veil protects. */
   .xm-veil-tall::after {
-    box-shadow: inset 0 -320px 240px -120px rgba(43, 43, 43, 0.62);
+    box-shadow: inset 0 -320px 240px -120px rgba(43, 43, 43, 0.78);
   }
 
-  /* The only two translucent surfaces */
   .xm-glass-header {
-    background: rgba(253, 246, 227, 0.92);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: var(--surface-page);
   }
   .xm-scrim {
-    background: rgba(61, 55, 51, 0.52);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
+    background: rgba(29, 26, 24, 0.5);
+  }
+
+  /* The lesson video: as wide as the screen, never taller than what is left under
+     the top bar, so the whole picture is visible without scrolling. */
+  .xm-theatre {
+    background: var(--xm-black);
+  }
+  .xm-theatre-frame {
+    width: 100%;
+    margin-inline: auto;
+    max-width: calc((100dvh - var(--header-h)) * 16 / 9);
+  }
+
+  /* Dark surfaces: the focus ring turns white so it stays visible. */
+  .xm-on-dark :focus-visible {
+    outline-color: var(--xm-white);
   }
 
   .xm-cutout {
     position: absolute;
     pointer-events: none;
     user-select: none;
-    filter: drop-shadow(0 6px 18px rgba(61, 55, 51, 0.22));
+    filter: drop-shadow(0 6px 18px rgba(29, 26, 24, 0.22));
   }
 
   .xm-safe-bottom {
@@ -492,6 +497,15 @@
   animation-duration: 200ms;
   animation-timing-function: cubic-bezier(0.2, 0.6, 0.25, 1);
 }
+/* Card photo morphing into the detail hero: the slow brand duration, the one curve. */
+::view-transition-group(*) {
+  animation-duration: 340ms;
+  animation-timing-function: var(--ease-standard);
+}
+/* A tap during a transition must not land on the old frame. */
+::view-transition {
+  pointer-events: none;
+}
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -501,5 +515,10 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
   }
 }

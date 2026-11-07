@@ -50,7 +50,7 @@ export function CompleteControl({
         ) : null}
         <div>
           <p className="font-ui text-[16px] font-semibold text-ink">{completed ? "Lesson complete" : "Finished this lesson?"}</p>
-          <p className="text-[14px] text-muted">{completed ? "Nice work. Keep going while it is fresh." : (hint ?? "Mark it complete to update your progress.")}</p>
+          <p className="text-[15px] text-muted">{completed ? "Nice work. Keep going while it is fresh." : (hint ?? "Mark it complete to update your progress.")}</p>
         </div>
       </div>
       {completed ? (
@@ -95,7 +95,7 @@ export function PdfLesson({
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate font-ui text-[15px] font-semibold text-ink">{fileName ?? "Document"}</p>
-          <p className="text-[13px] text-muted">PDF{fileSize ? ` · ${formatBytes(fileSize)}` : ""}</p>
+          <p className="text-[15px] text-muted">PDF{fileSize ? ` · ${formatBytes(fileSize)}` : ""}</p>
         </div>
       </div>
       <div className="flex flex-wrap gap-3">
@@ -136,7 +136,7 @@ export function DocumentLesson({
         </span>
         <div className="min-w-0 flex-1">
           <p className="font-ui text-[17px] font-semibold text-ink">{fileName ?? "Document"}</p>
-          <p className="mt-0.5 text-[14px] text-muted">{fileSize ? formatBytes(fileSize) : "Download to read offline or share with clients."}</p>
+          <p className="mt-0.5 text-[15px] text-muted">{fileSize ? formatBytes(fileSize) : "Download to read offline or share with clients."}</p>
         </div>
         <Button asChild size="lg">
           <a href={`/api/media/lesson/${lessonId}?kind=file&mode=download&redirect=1`}>
@@ -145,6 +145,34 @@ export function DocumentLesson({
         </Button>
       </div>
       <CompleteControl lessonId={lessonId} completed={completed} nextHref={nextHref} />
+    </div>
+  );
+}
+
+/** A video that lives on Google Drive or Wistia. Those players do not report progress, so the agent marks it. */
+export function EmbedVideoLesson({
+  lessonId,
+  url,
+  title,
+  completed,
+  nextHref,
+}: {
+  lessonId: string;
+  url: string;
+  title: string;
+  completed: boolean;
+  nextHref?: string | null;
+}) {
+  return (
+    <div className="space-y-5">
+      <div className="xm-theatre">
+        <div className="xm-theatre-frame aspect-video">
+          <iframe src={url} title={title} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen className="size-full border-0" />
+        </div>
+      </div>
+      <div className="mx-auto w-full max-w-[900px] px-4 md:px-8">
+        <CompleteControl lessonId={lessonId} completed={completed} nextHref={nextHref} hint="Finished watching? Mark this lesson complete." />
+      </div>
     </div>
   );
 }
@@ -186,7 +214,7 @@ export function LinkLesson({
       {opened ? (
         <CompleteControl lessonId={lessonId} completed={initial} nextHref={nextHref} hint="Back from the site? Mark this lesson complete." />
       ) : (
-        <p className="text-[14px] text-muted">Open the link to unlock completion for this lesson.</p>
+        <p className="text-[15px] text-muted">Open the link to unlock completion for this lesson.</p>
       )}
     </div>
   );

@@ -39,7 +39,7 @@ export function Table({ children, className }: { children: React.ReactNode; clas
 }
 export function Th({ children, className }: { children?: React.ReactNode; className?: string }) {
   return (
-    <th scope="col" className={cn("border-b border-line px-4 py-3 text-left font-ui text-[11px] font-semibold tracking-[0.12em] whitespace-nowrap text-muted uppercase", className)}>
+    <th scope="col" className={cn("border-b border-line px-4 py-3 text-left font-ui text-[14px] font-semibold whitespace-nowrap text-muted", className)}>
       {children}
     </th>
   );
@@ -69,7 +69,7 @@ export function Kpi({ label, value, detail, className }: { label: string; value:
   return (
     <div className={cn("rounded-lg bg-card p-5 shadow-card", className)}>
       <p className="xm-micro text-muted">{label}</p>
-      <p className="mt-2.5 font-display text-[36px] leading-none text-ink md:text-[40px]">{value}</p>
+      <p className="mt-2.5 font-display font-bold text-[36px] leading-none text-ink md:text-[40px]">{value}</p>
       {detail ? <p className="mt-2 text-[13px] text-muted">{detail}</p> : null}
     </div>
   );

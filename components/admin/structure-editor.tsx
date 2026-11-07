@@ -116,7 +116,7 @@ export function StructureEditor({ courseId, initial }: { courseId: string; initi
       </DndContext>
 
       <form
-        className="flex flex-col gap-3 rounded-lg border-2 border-dashed border-[#d6cdb8] p-4 sm:flex-row"
+        className="flex flex-col gap-3 rounded-lg border-2 border-dashed border-line p-4 sm:flex-row"
         onSubmit={(e) => {
           e.preventDefault();
           start(async () => {
@@ -175,7 +175,7 @@ function ModuleCard({
       <div className="flex items-center gap-2 p-3 md:p-4">
         <Handle {...handle} />
         <button type="button" onClick={onToggle} aria-expanded={open} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-          <span className="grid size-9 shrink-0 place-items-center rounded-pill bg-ink font-display text-[16px] text-cloudy">{index + 1}</span>
+          <span className="grid size-9 shrink-0 place-items-center rounded-pill bg-ink font-display font-bold text-[16px] text-cloudy">{index + 1}</span>
           <span className="min-w-0">
             <span className="block truncate font-ui text-[16px] font-semibold text-ink">{m.title}</span>
             <span className="flex flex-wrap items-center gap-x-2 text-[13px] text-muted">

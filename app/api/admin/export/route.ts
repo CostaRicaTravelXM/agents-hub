@@ -14,7 +14,7 @@ function csv(rows: Record<string, unknown>[]): string {
   return [headers.join(","), ...rows.map((r) => headers.map((h) => esc(r[h])).join(","))].join("\r\n");
 }
 
-/** Staff CSV exports for reporting outside the Academy. */
+/** Staff CSV exports for reporting outside the Hub. */
 export async function GET(request: NextRequest) {
   const viewer = await getViewer();
   if (!viewer || !isStaff(viewer.profile)) return NextResponse.json({ error: "Not allowed" }, { status: 403 });

@@ -47,7 +47,7 @@ export function LessonEditor({ lesson, courseId }: { lesson: Lesson; courseId: s
         file_name: t === "pdf" || t === "document" ? (file?.name ?? null) : null,
         file_size: t === "pdf" || t === "document" ? (file?.size ?? null) : null,
         file_mime: t === "pdf" || t === "document" ? (file?.type ?? null) : null,
-        external_url: t === "link" ? url : null,
+        external_url: t === "link" || t === "video" ? url : null,
         body: t === "reading" ? body : null,
         required_completion_pct: Number(requiredPct) || 90,
         is_required: isRequired,
@@ -89,6 +89,14 @@ export function LessonEditor({ lesson, courseId }: { lesson: Lesson; courseId: s
               }}
               onClear={() => setVideo(null)}
             />
+            <Field
+              label="Or a link to the video"
+              htmlFor="l-video-url"
+              optional
+              hint="Paste a Google Drive or Wistia link instead of uploading. A Drive file must be shared as “Anyone with the link”. An uploaded video is used first when there are both."
+            >
+              <Input id="l-video-url" type="url" inputMode="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://drive.google.com/file/d/…/view" />
+            </Field>
             <p className="text-[14px] text-muted">
               Duration: <span className="font-semibold text-ink">{durationSeconds ? formatClock(durationSeconds) : "set automatically from the upload"}</span>
             </p>

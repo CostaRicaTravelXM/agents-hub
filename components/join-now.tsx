@@ -13,7 +13,7 @@ export function JoinNow({ code }: { code: string }) {
   if (joined)
     return (
       <div className="space-y-5">
-        <p className="flex items-center gap-2 font-ui text-[16px] font-semibold text-olive">
+        <p className="flex items-center gap-2 font-ui text-[16px] font-semibold text-success">
           <span className="grid size-6 place-items-center rounded-pill bg-olive text-white">
             <Check aria-hidden className="size-4 stroke-[3]" />
           </span>

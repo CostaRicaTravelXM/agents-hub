@@ -159,6 +159,7 @@ export type Database = {
           total_amount: number
           travelers: number
           updated_at: string
+          variant_id: number | null
         }
         Insert: {
           agent_id?: string
@@ -176,6 +177,7 @@ export type Database = {
           total_amount: number
           travelers: number
           updated_at?: string
+          variant_id?: number | null
         }
         Update: {
           agent_id?: string
@@ -193,6 +195,7 @@ export type Database = {
           total_amount?: number
           travelers?: number
           updated_at?: string
+          variant_id?: number | null
         }
         Relationships: [
           {
@@ -237,46 +240,14 @@ export type Database = {
             referencedRelation: "quote_requests"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "bookings_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "quote_variants"
+            referencedColumns: ["id"]
+          },
         ]
-      }
-      catalog_items: {
-        Row: {
-          created_at: string
-          description: string | null
-          highlights: string[]
-          id: number
-          image_url: string | null
-          is_active: boolean
-          kind: Database["public"]["Enums"]["catalog_kind"]
-          location: string | null
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          highlights?: string[]
-          id?: number
-          image_url?: string | null
-          is_active?: boolean
-          kind: Database["public"]["Enums"]["catalog_kind"]
-          location?: string | null
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          highlights?: string[]
-          id?: number
-          image_url?: string | null
-          is_active?: boolean
-          kind?: Database["public"]["Enums"]["catalog_kind"]
-          location?: string | null
-          name?: string
-          updated_at?: string
-        }
-        Relationships: []
       }
       categories: {
         Row: {
@@ -809,115 +780,309 @@ export type Database = {
           },
         ]
       }
-      itinerary_items: {
+      hub_book_progress: {
         Row: {
-          catalog_item_id: number | null
-          created_at: string
-          description: string | null
-          end_at: string
-          highlights: string[]
-          id: number
-          image_url: string | null
-          kind: Database["public"]["Enums"]["catalog_kind"]
-          location: string | null
-          start_at: string
-          title: string
-          version_id: number
+          book_id: string
+          page: number
+          updated_at: string
+          user_id: string
         }
         Insert: {
-          catalog_item_id?: number | null
-          created_at?: string
-          description?: string | null
-          end_at: string
-          highlights?: string[]
-          id?: number
-          image_url?: string | null
-          kind: Database["public"]["Enums"]["catalog_kind"]
-          location?: string | null
-          start_at: string
-          title: string
-          version_id: number
+          book_id: string
+          page?: number
+          updated_at?: string
+          user_id: string
         }
         Update: {
-          catalog_item_id?: number | null
-          created_at?: string
-          description?: string | null
-          end_at?: string
-          highlights?: string[]
-          id?: number
-          image_url?: string | null
-          kind?: Database["public"]["Enums"]["catalog_kind"]
-          location?: string | null
-          start_at?: string
-          title?: string
-          version_id?: number
+          book_id?: string
+          page?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "itinerary_items_catalog_item_id_fkey"
-            columns: ["catalog_item_id"]
+            foreignKeyName: "hub_book_progress_book_id_fkey"
+            columns: ["book_id"]
             isOneToOne: false
-            referencedRelation: "catalog_items"
+            referencedRelation: "hub_books"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "itinerary_items_version_id_fkey"
-            columns: ["version_id"]
+            foreignKeyName: "hub_book_progress_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "itinerary_versions"
+            referencedRelation: "agent_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hub_book_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
       }
-      itinerary_versions: {
+      hub_books: {
         Row: {
-          commission_rate: number | null
+          author: string | null
+          cover_key: string | null
           created_at: string
-          id: number
-          published_at: string | null
-          quote_id: number
-          status: Database["public"]["Enums"]["itinerary_status"]
-          summary: string | null
-          total_price: number | null
+          description: string | null
+          file_key: string | null
+          file_name: string | null
+          file_size: number | null
+          file_version: number
+          id: string
+          page_aspect: number | null
+          page_count: number | null
+          slug: string
+          sort_order: number
+          status: Database["public"]["Enums"]["course_status"]
+          title: string
           updated_at: string
-          valid_until: string | null
-          version: number
         }
         Insert: {
-          commission_rate?: number | null
+          author?: string | null
+          cover_key?: string | null
           created_at?: string
-          id?: number
-          published_at?: string | null
-          quote_id: number
-          status?: Database["public"]["Enums"]["itinerary_status"]
-          summary?: string | null
-          total_price?: number | null
+          description?: string | null
+          file_key?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_version?: number
+          id?: string
+          page_aspect?: number | null
+          page_count?: number | null
+          slug: string
+          sort_order?: number
+          status?: Database["public"]["Enums"]["course_status"]
+          title: string
           updated_at?: string
-          valid_until?: string | null
-          version: number
         }
         Update: {
-          commission_rate?: number | null
+          author?: string | null
+          cover_key?: string | null
           created_at?: string
-          id?: number
-          published_at?: string | null
-          quote_id?: number
-          status?: Database["public"]["Enums"]["itinerary_status"]
-          summary?: string | null
-          total_price?: number | null
+          description?: string | null
+          file_key?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_version?: number
+          id?: string
+          page_aspect?: number | null
+          page_count?: number | null
+          slug?: string
+          sort_order?: number
+          status?: Database["public"]["Enums"]["course_status"]
+          title?: string
           updated_at?: string
-          valid_until?: string | null
-          version?: number
+        }
+        Relationships: []
+      }
+      hub_crm_leads: {
+        Row: {
+          attempts: number
+          claimed_at: string | null
+          created_at: string
+          last_error: string | null
+          payload: Json | null
+          sent_at: string | null
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          claimed_at?: string | null
+          created_at?: string
+          last_error?: string | null
+          payload?: Json | null
+          sent_at?: string | null
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          claimed_at?: string | null
+          created_at?: string
+          last_error?: string | null
+          payload?: Json | null
+          sent_at?: string | null
+          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "itinerary_versions_quote_id_fkey"
-            columns: ["quote_id"]
-            isOneToOne: false
-            referencedRelation: "quote_requests"
+            foreignKeyName: "hub_crm_leads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "agent_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hub_crm_leads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
+      }
+      hub_fam_trips: {
+        Row: {
+          body: Json | null
+          created_at: string
+          cta_label: string
+          cta_url: string | null
+          expect: string | null
+          id: string
+          image_alt: string | null
+          image_key: string | null
+          nights: number
+          regions: string[]
+          segments: string[]
+          slug: string
+          sort_order: number
+          starts_on: string | null
+          status: Database["public"]["Enums"]["course_status"]
+          summary: string
+          timing_label: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body?: Json | null
+          created_at?: string
+          cta_label?: string
+          cta_url?: string | null
+          expect?: string | null
+          id?: string
+          image_alt?: string | null
+          image_key?: string | null
+          nights: number
+          regions?: string[]
+          segments?: string[]
+          slug: string
+          sort_order?: number
+          starts_on?: string | null
+          status?: Database["public"]["Enums"]["course_status"]
+          summary: string
+          timing_label: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: Json | null
+          created_at?: string
+          cta_label?: string
+          cta_url?: string | null
+          expect?: string | null
+          id?: string
+          image_alt?: string | null
+          image_key?: string | null
+          nights?: number
+          regions?: string[]
+          segments?: string[]
+          slug?: string
+          sort_order?: number
+          starts_on?: string | null
+          status?: Database["public"]["Enums"]["course_status"]
+          summary?: string
+          timing_label?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      hub_links: {
+        Row: {
+          created_at: string
+          description: string | null
+          group_key: string
+          id: string
+          sort_order: number
+          title: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          group_key: string
+          id?: string
+          sort_order?: number
+          title: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          group_key?: string
+          id?: string
+          sort_order?: number
+          title?: string
+          url?: string
+        }
+        Relationships: []
+      }
+      hub_offers: {
+        Row: {
+          body: Json | null
+          created_at: string
+          cta_label: string | null
+          cta_url: string | null
+          excerpt: string | null
+          file_key: string | null
+          file_name: string | null
+          file_size: number | null
+          id: string
+          image_key: string | null
+          link_url: string | null
+          slug: string
+          sort_order: number
+          status: Database["public"]["Enums"]["course_status"]
+          title: string
+          updated_at: string
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          body?: Json | null
+          created_at?: string
+          cta_label?: string | null
+          cta_url?: string | null
+          excerpt?: string | null
+          file_key?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          image_key?: string | null
+          link_url?: string | null
+          slug: string
+          sort_order?: number
+          status?: Database["public"]["Enums"]["course_status"]
+          title: string
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          body?: Json | null
+          created_at?: string
+          cta_label?: string | null
+          cta_url?: string | null
+          excerpt?: string | null
+          file_key?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          image_key?: string | null
+          link_url?: string | null
+          slug?: string
+          sort_order?: number
+          status?: Database["public"]["Enums"]["course_status"]
+          title?: string
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: []
       }
       learning_events: {
         Row: {
@@ -1359,6 +1524,7 @@ export type Database = {
           price_per_person: number
           rating: number
           review_count: number
+          schedule: Json
           settings: Database["public"]["Enums"]["destination_setting"][]
           trip_types: Database["public"]["Enums"]["trip_type"][]
           updated_at: string
@@ -1386,6 +1552,7 @@ export type Database = {
           price_per_person: number
           rating?: number
           review_count?: number
+          schedule?: Json
           settings?: Database["public"]["Enums"]["destination_setting"][]
           trip_types?: Database["public"]["Enums"]["trip_type"][]
           updated_at?: string
@@ -1413,6 +1580,7 @@ export type Database = {
           price_per_person?: number
           rating?: number
           review_count?: number
+          schedule?: Json
           settings?: Database["public"]["Enums"]["destination_setting"][]
           trip_types?: Database["public"]["Enums"]["trip_type"][]
           updated_at?: string
@@ -1497,7 +1665,9 @@ export type Database = {
           email: string
           first_name: string | null
           full_name: string | null
+          hub_onboarded_at: string | null
           id: string
+          is_independent: boolean
           job_title: string | null
           last_name: string | null
           last_seen_at: string | null
@@ -1514,7 +1684,9 @@ export type Database = {
           email: string
           first_name?: string | null
           full_name?: string | null
+          hub_onboarded_at?: string | null
           id: string
+          is_independent?: boolean
           job_title?: string | null
           last_name?: string | null
           last_seen_at?: string | null
@@ -1531,7 +1703,9 @@ export type Database = {
           email?: string
           first_name?: string | null
           full_name?: string | null
+          hub_onboarded_at?: string | null
           id?: string
+          is_independent?: boolean
           job_title?: string | null
           last_name?: string | null
           last_seen_at?: string | null
@@ -1722,13 +1896,51 @@ export type Database = {
           },
         ]
       }
+      quote_proposals: {
+        Row: {
+          created_at: string
+          id: number
+          published_at: string | null
+          quote_id: number
+          status: Database["public"]["Enums"]["proposal_status"]
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          published_at?: string | null
+          quote_id: number
+          status?: Database["public"]["Enums"]["proposal_status"]
+          updated_at?: string
+          version: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          published_at?: string | null
+          quote_id?: number
+          status?: Database["public"]["Enums"]["proposal_status"]
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itinerary_versions_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quote_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quote_requests: {
         Row: {
           agent_id: string
           budget: number | null
           created_at: string
           customer_id: number
-          destination: string
+          destination: string | null
           end_date: string
           id: number
           notes: string | null
@@ -1743,7 +1955,7 @@ export type Database = {
           budget?: number | null
           created_at?: string
           customer_id: number
-          destination: string
+          destination?: string | null
           end_date: string
           id?: number
           notes?: string | null
@@ -1758,7 +1970,7 @@ export type Database = {
           budget?: number | null
           created_at?: string
           customer_id?: number
-          destination?: string
+          destination?: string | null
           end_date?: string
           id?: number
           notes?: string | null
@@ -1834,6 +2046,103 @@ export type Database = {
             columns: ["quote_id"]
             isOneToOne: true
             referencedRelation: "quote_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_variant_files: {
+        Row: {
+          content_type: string
+          created_at: string
+          id: number
+          name: string
+          path: string
+          position: number
+          size_bytes: number | null
+          variant_id: number
+        }
+        Insert: {
+          content_type: string
+          created_at?: string
+          id?: number
+          name: string
+          path: string
+          position?: number
+          size_bytes?: number | null
+          variant_id: number
+        }
+        Update: {
+          content_type?: string
+          created_at?: string
+          id?: number
+          name?: string
+          path?: string
+          position?: number
+          size_bytes?: number | null
+          variant_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_variant_files_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "quote_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_variants: {
+        Row: {
+          accepted_at: string | null
+          commission_rate: number | null
+          created_at: string
+          end_date: string | null
+          id: number
+          position: number
+          proposal_id: number
+          start_date: string | null
+          summary: string | null
+          title: string | null
+          total_price: number | null
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          commission_rate?: number | null
+          created_at?: string
+          end_date?: string | null
+          id?: number
+          position?: number
+          proposal_id: number
+          start_date?: string | null
+          summary?: string | null
+          title?: string | null
+          total_price?: number | null
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          commission_rate?: number | null
+          created_at?: string
+          end_date?: string | null
+          id?: number
+          position?: number
+          proposal_id?: number
+          start_date?: string | null
+          summary?: string | null
+          title?: string | null
+          total_price?: number | null
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_variants_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "quote_proposals"
             referencedColumns: ["id"]
           },
         ]
@@ -2007,7 +2316,10 @@ export type Database = {
       }
       booking_details: {
         Row: {
+          agent_company: string | null
+          agent_email: string | null
           agent_id: string | null
+          agent_name: string | null
           booked_at: string | null
           commission_rate: number | null
           created_at: string | null
@@ -2026,6 +2338,7 @@ export type Database = {
           total_amount: number | null
           travelers: number | null
           updated_at: string | null
+          variant_id: number | null
         }
         Relationships: [
           {
@@ -2070,6 +2383,13 @@ export type Database = {
             referencedRelation: "quote_requests"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "bookings_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "quote_variants"
+            referencedColumns: ["id"]
+          },
         ]
       }
       customer_stats: {
@@ -2108,7 +2428,17 @@ export type Database = {
       }
     }
     Functions: {
+      admin_delete_booking: { Args: { p_id: number }; Returns: undefined }
+      admin_delete_quote: { Args: { p_id: number }; Returns: undefined }
       admin_overview: { Args: { p_from: string; p_to: string }; Returns: Json }
+      admin_save_booking: {
+        Args: { p_fields: Json; p_id: number }
+        Returns: number
+      }
+      admin_save_quote: {
+        Args: { p_fields: Json; p_id: number }
+        Returns: number
+      }
       apply_verification_review: {
         Args: {
           p_email?: string
@@ -2152,6 +2482,10 @@ export type Database = {
       }
       assert_staff: { Args: never; Returns: undefined }
       can_access_course: { Args: { p_course: string }; Returns: boolean }
+      claim_hub_crm_lead: {
+        Args: { p_payload: Json; p_user: string }
+        Returns: boolean
+      }
       complete_lesson: {
         Args: { p_lesson: string }
         Returns: {
@@ -2209,6 +2543,10 @@ export type Database = {
       }
       ensure_enrollment: {
         Args: { p_course: string; p_user: string }
+        Returns: undefined
+      }
+      fill_profile_from_answers: {
+        Args: { p_answers: Json; p_user: string }
         Returns: undefined
       }
       gen_certificate_code: { Args: never; Returns: string }
@@ -2285,8 +2623,12 @@ export type Database = {
         }[]
       }
       portal_seed_demo: { Args: { p_agent: string }; Returns: undefined }
-      quote_accept: { Args: { p_version_id: number }; Returns: number }
+      quote_accept: { Args: { p_variant_id: number }; Returns: number }
       quote_cancel: { Args: { p_quote_id: number }; Returns: undefined }
+      quote_label: {
+        Args: { p_destination: string; p_id: number }
+        Returns: string
+      }
       quote_notify_agent: {
         Args: {
           p_agent: string
@@ -2300,12 +2642,16 @@ export type Database = {
         Args: { p_body: string; p_quote_id: number; p_title: string }
         Returns: undefined
       }
-      quote_publish_version: {
-        Args: { p_version_id: number }
-        Returns: undefined
-      }
       quote_request_changes: {
         Args: { p_message: string; p_quote_id: number }
+        Returns: undefined
+      }
+      quote_save_draft: {
+        Args: { p_proposal_id: number; p_variants: Json }
+        Returns: undefined
+      }
+      quote_send_proposal: {
+        Args: { p_proposal_id: number }
         Returns: undefined
       }
       quote_share_create: {
@@ -2436,7 +2782,6 @@ export type Database = {
         | "traveling"
         | "completed"
         | "cancelled"
-      catalog_kind: "tour" | "hotel" | "transport"
       commission_status: "pending" | "earned" | "paid"
       course_level: "foundation" | "advanced" | "specialist"
       course_status: "draft" | "published" | "archived"
@@ -2452,7 +2797,6 @@ export type Database = {
         | "rainforest"
         | "countryside"
         | "safari"
-      itinerary_status: "draft" | "published" | "superseded"
       lesson_type: "video" | "pdf" | "document" | "link" | "reading" | "quiz"
       payment_status:
         | "succeeded"
@@ -2462,6 +2806,7 @@ export type Database = {
         | "requires_action"
         | "canceled"
       progress_status: "not_started" | "in_progress" | "completed"
+      proposal_status: "draft" | "published" | "superseded"
       question_type: "single" | "multiple" | "true_false"
       quote_status:
         | "requested"
@@ -2633,7 +2978,6 @@ export const Constants = {
         "completed",
         "cancelled",
       ],
-      catalog_kind: ["tour", "hotel", "transport"],
       commission_status: ["pending", "earned", "paid"],
       course_level: ["foundation", "advanced", "specialist"],
       course_status: ["draft", "published", "archived"],
@@ -2650,7 +2994,6 @@ export const Constants = {
         "countryside",
         "safari",
       ],
-      itinerary_status: ["draft", "published", "superseded"],
       lesson_type: ["video", "pdf", "document", "link", "reading", "quiz"],
       payment_status: [
         "succeeded",
@@ -2661,6 +3004,7 @@ export const Constants = {
         "canceled",
       ],
       progress_status: ["not_started", "in_progress", "completed"],
+      proposal_status: ["draft", "published", "superseded"],
       question_type: ["single", "multiple", "true_false"],
       quote_status: [
         "requested",

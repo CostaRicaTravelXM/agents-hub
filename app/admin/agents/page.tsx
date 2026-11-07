@@ -58,7 +58,7 @@ export default async function AgentsPage({ searchParams }: PageProps<"/admin/age
             name="q"
             defaultValue={q}
             placeholder="Name, email, agency or country"
-            className="h-11 w-full rounded-md border-2 border-line bg-card pr-4 pl-11 text-[15px] text-ink placeholder:text-muted focus-visible:border-secondary focus-visible:outline-none"
+            className="h-11 w-full rounded-pill border border-control bg-card pr-4 pl-11 text-[15px] text-ink placeholder:text-muted focus-visible:border-ink focus-visible:outline-none"
           />
         </form>
         <div role="group" aria-label="Filter by role" className="inline-flex rounded-md border border-line bg-card p-1 shadow-card">

@@ -60,7 +60,7 @@ export function AccessEditor({
               key={o.id}
               className={cn(
                 "flex cursor-pointer gap-3 rounded-md border-2 p-4 transition-colors duration-120",
-                status === o.id ? "border-primary bg-primary/5" : "border-line hover:border-[#cfc6b1]",
+                status === o.id ? "border-primary bg-primary/5" : "border-line hover:border-ink",
               )}
             >
               <Radio value={o.id} className="mt-0.5" />
@@ -87,7 +87,7 @@ export function AccessEditor({
               key={o.id}
               className={cn(
                 "flex cursor-pointer gap-3 rounded-md border-2 p-4 transition-colors duration-120",
-                visibility === o.id ? "border-primary bg-primary/5" : "border-line hover:border-[#cfc6b1]",
+                visibility === o.id ? "border-primary bg-primary/5" : "border-line hover:border-ink",
               )}
             >
               <Radio value={o.id} className="mt-0.5" />
@@ -186,7 +186,7 @@ export function ResourcesEditor({
             ))}
           </ul>
         ) : (
-          <p className="rounded-md border border-dashed border-[#d6cdb8] p-6 text-center text-[14px] text-muted">
+          <p className="rounded-md border border-dashed border-line p-6 text-center text-[14px] text-muted">
             No resources yet. Add fact sheets, rate sheets and brochures agents can download.
           </p>
         )}

@@ -5,7 +5,7 @@ import { AdminMobileNav, AdminSidebarNav } from "@/components/admin/admin-nav";
 import { UserMenu } from "@/components/shell/user-menu";
 import { Badge } from "@/components/ui/surface";
 
-export const metadata = { title: { default: "Admin", template: "%s · Admin · TravelXM Academy" } };
+export const metadata = { title: { default: "Admin", template: "%s · Admin · TravelXM Agents Hub" } };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const viewer = await requireStaff();

@@ -1,6 +1,19 @@
-# TravelXM Academy
+# TravelXM Agents Hub
 
-The TravelXM learning platform for travel advisors (Phase 1). Agents register, take Costa Rica destination courses built from videos, PDFs, documents, links, readings and quizzes, unlock modules in order, and earn verifiable certificates. TravelXM staff build courses, restrict them to groups and follow the Phase 1 success metrics from an admin portal.
+The one place TravelXM gives travel advisors. One account (shared with the Agent Portal) opens:
+
+| Module | What it is | Where |
+| --- | --- | --- |
+| Learning | The Academy: Costa Rica courses with videos, PDFs, readings and quizzes, module locks, progress and verifiable certificates. Masterclasses are courses in their own category; a video lesson can be an upload or a Google Drive or Wistia link | `/courses`, `/progress`, `/certificates`, `/resources`, `/learn/…` |
+| FAM Trips | The familiarisation programme; each trip opens a detail page and an interest form (Zoho Forms, pre-filled) | `/fam-trips` |
+| Current Offers | Promotions with start and end dates, an optional PDF, link or interest form | `/offers` |
+| Books | PDF guides read page by page in a page-turn reader; pages are rendered on the server | `/books`, `/read/…` |
+| Marketing Assets | The shared Google Drive folder inside the Hub: subfolders, thumbnails, search, preview and download. Links out when `GOOGLE_DRIVE_API_KEY` is empty or Google does not answer | `/marketing/…` |
+| Agents Portal | External app at `NEXT_PUBLIC_AGENTS_PORTAL_URL`, same session cookie | nav entry |
+
+Staff manage every module from `/admin`. Registration asks for first name, last name, email, password (or a sign-in link, or Google), an optional agency and an "I am a solo or independent agent" box. After the first sign-in the Hub sends the lead once to the n8n "TravelXM — Agents Hub" workflow (`N8N_AGENTS_WEBHOOK_URL`), which creates it in Zoho CRM.
+
+The audience is often older and on phones or iPads: a bottom bar with five labelled tabs (Home, Learning, Trips, More, Profile) and no top bar on phones and iPads, module tiles on Home, 17px body text, 44px+ targets, visible labels under every icon, and the page turn in the reader is the one motion that is longer than the brand's 340ms.
 
 - **Frontend:** Next.js 16 (App Router, React 19, TypeScript), Tailwind CSS 4 mapped to the TravelXM design system, Radix primitives, Lucide icons.
 - **Backend:** Supabase (Auth, Postgres with row-level security, a progress engine in SQL functions and triggers).
@@ -101,29 +114,45 @@ Staff accounts are excluded from every number. The agents and enrollments lists 
 
 1. **Supabase:** create a project, then `npx supabase link --project-ref <ref>` and `npx supabase db push`. In Authentication, set the Site URL to your domain and add `https://<domain>/auth/confirm` and `https://<domain>/auth/callback` to the redirect URLs. Configure SMTP (for example Resend) so confirmation and reset emails come from TravelXM. For Google sign-in, enable the Google provider and set `NEXT_PUBLIC_GOOGLE_AUTH=true`.
 2. **Cloudflare R2:** create `academy-private` and `academy-public`, and give the public bucket a custom domain such as `media.travelxm.com`. Create an API token with object read and write access. Then run `npm run storage:setup` with the production variables to apply CORS for your domain.
-3. **Hosting (Vercel or any Node host):** set the variables from `.env.example`, with `R2_ENDPOINT=https://<ACCOUNT_ID>.r2.cloudflarestorage.com`, `R2_FORCE_PATH_STYLE=false` and `NEXT_PUBLIC_MEDIA_URL=https://media.travelxm.com`.
+3. **Hosting (Vercel or any Node host):** set the variables from `.env.example`, with `R2_ENDPOINT=https://<ACCOUNT_ID>.r2.cloudflarestorage.com`, `R2_FORCE_PATH_STYLE=false` and `NEXT_PUBLIC_MEDIA_URL=https://media.travelxm.com`. Add `GOOGLE_DRIVE_API_KEY` as a server variable; the root folder is the first Drive link under Marketing in `/admin`. Everything in that folder is visible to every signed-in agent, and new files appear within five minutes.
 4. **First admin:** register normally, then in the Supabase SQL editor run `update profiles set role = 'admin' where email = 'you@travelxm.com';`.
 
 Do not run `npm run seed` against production. It creates demo accounts.
+
+5. **Hub extras:** set `NEXT_PUBLIC_AGENTS_PORTAL_URL` (the Agent Portal) and `N8N_AGENTS_WEBHOOK_URL` (the n8n "TravelXM — Agents Hub" webhook, whose welcome email must link to this app's `/login`). The book renderer needs the native packages `@napi-rs/canvas` and `sharp`, which Vercel installs from the lockfile.
 
 ## Project map
 
 ```
 app/(auth)            sign in, register, password reset
-app/(app)             agent area: dashboard, courses, modules, progress, resources, certificates, profile
+app/(app)             the Hub: dashboard (Home tiles), (learning)/ courses, progress, certificates, resources,
+                      fam-trips, offers, books, marketing, profile
 app/learn             lesson player (video, PDF, document, link, reading, quiz)
-app/admin             CMS, groups, agents, analytics
-app/api               progress heartbeat, signed media, uploads, certificates PDF, CSV exports
-app/actions           server actions (auth, learning, profile, admin)
+app/read              book reader, outside the shell so the page fills a phone screen
+app/admin             CMS: courses, categories, groups, agents, FAM trips, offers, books, links
+app/api               progress heartbeat, signed media, uploads, certificates PDF, CSV exports, hub media and book pages
+app/actions           server actions (auth, learning, profile, admin, hub-admin)
+components/shell      app shell, nav-config (the single list every nav reads), sidebar, bottom tabs, More sheet
+components/hub        module tile, media card, detail hero and layout, sticky CTA, interest page, Drive browser
+components/books      the page-turn reader
 components/ui         brand primitives (Button, inputs, Card, Badge, Tag, Tabs, Dialog, Toast, Tooltip…)
 components/learning   player, quiz runner, syllabus, cards, charts
-components/admin      course builder, lesson and quiz editors, uploader
-lib                   Supabase clients, auth, queries, storage, certificate PDF
-supabase/migrations   schema, access control, progress engine, metrics
+components/admin      course builder, lesson and quiz editors, hub forms, uploader
+lib                   Supabase clients, auth, queries, storage, certificate PDF; lib/hub (queries, CTA pre-fill,
+                      CRM hand-off, book page rendering), lib/books (reader page math)
+supabase/migrations   schema, access control, progress engine, metrics, hub tables
 supabase/tests        pgTAP tests
 scripts               storage setup, demo seed, screenshot helper
-styles/tokens.css     design tokens from the branding file
+styles/tokens.css     design tokens from the branding file; styles/reader.css the reader
 ```
+
+### Books
+
+A book is a PDF in the private bucket. `/api/hub/books/[id]/page/[n]?w=800|1600` renders the page the first time it is requested (`pdf-to-img` + `sharp`, server side), stores the WebP next to the PDF under `books/{id}/v{version}/`, and serves it with a one-year cache. The reader (`components/books/reader`) never loads pdf.js: it shows plain images, turns pages with a CSS 3D leaf driven by pointer events, and also offers Previous/Next buttons, a slider, "Go to page", keyboard keys and a "Larger text" mode. Position is kept in `localStorage` and in `hub_book_progress`. Saving a book runs the PDF inspection (page count and shape); "Re-check PDF" in the admin form repeats it, and "Prepare pages" renders every page ahead of time so the first reader does not wait.
+
+### Interest forms
+
+FAM trips and offers can carry a Zoho Forms link. The Hub shows the form inside the page (`/fam-trips/[slug]/interest`) with the advisor's name and email pre-filled; the pre-fill is only applied when the link points at `forms.zohopublic.com`. A native form posting to n8n can replace it later without a schema change.
 
 ## Notes and known limits
 

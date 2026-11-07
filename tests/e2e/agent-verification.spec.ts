@@ -58,8 +58,12 @@ test("an account signs up, is locked out, verifies and is approved from Zoho", a
   await expect(page.getByText("Your TravelXM account is ready")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Next: verify that you're a travel agent" })).toBeVisible();
 
-  // Same session in Learning, with no verification needed.
+  // Same session in the Hub, with no verification needed. A Portal sign-up has not
+  // been asked about an agency yet, so the Hub asks once and then opens.
   await page.goto("http://localhost:3000/dashboard");
+  await expect(page).toHaveURL(/localhost:3000\/welcome/);
+  await page.getByText(/solo or independent agent/).click();
+  await page.locator("form").getByRole("button").last().click();
   await expect(page).toHaveURL(/localhost:3000\/dashboard/);
 
   // Locked sections send the agent to the form.

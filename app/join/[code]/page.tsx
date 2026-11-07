@@ -55,7 +55,7 @@ export default async function JoinPage({ params }: PageProps<"/join/[code]">) {
                 The code may have a typo, or the group has closed new sign-ups. Ask your TravelXM contact for a new link.
               </p>
               <Button asChild className="mt-6">
-                <Link href={viewer ? "/dashboard" : "/"}>Go to TravelXM Academy</Link>
+                <Link href={viewer ? "/dashboard" : "/"}>Go to the Agents Hub</Link>
               </Button>
             </>
           )}

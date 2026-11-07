@@ -28,7 +28,7 @@ export default async function AgentPage({ params }: PageProps<"/admin/agents/[id
   const viewer = await requireStaff();
   const { id } = await params;
   const supabase = await createClient();
-  const [{ data: person }, { data: summary }, { data: enrollments }, { data: certs }, { data: groups }, { data: events }] = await Promise.all([
+  const [{ data: person }, { data: summary }, { data: enrollments }, { data: certs }, { data: groups }, { data: events }, { data: crm }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", id).maybeSingle(),
     supabase.from("agent_summary").select("*").eq("id", id).maybeSingle(),
     supabase
@@ -44,8 +44,15 @@ export default async function AgentPage({ params }: PageProps<"/admin/agents/[id
       .eq("user_id", id)
       .order("created_at", { ascending: false })
       .limit(25),
+    supabase.from("hub_crm_leads").select("sent_at, attempts, last_error").eq("user_id", id).maybeSingle(),
   ]);
   if (!person) notFound();
+
+  const crmStatus = crm?.sent_at
+    ? `Sent ${formatDate(crm.sent_at)}`
+    : crm?.last_error
+      ? `Not sent after ${crm.attempts} ${crm.attempts === 1 ? "try" : "tries"}: ${crm.last_error}`
+      : "Not sent yet";
 
   return (
     <>
@@ -63,7 +70,8 @@ export default async function AgentPage({ params }: PageProps<"/admin/agents/[id
             </div>
             <dl className="mt-5 space-y-3 border-t border-line pt-5 text-[14px]">
               {[
-                ["Agency", person.company],
+                ["Agency", person.is_independent ? "Independent agent" : person.company],
+                ["Zoho CRM", crmStatus],
                 ["Job title", person.job_title],
                 ["Country", person.country],
                 ["Phone", person.phone],

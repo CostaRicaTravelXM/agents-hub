@@ -11,8 +11,8 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const error = typeof sp.error === "string" ? sp.error : undefined;
   return (
     <div className="xm-reveal">
-      <h1 className="xm-title-sm">Welcome back</h1>
-      <p className="mt-3 mb-7 text-[17px] text-muted">Sign in with the email you used to create your Academy account.</p>
+      <h1 className="xm-title">Welcome back</h1>
+      <p className="mt-3 mb-7 text-[17px] text-muted">Sign in with the email you used to create your TravelXM account.</p>
       {error ? (
         <p role="alert" className="mb-5 rounded-md bg-card p-4 text-[15px] text-ink shadow-card">
           {error === "link"
@@ -22,7 +22,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
       ) : null}
       <LoginForm next={next} google={env.googleAuth} />
       <p className="mt-7 text-[15px] text-body">
-        New to the Academy?{" "}
+        New to the Agents Hub?{" "}
         <Link href={`/register${next ? `?next=${encodeURIComponent(next)}` : ""}`} className="xm-link font-semibold">
           Create a free account
         </Link>

@@ -36,7 +36,7 @@ export default async function ResetPasswordPage({ searchParams }: PageProps<"/re
   if (viewer && allowed) {
     return (
       <div className="xm-reveal">
-        <h1 className="xm-title-sm">Choose a new password</h1>
+        <h1 className="xm-title">Choose a new password</h1>
         <p className="mt-3 mb-7 text-[17px] text-muted">
           For <span className="font-semibold text-ink">{viewer.email}</span>. Use at least 8 characters.
         </p>
@@ -47,7 +47,7 @@ export default async function ResetPasswordPage({ searchParams }: PageProps<"/re
 
   return (
     <div className="xm-reveal">
-      <h1 className="xm-title-sm">{expired ? "This link has expired" : "Change your password"}</h1>
+      <h1 className="xm-title">{expired ? "This link has expired" : "Change your password"}</h1>
       <p className="mt-3 mb-7 text-[17px] text-muted">
         {expired
           ? "Reset links work once, for one hour. Ask for a new one below and open the newest email."

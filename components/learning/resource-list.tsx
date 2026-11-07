@@ -21,17 +21,17 @@ export function ResourceList({ resources }: { resources: Resource[] }) {
               href={`/api/resources/${r.id}`}
               target={isLink ? "_blank" : undefined}
               rel={isLink ? "noopener noreferrer" : undefined}
-              className="group flex items-center gap-3 py-3 transition-colors duration-120"
+              className="group flex min-h-14 items-center gap-3 py-3 transition-colors duration-120"
             >
-              <span className="grid size-9 shrink-0 place-items-center rounded-md bg-sunken text-body transition-colors duration-120 group-hover:bg-primary group-hover:text-white">
+              <span className="grid size-11 shrink-0 place-items-center rounded-md bg-sunken text-ink transition-colors duration-120 group-hover:bg-primary group-hover:text-white">
                 {isLink ? <ExternalLink aria-hidden className="size-4 stroke-[2]" /> : <Download aria-hidden className="size-4 stroke-[2]" />}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate font-ui text-[14px] font-semibold text-ink group-hover:text-link">{r.title}</span>
-                <span className="block truncate text-[13px] text-muted">
+                <span className="block truncate font-ui text-[15px] font-semibold text-ink group-hover:text-link">{r.title}</span>
+                <span className="block truncate text-[15px] text-muted">
                   {kind(r)}
-                  {r.file_size ? ` · ${formatBytes(r.file_size)}` : ""}
-                  {r.description ? ` · ${r.description}` : ""}
+                  {r.file_size ? `, ${formatBytes(r.file_size)}` : ""}
+                  {r.description ? `. ${r.description}` : ""}
                 </span>
               </span>
             </a>

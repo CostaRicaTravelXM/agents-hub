@@ -11,6 +11,7 @@ import type { FormState } from "@/app/actions/auth";
 const schema = z.object({
   full_name: z.string().trim().min(2, "Enter your full name").max(120),
   company: z.string().trim().max(160).optional().transform((v) => v || null),
+  is_independent: z.preprocess((v) => v === "on" || v === "true" || v === true, z.boolean()),
   job_title: z.string().trim().max(120).optional().transform((v) => v || null),
   country: z.string().trim().max(80).optional().transform((v) => v || null),
   phone: z
@@ -35,6 +36,7 @@ export async function saveProfile(_prev: FormState, formData: FormData): Promise
   const parsed = schema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { fieldErrors: toErrors(parsed.error) };
   const { next, ...values } = parsed.data;
+  if (values.is_independent) values.company = null;
   const supabase = await createClient();
   const { error } = await supabase
     .from("profiles")

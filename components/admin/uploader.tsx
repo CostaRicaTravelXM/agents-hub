@@ -126,7 +126,7 @@ export function Uploader({
           disabled={progress !== null}
           className={cn(
             "flex w-full flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed px-4 py-8 text-center transition-colors duration-120 ease-standard",
-            drag ? "border-secondary bg-turquoise/10" : "border-[#d6cdb8] bg-card hover:border-line-strong",
+            drag ? "border-ink bg-turquoise/10" : "border-line bg-card hover:border-line-strong",
           )}
         >
           {progress === null ? (

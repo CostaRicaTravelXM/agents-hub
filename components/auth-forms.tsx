@@ -16,7 +16,7 @@ import {
   type FormState,
 } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
-import { Field, Input } from "@/components/ui/form";
+import { Checkbox, Field, Input, keepValues } from "@/components/ui/form";
 
 export function FormError({ state }: { state: FormState }) {
   if (!state?.error) return null;
@@ -53,6 +53,45 @@ export function SentNotice({
 
 const inboxTip = "Not there after a few minutes? Look in your spam or promotions folder.";
 
+/** Agency (optional) with the "I work on my own" box that clears and disables it. */
+export function AgencyFields({ company, isIndependent, error }: { company?: string | null; isIndependent?: boolean; error?: string }) {
+  const [independent, setIndependent] = useState(Boolean(isIndependent));
+  const [value, setValue] = useState(company ?? "");
+  return (
+    <div className="space-y-3">
+      <Field
+        label="Agency or company"
+        htmlFor="company"
+        error={error}
+        optional
+        hint={independent ? "Not needed: you told us you work on your own." : "The agency you book through, if you have one."}
+      >
+        <Input
+          id="company"
+          name="company"
+          value={independent ? "" : value}
+          onChange={(e) => setValue(e.target.value)}
+          disabled={independent}
+          autoComplete="organization"
+          aria-invalid={!!error}
+        />
+      </Field>
+      <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-md border border-line bg-card px-4 py-3">
+        <Checkbox
+          name="is_independent"
+          checked={independent}
+          onCheckedChange={(c) => {
+            const on = c === true;
+            setIndependent(on);
+            if (on) setValue("");
+          }}
+        />
+        <span className="font-ui text-[16px] font-semibold text-ink">I am a solo or independent agent</span>
+      </label>
+    </div>
+  );
+}
+
 function PasswordInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   const [show, setShow] = useState(false);
   return (
@@ -62,7 +101,7 @@ function PasswordInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
         type="button"
         onClick={() => setShow((s) => !s)}
         aria-label={show ? "Hide password" : "Show password"}
-        className="absolute top-1/2 right-1.5 grid size-9 -translate-y-1/2 place-items-center rounded-md text-muted transition-colors duration-120 hover:bg-sunken hover:text-ink"
+        className="absolute top-1/2 right-1 grid size-11 -translate-y-1/2 place-items-center rounded-pill text-muted transition-colors duration-120 hover:bg-sunken hover:text-ink"
       >
         {show ? <EyeOff className="size-5 stroke-[1.75]" aria-hidden /> : <Eye className="size-5 stroke-[1.75]" aria-hidden />}
       </button>
@@ -89,7 +128,7 @@ function GoogleButton({ next }: { next?: string }) {
 
 function OrDivider() {
   return (
-    <div className="flex items-center gap-4 text-[13px] text-muted">
+    <div className="flex items-center gap-4 text-[15px] text-muted">
       <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
     </div>
   );
@@ -100,11 +139,11 @@ function MagicLinkForm({ next, onBack }: { next?: string; onBack: () => void }) 
   if (state?.message)
     return (
       <SentNotice message={state.message}>
-        <p className="text-[14px] text-muted">{inboxTip}</p>
+        <p className="text-[15px] text-muted">{inboxTip}</p>
       </SentNotice>
     );
   return (
-    <form action={action} className="space-y-5" noValidate>
+    <form action={action} onSubmit={keepValues(action)} className="space-y-5" noValidate>
       <input type="hidden" name="next" value={next ?? ""} />
       <FormError state={state} />
       <Field label="Email" htmlFor="email" error={state?.fieldErrors?.email}>
@@ -132,7 +171,7 @@ export function LoginForm({ next, google }: { next?: string; google: boolean }) 
           <OrDivider />
         </>
       ) : null}
-      <form action={action} className="space-y-5" noValidate>
+      <form action={action} onSubmit={keepValues(action)} className="space-y-5" noValidate>
         <input type="hidden" name="next" value={next ?? ""} />
         <FormError state={state} />
         <Field label="Email" htmlFor="email" error={state?.fieldErrors?.email}>
@@ -166,7 +205,7 @@ function RegisterWithLinkForm({ next, onBack }: { next?: string; onBack: () => v
   if (state?.message) return <SentNotice message={state.message} />;
   const fe = state?.fieldErrors ?? {};
   return (
-    <form action={action} className="space-y-5" noValidate>
+    <form action={action} onSubmit={keepValues(action)} className="space-y-5" noValidate>
       <input type="hidden" name="next" value={next ?? ""} />
       <FormError state={state} />
       <div className="grid gap-5 sm:grid-cols-2">
@@ -180,6 +219,7 @@ function RegisterWithLinkForm({ next, onBack }: { next?: string; onBack: () => v
       <Field label="Email" htmlFor="email" error={fe.email}>
         <Input id="email" name="email" type="email" autoComplete="email" inputMode="email" required aria-invalid={!!fe.email} />
       </Field>
+      <AgencyFields error={fe.company} />
       <Button type="submit" block size="lg" loading={pending}>
         <Send aria-hidden /> Email me a link
       </Button>
@@ -191,11 +231,23 @@ function RegisterWithLinkForm({ next, onBack }: { next?: string; onBack: () => v
 }
 
 /** Shown only when Google or a sign-in link did not give us a full name. */
-export function NameForm({ firstName, lastName, next }: { firstName?: string | null; lastName?: string | null; next?: string }) {
+export function NameForm({
+  firstName,
+  lastName,
+  company,
+  isIndependent,
+  next,
+}: {
+  firstName?: string | null;
+  lastName?: string | null;
+  company?: string | null;
+  isIndependent?: boolean;
+  next?: string;
+}) {
   const [state, action, pending] = useActionState(completeAccount, undefined);
   const fe = state?.fieldErrors ?? {};
   return (
-    <form action={action} className="space-y-5" noValidate>
+    <form action={action} onSubmit={keepValues(action)} className="space-y-5" noValidate>
       <input type="hidden" name="next" value={next ?? ""} />
       <FormError state={state} />
       <div className="grid gap-5 sm:grid-cols-2">
@@ -206,6 +258,7 @@ export function NameForm({ firstName, lastName, next }: { firstName?: string | n
           <Input id="last_name" name="last_name" defaultValue={lastName ?? ""} autoComplete="family-name" required aria-invalid={!!fe.last_name} />
         </Field>
       </div>
+      <AgencyFields company={company} isIndependent={isIndependent} error={fe.company} />
       <Button type="submit" block size="lg" loading={pending}>
         Finish creating my account
       </Button>
@@ -227,7 +280,7 @@ export function RegisterForm({ next, google }: { next?: string; google: boolean 
           <OrDivider />
         </>
       ) : null}
-      <form action={action} className="space-y-5" noValidate>
+      <form action={action} onSubmit={keepValues(action)} className="space-y-5" noValidate>
         <input type="hidden" name="next" value={next ?? ""} />
         <FormError state={state} />
         <div className="grid gap-5 sm:grid-cols-2">
@@ -244,14 +297,15 @@ export function RegisterForm({ next, google }: { next?: string; google: boolean 
         <Field label="Password" htmlFor="password" error={fe.password} hint="At least 8 characters.">
           <PasswordInput id="password" name="password" autoComplete="new-password" required aria-invalid={!!fe.password} />
         </Field>
+        <AgencyFields error={fe.company} />
         <Button type="submit" block size="lg" loading={pending}>
           Create account
         </Button>
         <button type="button" onClick={() => setUseLink(true)} className="xm-link block text-[15px]">
           Use an email link instead of a password
         </button>
-        <p className="text-[13px] text-muted">
-          By creating an account you agree to receive course and certification emails from TravelXM.
+        <p className="text-[15px] text-muted">
+          By creating an account you agree to receive emails from TravelXM about courses, trips and offers for advisors.
         </p>
       </form>
     </div>
@@ -263,11 +317,11 @@ export function ForgotForm({ defaultEmail }: { defaultEmail?: string }) {
   if (state?.message)
     return (
       <SentNotice message={state.message}>
-        <p className="text-[14px] text-muted">{inboxTip}</p>
+        <p className="text-[15px] text-muted">{inboxTip}</p>
       </SentNotice>
     );
   return (
-    <form action={action} className="space-y-5" noValidate>
+    <form action={action} onSubmit={keepValues(action)} className="space-y-5" noValidate>
       <FormError state={state} />
       <Field label="Email" htmlFor="email" error={state?.fieldErrors?.email}>
         <Input
@@ -294,7 +348,7 @@ export function SendMyResetLink({ email }: { email: string }) {
   if (state?.message)
     return (
       <SentNotice message={state.message}>
-        <p className="text-[14px] text-muted">{inboxTip}</p>
+        <p className="text-[15px] text-muted">{inboxTip}</p>
       </SentNotice>
     );
   return (
@@ -314,7 +368,7 @@ export function ResetForm() {
   // On success the action redirects to /reset-password?done=1.
   const [state, action, pending] = useActionState(updatePassword, undefined);
   return (
-    <form action={action} className="space-y-5" noValidate>
+    <form action={action} onSubmit={keepValues(action)} className="space-y-5" noValidate>
       <FormError state={state} />
       <Field label="New password" htmlFor="password" error={state?.fieldErrors?.password} hint="At least 8 characters.">
         <PasswordInput id="password" name="password" autoComplete="new-password" required aria-invalid={!!state?.fieldErrors?.password} />

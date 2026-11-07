@@ -21,14 +21,19 @@ export function DialogContent({
   description?: string;
   children?: React.ReactNode;
   className?: string;
-  /** "sheet" slides up from the bottom on mobile; centered dialog on desktop. */
-  side?: "center" | "sheet" | "right";
+  /**
+   * "sheet" slides up from the bottom on mobile, centered dialog on desktop.
+   * "panel" slides up on a phone and in from the right on larger screens.
+   */
+  side?: "center" | "sheet" | "right" | "panel";
 }) {
   const layout =
-    side === "right"
-      ? "inset-y-0 right-0 h-full w-[min(420px,100vw)] rounded-none data-[state=open]:animate-[xm-slide-left_340ms_var(--ease-standard)]"
+    side === "panel"
+      ? "inset-x-0 bottom-0 max-h-[88dvh] rounded-t-xl data-[state=open]:animate-[xm-slide-up_340ms_var(--ease-standard)] md:inset-x-auto md:inset-y-0 md:right-0 md:h-full md:max-h-none md:w-[440px] md:rounded-t-none md:rounded-l-xl md:data-[state=open]:animate-[xm-slide-left_340ms_var(--ease-standard)]"
+      : side === "right"
+      ? "inset-y-0 right-0 h-full w-[min(420px,100vw)] rounded-l-xl data-[state=open]:animate-[xm-slide-left_340ms_var(--ease-standard)]"
       : side === "sheet"
-        ? "inset-x-0 bottom-0 max-h-[88dvh] rounded-t-lg md:inset-x-auto md:bottom-auto md:top-1/2 md:left-1/2 md:w-[min(560px,calc(100vw-32px))] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-lg data-[state=open]:animate-[xm-slide-up_340ms_var(--ease-standard)] md:data-[state=open]:animate-[xm-pop_200ms_var(--ease-standard)]"
+        ? "inset-x-0 bottom-0 max-h-[88dvh] rounded-t-xl md:inset-x-auto md:bottom-auto md:top-1/2 md:left-1/2 md:w-[min(560px,calc(100vw-32px))] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-lg data-[state=open]:animate-[xm-slide-up_340ms_var(--ease-standard)] md:data-[state=open]:animate-[xm-pop_200ms_var(--ease-standard)]"
         : "top-1/2 left-1/2 w-[min(560px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 rounded-lg data-[state=open]:animate-[xm-pop_200ms_var(--ease-standard)]";
   return (
     <RDialog.Portal>
@@ -36,7 +41,7 @@ export function DialogContent({
       <RDialog.Content
         className={cn("fixed z-50 flex flex-col overflow-hidden bg-card shadow-raised outline-none", layout, className)}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-line px-5 pt-5 pb-4 md:px-6">
+        <div className="flex items-start justify-between gap-4 px-5 pt-5 pb-3 md:px-6">
           <div className="min-w-0">
             <RDialog.Title className="xm-subtitle-sm">{title}</RDialog.Title>
             {description ? (
@@ -47,12 +52,12 @@ export function DialogContent({
           </div>
           <RDialog.Close
             aria-label="Close"
-            className="-mt-1 -mr-2 grid size-10 shrink-0 place-items-center rounded-md text-body transition-colors duration-120 ease-standard hover:bg-sunken"
+            className="-mt-1 -mr-2 grid size-11 shrink-0 place-items-center rounded-pill bg-sunken text-ink transition-colors duration-120 ease-standard hover:bg-line"
           >
             <X className="size-5 stroke-[1.75]" aria-hidden />
           </RDialog.Close>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-6">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 pt-2 pb-6 md:px-6">{children}</div>
       </RDialog.Content>
     </RDialog.Portal>
   );
@@ -85,7 +90,7 @@ export function Confirm({
           <RAlert.Title className="xm-subtitle-sm">{title}</RAlert.Title>
           {body ? <RAlert.Description className="mt-2 text-[15px] text-muted">{body}</RAlert.Description> : null}
           <div className="mt-6 flex justify-end gap-3">
-            <RAlert.Cancel className="inline-flex h-11 items-center rounded-md px-5 font-ui text-ui font-semibold text-ink transition-colors duration-120 ease-standard hover:bg-sunken">
+            <RAlert.Cancel className="inline-flex h-12 items-center rounded-pill px-5 font-ui text-[16px] font-semibold text-ink transition-colors duration-120 ease-standard hover:bg-sunken">
               Cancel
             </RAlert.Cancel>
             <button
@@ -98,7 +103,7 @@ export function Confirm({
                 })
               }
               className={cn(
-                "inline-flex h-11 items-center rounded-md px-5 font-ui text-ui font-semibold transition-colors duration-120 ease-standard active:translate-y-px disabled:opacity-[.42]",
+                "inline-flex h-12 items-center rounded-pill px-5 font-ui text-[16px] font-semibold transition-colors duration-120 ease-standard active:translate-y-px disabled:opacity-[.42]",
                 destructive ? "bg-danger text-white hover:bg-[#a84e2b]" : "bg-primary text-white hover:bg-primary-hover",
               )}
             >
@@ -145,7 +150,7 @@ export function Tooltip({ content, children }: { content: string; children: Reac
         <RTooltip.Portal>
           <RTooltip.Content
             sideOffset={6}
-            className="z-50 max-w-60 rounded-md bg-inverse px-2.5 py-1.5 text-[13px] text-cloudy shadow-raised data-[state=delayed-open]:animate-[xm-fade_120ms_var(--ease-standard)]"
+            className="z-50 max-w-60 rounded-md bg-inverse px-2.5 py-1.5 text-[15px] text-cloudy shadow-raised data-[state=delayed-open]:animate-[xm-fade_120ms_var(--ease-standard)]"
           >
             {content}
           </RTooltip.Content>
