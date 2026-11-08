@@ -7,6 +7,8 @@
  * generated lesson videos (ffmpeg, Ken Burns over the destination photos) and
  * branded PDFs, a partner group, and ten weeks of synthetic learner activity so
  * the analytics dashboard has something to show.
+ *
+ * Local only: it refuses to run when Supabase or storage point anywhere else.
  */
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
@@ -16,6 +18,10 @@ import { createClient } from "@supabase/supabase-js";
 import React from "react";
 import { Document, Font, Image, Page, StyleSheet, Text, View, renderToBuffer } from "@react-pdf/renderer";
 import { categories, courses, photoForVideo, type SeedCourse } from "./seed-content.mts";
+import { assertLocalOnly } from "./local-only.mts";
+
+// Demo accounts and courses never go to production.
+assertLocalOnly("The demo seed", { NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL, R2_ENDPOINT: process.env.R2_ENDPOINT });
 
 const root = process.cwd();
 const cache = path.join(root, ".seed-cache");

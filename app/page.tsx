@@ -31,14 +31,18 @@ function courseTime(c: Pick<PublicCourse, "estimated_minutes" | "durationSeconds
 
 export default async function HomePage() {
   const [viewer, catalog] = await Promise.all([getViewer(), getPublicCatalog()]);
+  // The course the certificate promise is about. With no certificate course yet
+  // (a fresh launch), the landing promises only what the Hub really has.
   const specialist =
-    catalog.find((c) => c.slug === "costa-rica-specialist") ?? catalog.find((c) => c.featured && c.certificate_enabled) ?? catalog[0] ?? null;
+    catalog.find((c) => c.slug === "costa-rica-specialist" && c.certificate_enabled) ??
+    catalog.find((c) => c.featured && c.certificate_enabled) ??
+    catalog.find((c) => c.certificate_enabled) ??
+    null;
   const others = catalog.filter((c) => c.id !== specialist?.id);
   // Courses without a cover photo render as a blank slot; keep them off the
   // landing whenever enough courses have one.
   const withCover = others.filter((c) => c.cover_key);
   const destinations = (withCover.length >= 3 ? withCover : others).slice(0, 6);
-  const certTitle = specialist?.title ?? "Costa Rica Specialist";
   const join = viewer ? "/dashboard" : "/register";
   const signIn = (next?: string) => (viewer ? (next ?? "/dashboard") : `/login${next ? `?next=${encodeURIComponent(next)}` : ""}`);
 
@@ -85,7 +89,7 @@ export default async function HomePage() {
               desktop the details sit under the actions in the left column. */}
           <div className="xm-reveal lg:self-end">
             <h1 id="hero-heading" className="xm-hero max-w-[12ch]">
-              Become a Costa Rica Specialist
+              {specialist ? "Become a Costa Rica Specialist" : "Everything you need to sell Costa Rica"}
             </h1>
             <p className="xm-lead mt-5 max-w-xl md:mt-6">
               The Agents Hub is where TravelXM, the team in San José that runs your clients&apos; trips, gives advisors everything:
@@ -133,23 +137,27 @@ export default async function HomePage() {
               </div>
               <p className="xm-meta absolute top-5 left-5 z-10 hidden lg:block">Arenal, La Fortuna</p>
             </div>
-            <div className="xm-settle relative z-10 mx-4 -mt-16 sm:mx-12 sm:-mt-40 lg:absolute lg:bottom-12 lg:-left-10 lg:mx-0 lg:mt-0 lg:w-[400px]">
-              <Card className="shadow-raised">
-                <Badge tone="warning" className="absolute top-3 right-3 z-10">
-                  Sample
-                </Badge>
-                <CertificateArt compact name="Your name here" courseTitle={certTitle} footer="Issued when you pass the final exam" />
-              </Card>
-            </div>
-            <div className="mt-4 flex items-center gap-3 rounded-lg bg-card p-4 shadow-card lg:absolute lg:top-14 lg:-right-6 lg:mt-0 lg:shadow-raised">
-              <span className="grid size-10 shrink-0 place-items-center rounded-pill bg-olive text-white">
-                <BadgeCheck aria-hidden className="size-5 stroke-[1.75]" />
-              </span>
-              <span>
-                <span className="block font-ui text-[15px] font-semibold text-ink">Clients can verify it</span>
-                <span className="block text-[15px] text-muted">Every certificate has its own check code</span>
-              </span>
-            </div>
+            {specialist ? (
+              <>
+                <div className="xm-settle relative z-10 mx-4 -mt-16 sm:mx-12 sm:-mt-40 lg:absolute lg:bottom-12 lg:-left-10 lg:mx-0 lg:mt-0 lg:w-[400px]">
+                  <Card className="shadow-raised">
+                    <Badge tone="warning" className="absolute top-3 right-3 z-10">
+                      Sample
+                    </Badge>
+                    <CertificateArt compact name="Your name here" courseTitle={specialist.title} footer="Issued when you pass the final exam" />
+                  </Card>
+                </div>
+                <div className="mt-4 flex items-center gap-3 rounded-lg bg-card p-4 shadow-card lg:absolute lg:top-14 lg:-right-6 lg:mt-0 lg:shadow-raised">
+                  <span className="grid size-10 shrink-0 place-items-center rounded-pill bg-olive text-white">
+                    <BadgeCheck aria-hidden className="size-5 stroke-[1.75]" />
+                  </span>
+                  <span>
+                    <span className="block font-ui text-[15px] font-semibold text-ink">Clients can verify it</span>
+                    <span className="block text-[15px] text-muted">Every certificate has its own check code</span>
+                  </span>
+                </div>
+              </>
+            ) : null}
             <Cutout name="toucan" width={170} height={120} className="-top-14 right-2 z-20 hidden lg:block" />
           </div>
 

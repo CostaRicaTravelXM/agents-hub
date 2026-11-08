@@ -56,7 +56,7 @@ export default async function CertificatesPage() {
           body="Finish every required lesson in a course, including its quiz, and the certificate appears here straight away."
           action={
             <Button asChild>
-              <Link href="/courses/costa-rica-specialist">Start the Costa Rica Specialist</Link>
+              <Link href="/courses">Browse courses</Link>
             </Button>
           }
         />
