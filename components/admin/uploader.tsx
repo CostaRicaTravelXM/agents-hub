@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { CloudUpload, FileCheck2, RotateCcw, X } from "lucide-react";
 import type { UploadKind } from "@/lib/media";
-import { UPLOAD_RULES } from "@/lib/media";
+import { MULTIPART_THRESHOLD, UPLOAD_RULES } from "@/lib/media";
 import { cn, formatBytes } from "@/lib/utils";
 
 export type Uploaded = { key: string; name: string; size: number; type: string; durationSeconds?: number };
@@ -19,6 +19,79 @@ function videoDuration(file: File): Promise<number | undefined> {
     v.onerror = () => resolve(undefined);
     v.src = URL.createObjectURL(file);
   });
+}
+
+/** One PUT straight to storage. Resolves with the ETag, which multipart needs. */
+function put(url: string, body: Blob, headers: Record<string, string>, onProgress: (loaded: number) => void) {
+  return new Promise<string>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", url);
+    for (const [k, v] of Object.entries(headers)) xhr.setRequestHeader(k, v);
+    xhr.upload.onprogress = (e) => onProgress(e.loaded);
+    xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve(xhr.getResponseHeader("ETag") ?? "") : reject(new Error(`Storage responded ${xhr.status}`)));
+    xhr.onerror = () => reject(new Error("Network error during upload"));
+    xhr.send(body);
+  });
+}
+
+async function postJson<T>(url: string, body: unknown): Promise<T> {
+  const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error ?? "Upload could not start");
+  return j as T;
+}
+
+const PARALLEL_PARTS = 3;
+const PART_ATTEMPTS = 3;
+
+/**
+ * Files over 100 MB go up in parts, three at a time. A part that fails is retried,
+ * so a dropped connection costs one part instead of the whole video.
+ */
+async function uploadInParts(kind: UploadKind, file: File, type: string, scope: string | undefined, onProgress: (pct: number) => void) {
+  const start = await postJson<{ key: string; uploadId: string; partSize: number; urls: string[] }>("/api/admin/upload/multipart", {
+    action: "create",
+    kind,
+    filename: file.name,
+    contentType: type,
+    size: file.size,
+    scope,
+  });
+  const loaded = new Array<number>(start.urls.length).fill(0);
+  const report = () => onProgress(Math.min(99, Math.round((loaded.reduce((a, b) => a + b, 0) / file.size) * 100)));
+  const parts: { partNumber: number; etag: string }[] = [];
+  let next = 0;
+
+  const worker = async () => {
+    while (next < start.urls.length) {
+      const i = next++;
+      const blob = file.slice(i * start.partSize, Math.min(file.size, (i + 1) * start.partSize));
+      for (let attempt = 1; ; attempt++) {
+        try {
+          const etag = await put(start.urls[i], blob, {}, (n) => {
+            loaded[i] = n;
+            report();
+          });
+          if (!etag) throw new Error("Storage did not confirm a part. Check the bucket's CORS settings.");
+          parts.push({ partNumber: i + 1, etag });
+          break;
+        } catch (e) {
+          loaded[i] = 0;
+          if (attempt >= PART_ATTEMPTS) throw e;
+          await new Promise((r) => setTimeout(r, 1500 * attempt));
+        }
+      }
+    }
+  };
+
+  try {
+    await Promise.all(Array.from({ length: Math.min(PARALLEL_PARTS, start.urls.length) }, worker));
+  } catch (e) {
+    await postJson("/api/admin/upload/multipart", { action: "abort", kind, key: start.key, uploadId: start.uploadId }).catch(() => {});
+    throw e;
+  }
+  await postJson("/api/admin/upload/multipart", { action: "complete", kind, key: start.key, uploadId: start.uploadId, parts });
+  return start.key;
 }
 
 /** Direct-to-R2 upload with progress. The server only signs the request. */
@@ -54,28 +127,20 @@ export function Uploader({
     if (file.size > rule.maxBytes) return setError(`The file is larger than ${formatBytes(rule.maxBytes)}.`);
     setProgress(0);
     try {
-      const [sign, durationSeconds] = await Promise.all([
-        fetch("/api/admin/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ kind, filename: file.name, contentType: type, size: file.size, scope }),
-        }).then(async (r) => {
-          const j = await r.json();
-          if (!r.ok) throw new Error(j.error ?? "Upload could not start");
-          return j as { url: string; key: string };
-        }),
-        kind === "video" ? videoDuration(file) : Promise.resolve(undefined),
-      ]);
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("PUT", sign.url);
-        xhr.setRequestHeader("Content-Type", type);
-        xhr.upload.onprogress = (e) => e.lengthComputable && setProgress(Math.round((e.loaded / e.total) * 100));
-        xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Storage responded ${xhr.status}`)));
-        xhr.onerror = () => reject(new Error("Network error during upload"));
-        xhr.send(file);
-      });
-      onUploaded({ key: sign.key, name: file.name, size: file.size, type, durationSeconds });
+      const send = async () => {
+        if (file.size > MULTIPART_THRESHOLD) return uploadInParts(kind, file, type, scope, setProgress);
+        const sign = await postJson<{ url: string; key: string; headers: Record<string, string> }>("/api/admin/upload", {
+          kind,
+          filename: file.name,
+          contentType: type,
+          size: file.size,
+          scope,
+        });
+        await put(sign.url, file, sign.headers, (n) => setProgress(Math.round((n / file.size) * 100)));
+        return sign.key;
+      };
+      const [key, durationSeconds] = await Promise.all([send(), kind === "video" ? videoDuration(file) : Promise.resolve(undefined)]);
+      onUploaded({ key, name: file.name, size: file.size, type, durationSeconds });
       setProgress(null);
     } catch (e) {
       setProgress(null);

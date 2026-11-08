@@ -16,7 +16,8 @@
     "db:types": "supabase gen types typescript --local > lib/database.types.ts",
     "storage:start": "docker compose -f docker-compose.dev.yml up -d",
     "storage:setup": "node --env-file=.env.local scripts/setup-storage.mts",
-    "seed": "node --env-file=.env.local scripts/seed.mts"
+    "seed": "node --env-file=.env.local scripts/seed.mts",
+    "photos:move": "node --env-file=.env.local scripts/move-public-photos.mts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1139.0",

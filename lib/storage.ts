@@ -1,6 +1,17 @@
 import "server-only";
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  AbortMultipartUploadCommand,
+  CompleteMultipartUploadCommand,
+  CreateMultipartUploadCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+  S3Client,
+  UploadPartCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { PUBLIC_CACHE_CONTROL } from "@/lib/media";
 
 /**
  * Cloudflare R2 (S3 API). Two buckets:
@@ -63,12 +74,68 @@ export async function signedGetUrl(
   );
 }
 
+const cacheControl = (bucket: BucketKind) => (bucket === "public" ? PUBLIC_CACHE_CONTROL : undefined);
+
+/**
+ * A browser upload in one request. The headers are part of the signature, so the
+ * browser must send exactly the ones returned here (public files carry the CDN cache rule).
+ */
 export async function signedPutUrl(bucket: BucketKind, key: string, contentType: string, expiresIn = 60 * 30) {
-  return getSignedUrl(
+  const headers: Record<string, string> = { "Content-Type": contentType };
+  const cache = cacheControl(bucket);
+  if (cache) headers["Cache-Control"] = cache;
+  const url = await getSignedUrl(
     s3(),
-    new PutObjectCommand({ Bucket: buckets[bucket], Key: key, ContentType: contentType }),
-    { expiresIn },
+    new PutObjectCommand({ Bucket: buckets[bucket], Key: key, ContentType: contentType, CacheControl: cache }),
+    { expiresIn, signableHeaders: new Set(Object.keys(headers).map((h) => h.toLowerCase())) },
   );
+  return { url, headers };
+}
+
+/** Large files go up in parts, each signed here and sent by the browser straight to storage. */
+export async function createMultipart(bucket: BucketKind, key: string, contentType: string) {
+  const res = await s3().send(
+    new CreateMultipartUploadCommand({ Bucket: buckets[bucket], Key: key, ContentType: contentType, CacheControl: cacheControl(bucket) }),
+  );
+  if (!res.UploadId) throw new Error("Storage did not start the upload");
+  return res.UploadId;
+}
+
+export async function signedPartUrls(bucket: BucketKind, key: string, uploadId: string, parts: number, expiresIn = 60 * 60 * 6) {
+  return Promise.all(
+    Array.from({ length: parts }, (_, i) =>
+      getSignedUrl(s3(), new UploadPartCommand({ Bucket: buckets[bucket], Key: key, UploadId: uploadId, PartNumber: i + 1 }), { expiresIn }),
+    ),
+  );
+}
+
+export async function completeMultipart(bucket: BucketKind, key: string, uploadId: string, parts: { partNumber: number; etag: string }[]) {
+  await s3().send(
+    new CompleteMultipartUploadCommand({
+      Bucket: buckets[bucket],
+      Key: key,
+      UploadId: uploadId,
+      MultipartUpload: { Parts: parts.map((p) => ({ PartNumber: p.partNumber, ETag: p.etag })) },
+    }),
+  );
+}
+
+export async function abortMultipart(bucket: BucketKind, key: string, uploadId: string) {
+  try {
+    await s3().send(new AbortMultipartUploadCommand({ Bucket: buckets[bucket], Key: key, UploadId: uploadId }));
+  } catch {
+    // Unfinished parts also expire on their own; a failed abort must not hide the upload error.
+  }
+}
+
+/** Stored size in bytes, or null when the object does not exist. */
+export async function objectSize(bucket: BucketKind, key: string): Promise<number | null> {
+  try {
+    const res = await s3().send(new HeadObjectCommand({ Bucket: buckets[bucket], Key: key }));
+    return res.ContentLength ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function putObject(bucket: BucketKind, key: string, body: Uint8Array | Buffer, contentType: string) {
@@ -78,7 +145,7 @@ export async function putObject(bucket: BucketKind, key: string, body: Uint8Arra
       Key: key,
       Body: body,
       ContentType: contentType,
-      CacheControl: bucket === "public" ? "public, max-age=31536000, immutable" : undefined,
+      CacheControl: cacheControl(bucket),
     }),
   );
 }

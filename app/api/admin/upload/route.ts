@@ -2,8 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { getViewer, isStaff } from "@/lib/auth";
 import { signedPutUrl } from "@/lib/storage";
-import { UPLOAD_RULES } from "@/lib/media";
-import { slugify } from "@/lib/utils";
+import { UPLOAD_RULES, uploadDestination } from "@/lib/media";
 
 const body = z.object({
   kind: z.enum(["video", "document", "image"]),
@@ -27,10 +26,7 @@ export async function POST(request: NextRequest) {
   if (size > rule.maxBytes) {
     return NextResponse.json({ error: `File is too large. The limit is ${Math.round(rule.maxBytes / 1024 / 1024)} MB.` }, { status: 400 });
   }
-  const ext = filename.includes(".") ? filename.split(".").pop()!.toLowerCase().replace(/[^a-z0-9]/g, "") : "";
-  const base = slugify(filename.replace(/\.[^.]+$/, "")) || kind;
-  const folder = { video: "videos", document: "documents", image: "images" }[kind];
-  const key = `${folder}/${scope ? `${slugify(scope)}/` : ""}${crypto.randomUUID().slice(0, 8)}-${base}${ext ? `.${ext}` : ""}`;
-  const url = await signedPutUrl(rule.bucket, key, contentType);
-  return NextResponse.json({ url, key, bucket: rule.bucket });
+  const { bucket, key } = uploadDestination(kind, filename, scope);
+  const { url, headers } = await signedPutUrl(bucket, key, contentType);
+  return NextResponse.json({ url, headers, key, bucket });
 }

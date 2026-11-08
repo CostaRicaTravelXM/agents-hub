@@ -28,7 +28,7 @@ const nextConfig: NextConfig = {
   },
   // Brand fonts for the certificate PDF route.
   outputFileTracingIncludes: {
-    "/api/certificates/[code]": ["./assets/fonts/**", "./public/brand/travelxm-logo.png"],
+    "/api/certificates/[code]": ["./assets/fonts/**", "./public/brand/travelxm-logo.png", "./public/brand/cutouts/toucan.png"],
   },
   // Masterclasses live in Learning now. Old links, including the marketing site's, keep working.
   async redirects() {
