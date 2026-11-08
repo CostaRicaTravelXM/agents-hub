@@ -1,7 +1,7 @@
 "use client";
 
 import { useDeferredValue, useMemo, useState } from "react";
-import { Search, X } from "lucide-react";
+import { GraduationCap, Search, X } from "lucide-react";
 import type { CourseSummary } from "@/lib/queries";
 import { CourseCard } from "@/components/learning/course-card";
 import { EmptyState } from "@/components/ui/surface";
@@ -40,6 +40,17 @@ export function Catalog({ courses, initialCategory }: { courses: CourseSummary[]
     if (q && ![c.title, c.subtitle, c.description, c.category?.name].some((t) => t?.toLowerCase().includes(q))) return false;
     return true;
   });
+
+  // Nothing published yet (a fresh launch): filters and search would only get in the way.
+  if (!courses.length) {
+    return (
+      <EmptyState
+        icon={<GraduationCap aria-hidden />}
+        title="Courses are on their way"
+        body="The TravelXM team is preparing the first courses. They appear here as soon as they are published."
+      />
+    );
+  }
 
   return (
     <div>

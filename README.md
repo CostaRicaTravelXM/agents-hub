@@ -112,14 +112,11 @@ Staff accounts are excluded from every number. The agents and enrollments lists 
 
 ## Deploying to production
 
-1. **Supabase:** create a project, then `npx supabase link --project-ref <ref>` and `npx supabase db push`. In Authentication, set the Site URL to your domain and add `https://<domain>/auth/confirm` and `https://<domain>/auth/callback` to the redirect URLs. Configure SMTP (for example Resend) so confirmation and reset emails come from TravelXM. For Google sign-in, enable the Google provider and set `NEXT_PUBLIC_GOOGLE_AUTH=true`.
-2. **Cloudflare R2:** create `academy-private` and `academy-public`, and give the public bucket a custom domain such as `media.travelxm.com`. Create an API token with object read and write access. Then run `npm run storage:setup` with the production variables to apply CORS for your domain.
-3. **Hosting (Vercel or any Node host):** set the variables from `.env.example`, with `R2_ENDPOINT=https://<ACCOUNT_ID>.r2.cloudflarestorage.com`, `R2_FORCE_PATH_STYLE=false` and `NEXT_PUBLIC_MEDIA_URL=https://media.travelxm.com`. Add `GOOGLE_DRIVE_API_KEY` as a server variable; the root folder is the first Drive link under Marketing in `/admin`. Everything in that folder is visible to every signed-in agent, and new files appear within five minutes.
-4. **First admin:** register normally, then in the Supabase SQL editor run `update profiles set role = 'admin' where email = 'you@travelxm.com';`.
+Follow [docs/DEPLOY.md](docs/DEPLOY.md), step by step: GitHub, Cloudflare DNS and R2, the shared Supabase project, Vercel, a device checklist, and going live.
 
-Do not run `npm run seed` against production. It creates demo accounts.
-
-5. **Hub extras:** set `NEXT_PUBLIC_AGENTS_PORTAL_URL` (the Agent Portal) and `N8N_AGENTS_WEBHOOK_URL` (the n8n "TravelXM — Agents Hub" webhook, whose welcome email must link to this app's `/login`). The book renderer needs the native packages `@napi-rs/canvas` and `sharp`, which Vercel installs from the lockfile.
+Two rules hold throughout:
+- **Production starts with real data only.** Migrations bring the 13 FAM trips, the Marketing link and the Masterclasses category; everything else is added in `/admin`. `npm run seed` creates demo accounts and courses, and refuses to run unless Supabase and storage are both local.
+- **Keys stay on the server.** Only variables starting with `NEXT_PUBLIC_` reach the browser, and none of them is a secret.
 
 ## Project map
 
@@ -157,5 +154,6 @@ FAM trips and offers can carry a Zoho Forms link. The Hub shows the form inside 
 ## Notes and known limits
 
 - The stack follows the Phase 1 document, with two deliberate deviations. Radix primitives styled to the brand replace shadcn/ui, which uses the same primitives underneath. Server Components and Server Actions replace React Query and Zustand, since no client-side cache is needed.
-- Videos are progressive MP4 served from R2. If adaptive bitrate becomes necessary, `video_key` can point to Cloudflare Stream without schema changes.
+- Videos are progressive MP4 served from R2 through signed links, which Cloudflare does not cache, so compress them before uploading (1080p, under 1 GB). Files over 100 MB upload in parts, three at a time with retries. Cloudflare Stream would add adaptive quality, but needs its own upload path and player.
+- Admin photos are uploaded with a one-year immutable `Cache-Control`; every upload gets a new key, so a replaced photo never shows stale.
 - Seed photography is Commons-licensed (see `public/photos/CREDITS.md`). Replace it with TravelXM's own photography before launch. The demo videos are generated from those photos.
