@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const mediaBase = process.env.NEXT_PUBLIC_MEDIA_URL ? new URL(process.env.NEXT_PUBLIC_MEDIA_URL) : null;
 const localMedia = mediaBase ? ["localhost", "127.0.0.1"].includes(mediaBase.hostname) : false;
 
+// Vercel functions run on Linux x64 (glibc). The win32/darwin packages only exist on dev machines.
+const BOOK_RENDER_FILES = ["./node_modules/@napi-rs/canvas/**/*", "./node_modules/@napi-rs/canvas-linux-x64-gnu/**/*"];
+
 const nextConfig: NextConfig = {
   turbopack: { root: process.cwd() },
   devIndicators: false,
@@ -29,6 +32,10 @@ const nextConfig: NextConfig = {
   // Brand fonts for the certificate PDF route.
   outputFileTracingIncludes: {
     "/api/certificates/[code]": ["./assets/fonts/**", "./public/brand/travelxm-logo.png", "./public/brand/cutouts/toucan.png"],
+    // pdf.js loads the native canvas through a runtime createRequire the tracer cannot see, so book
+    // rendering (admin save/prepare actions and the page route) would ship without it on Vercel.
+    "/admin/books/*": BOOK_RENDER_FILES,
+    "/api/hub/books/*/page/*": BOOK_RENDER_FILES,
   },
   // Masterclasses live in Learning now. Old links, including the marketing site's, keep working.
   async redirects() {
