@@ -1,8 +1,56 @@
 {
   "GR04": {
     "video_key": "videos/masterclasses/5995fd5a-top-producer-playbook.mp4",
-    "poster_key": "images/masterclasses/e1e4e1ee-top-producer-playbook.jpg",
+    "poster_key": "images/masterclasses/98c868e0-top-producer-playbook.jpg",
     "duration_seconds": 920,
     "video_bytes": 233163728
+  },
+  "GR01": {
+    "video_key": "videos/masterclasses/d74892fb-costa-rica-seller-foundations.mp4",
+    "poster_key": "images/masterclasses/c08f1d3d-costa-rica-seller-foundations.jpg",
+    "duration_seconds": 1747,
+    "video_bytes": 714567020
+  },
+  "GR02": {
+    "video_key": "videos/masterclasses/b59db046-seasons-gateways-transfers.mp4",
+    "poster_key": "images/masterclasses/2bf7919a-seasons-gateways-transfers.jpg",
+    "duration_seconds": 1897,
+    "video_bytes": 780079135
+  },
+  "GR03": {
+    "video_key": "videos/masterclasses/8b941089-luxury-and-eco-luxury.mp4",
+    "poster_key": "images/masterclasses/b338abe7-luxury-and-eco-luxury.jpg",
+    "duration_seconds": 1411,
+    "video_bytes": 549093567
+  },
+  "GR05": {
+    "video_key": "videos/masterclasses/85bab0df-mice-corporate-retreats.mp4",
+    "poster_key": "images/masterclasses/acbfee3a-mice-corporate-retreats.jpg",
+    "duration_seconds": 985,
+    "video_bytes": 367417202
+  },
+  "GR06": {
+    "video_key": "videos/masterclasses/fc37f827-wellness-transformational-travel.mp4",
+    "poster_key": "images/masterclasses/956b29d5-wellness-transformational-travel.jpg",
+    "duration_seconds": 1126,
+    "video_bytes": 383207903
+  },
+  "GR07": {
+    "video_key": "videos/masterclasses/80b58ad4-adventure-experiential-travel.mp4",
+    "poster_key": "images/masterclasses/d9962e7e-adventure-experiential-travel.jpg",
+    "duration_seconds": 959,
+    "video_bytes": 355256517
+  },
+  "GR08": {
+    "video_key": "videos/masterclasses/78a25a8b-weddings-and-honeymoons.mp4",
+    "poster_key": "images/masterclasses/ea622fd8-weddings-and-honeymoons.jpg",
+    "duration_seconds": 1262,
+    "video_bytes": 470361562
+  },
+  "GR09": {
+    "video_key": "videos/masterclasses/fb4b7e68-multigenerational-family-travel.mp4",
+    "poster_key": "images/masterclasses/11ccb5b6-multigenerational-family-travel.jpg",
+    "duration_seconds": 1675,
+    "video_bytes": 642532549
   }
 }
