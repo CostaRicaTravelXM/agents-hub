@@ -4,54 +4,72 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
     <title>Reset your TravelXM password</title>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
   </head>
   <!--
     Supabase Auth password recovery email.
     The button goes to /auth/confirm with a token hash (not the default PKCE
     link), so it works on any device. /auth/confirm verifies it, signs the
     agent in and opens /reset-password with a 15-minute window.
-    Agents Hub and Agent Portal share these accounts, so the link goes back to
-    whichever app asked (RedirectTo, e.g. https://learn.travelxm.com/auth/confirm?next=/reset-password).
-    RedirectTo must already carry a query string and be in additional_redirect_urls.
+    RedirectTo (e.g. https://hub.travelxm.com/auth/confirm?next=/reset-password)
+    must already carry a query string and be in additional_redirect_urls.
+    Images live on media.travelxm.com (R2 + CDN). Replace a file under a new
+    name (-v2), since that bucket is cached as immutable for a year.
   -->
-  <body style="margin:0;padding:0;background:#FDF6E3;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FDF6E3;">
+  <body style="margin:0;padding:0;background:#F5F5F3;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F5F5F3;">
       <tr>
-        <td align="center" style="padding:32px 16px;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+        <td align="center" style="padding:24px 12px 32px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;">
             <tr>
-              <td style="padding:0 0 24px;">
-                <img src="{{ .SiteURL }}/brand/travelxm-logo.png" width="56" height="56" alt="TravelXM" style="display:block;border:0;" />
+              <td style="line-height:0;font-size:0;border-radius:14px 14px 0 0;background:#507C13;">
+                <img src="https://media.travelxm.com/email/monteverde-banner-v1.jpg" width="560" alt="" style="display:block;width:100%;max-width:560px;height:auto;border:0;border-radius:14px 14px 0 0;" />
               </td>
             </tr>
             <tr>
-              <td style="background:#FFFFFF;border-radius:8px;padding:32px;font-family:Arimo,Helvetica,Arial,sans-serif;color:#3D3733;">
-                <h1 style="margin:0 0 16px;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:24px;line-height:1.2;font-weight:600;color:#000000;">
+              <td style="background:#FFFFFF;border-radius:0 0 14px 14px;padding:28px 32px 32px;font-family:'Be Vietnam Pro',Helvetica,Arial,sans-serif;color:#3D3733;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="padding:0 12px 0 0;vertical-align:middle;">
+                      <img src="https://media.travelxm.com/email/travelxm-logo-v2.png" width="48" height="48" alt="TravelXM" style="display:block;border:0;" />
+                    </td>
+                    <td style="vertical-align:middle;font-family:'Be Vietnam Pro',Helvetica,Arial,sans-serif;">
+                      <div style="font-size:19px;line-height:1;font-weight:700;letter-spacing:-0.02em;color:#1D1A18;">TravelXM</div>
+                      <div style="margin-top:4px;font-size:15px;line-height:1;font-weight:500;color:#6B625C;">Agents Hub</div>
+                    </td>
+                  </tr>
+                </table>
+                <h1 style="margin:28px 0 12px;font-family:'Be Vietnam Pro',Helvetica,Arial,sans-serif;font-size:30px;line-height:1.15;font-weight:700;letter-spacing:-0.02em;color:#1D1A18;">
                   Reset your password
                 </h1>
-                <p style="margin:0 0 24px;font-size:17px;line-height:1.55;">
-                  Someone asked to change the password of the TravelXM account for {{ .Email }} (Agents Hub and Agent Portal). If it was you, press the button and choose a new password.
+                <p style="margin:0 0 28px;font-size:17px;line-height:1.55;">
+                  Someone asked to change the password of the Agents Hub account for {{ .Email }}. If it was you, press the button and choose a new password.
                 </p>
-                <table role="presentation" cellpadding="0" cellspacing="0">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                   <tr>
-                    <td style="border-radius:4px;background:#70A91B;">
+                    <td style="border-radius:999px;background:#507C13;">
                       <a
                         href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=recovery"
-                        style="display:inline-block;padding:14px 28px;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:17px;font-weight:700;color:#FFFFFF;text-decoration:none;border-radius:4px;"
+                        style="display:inline-block;padding:15px 30px;font-family:'Be Vietnam Pro',Helvetica,Arial,sans-serif;font-size:16px;line-height:1;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:999px;"
                         >Choose a new password</a
                       >
                     </td>
                   </tr>
                 </table>
-                <p style="margin:24px 0 0;font-size:13px;line-height:1.55;color:#6B625C;">
+                <p style="margin:28px 0 0;padding:20px 0 0;border-top:1px solid #EBE9E6;font-size:15px;line-height:1.55;color:#6B625C;">
+                  If the button does not work, copy this link into your browser:<br />
+                  <a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=recovery" style="color:#2F7031;word-break:break-all;">{{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=recovery</a>
+                </p>
+                <p style="margin:16px 0 0;font-size:15px;line-height:1.55;color:#6B625C;">
                   The link works once, for one hour. If you did not ask for this, ignore this email: your password stays the same.
                 </p>
               </td>
             </tr>
             <tr>
-              <td style="padding:24px 0 0;font-family:Arimo,Helvetica,Arial,sans-serif;font-size:13px;line-height:1.55;color:#6B625C;">
-                TravelXM · San José, Costa Rica · Pura Vida
+              <td align="center" style="padding:24px 0 0;font-family:'Be Vietnam Pro',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;color:#6B625C;">
+                TravelXM, San José, Costa Rica. <em>Pura Vida</em>
               </td>
             </tr>
           </table>

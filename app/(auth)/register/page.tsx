@@ -11,7 +11,7 @@ export default async function RegisterPage({ searchParams }: PageProps<"/registe
   return (
     <div className="xm-reveal">
       <h1 className="xm-title">Create your account</h1>
-      <p className="mt-3 mb-7 text-[17px] text-muted">Free for travel advisors who sell Costa Rica. It takes about a minute, and the same account opens the Agents Portal.</p>
+      <p className="mt-3 mb-7 text-[17px] text-muted">Free for travel advisors who sell Costa Rica. It takes about a minute.</p>
       <RegisterForm next={next} google={env.googleAuth} />
       <p className="mt-7 text-[15px] text-body">
         Already have an account?{" "}
