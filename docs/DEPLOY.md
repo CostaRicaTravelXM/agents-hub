@@ -6,10 +6,10 @@ The steps in order, from this laptop to `hub.travelxm.com`. The Hub stands on it
 |---|---|---|
 | Code | GitHub, `CostaRicaTravelXM/agents-hub` (private), branches `main` and `backend` | Done |
 | DNS | Cloudflare (moved from DigitalOcean) | Done |
-| Photos | R2 bucket `academy-public`, served by the Cloudflare CDN at `media.travelxm.com` | Bucket and domain done, access key to do |
-| Videos and PDFs | R2 bucket `academy-private`, opened with short-lived signed links | Bucket done, access key to do |
-| Database and sign-in | New Supabase project `agents-hub` (TravelXM organization, East US) | Project, database, sign-in settings and templates done; SMTP and keys to do |
-| App | Vercel, building from `main`, at `hub.travelxm.com` | To do |
+| Photos | R2 bucket `academy-public`, served by the Cloudflare CDN at `media.travelxm.com` | Done: access key, CORS for `hub.travelxm.com`, the 13 FAM trip photos |
+| Videos and PDFs | R2 bucket `academy-private`, opened with short-lived signed links | Done: access key, CORS, the nine masterclass videos |
+| Database and sign-in | New Supabase project `agents-hub` (TravelXM organization, East US) | Done: database, sign-in settings, templates, Zoho SMTP (support@travelxm.com), nine masterclass courses as drafts |
+| App | Vercel, building from `main`, at `hub.travelxm.com` | Done: team travel-xm (Pro), Node 24.x, `hub.travelxm.com` live. n8n webhook to add |
 | Marketing Assets | Stays in Google Drive | Nothing to move |
 
 ---
@@ -28,6 +28,8 @@ GoDaddy points at `santino` and `zara.ns.cloudflare.com`. Every DigitalOcean rec
 - **To undo the move:** set the nameservers back to `ns1`, `ns2` and `ns3.digitalocean.com` at GoDaddy. The old records are still in DigitalOcean.
 
 ## 3. Cloudflare R2
+
+> **Done on 2026-11-09:** steps 1 to 4. The R2 token is Object Read & Write on the two buckets only, so it cannot change bucket settings: CORS (only `https://hub.travelxm.com`, methods GET, PUT, HEAD) was set in each bucket's Settings → CORS Policy instead of with step 4. To allow another address later, edit that policy on both buckets.
 
 Done: buckets `academy-public` and `academy-private`, and `media.travelxm.com` serving `academy-public` over HTTPS. `academy-private` has no public access and must keep it that way.
 
@@ -122,6 +124,8 @@ Videos and PDFs come straight from R2, not from Cloudflare's cache: signed links
 
 ## 5. Masterclasses: videos to R2, courses to Supabase
 
+> **Done on 2026-11-09:** all nine videos and posters are in R2, and the nine courses exist in production as drafts (9 video lessons, 9 quizzes, 72 questions). Publish them in Admin → Courses.
+
 The nine Greenroom videos (Drive: `Master Classes/Greenroom Videos`, GR01 to GR09) are compressed to 1080p for the web and transcribed. When all nine are done, they go in `C:\Users\Keiron\Desktop\TravelXM Learning\masterclass-media\`, one folder per episode with `web.mp4`, `poster.jpg`, `duration.txt` and the transcript. The course text and quizzes are in `scripts/masterclasses.mts`, one entry per episode.
 
 1. **Videos to R2.** Needs step 3 done. Shows the plan first, then uploads with `--yes`. Re-running skips what is already there.
@@ -144,6 +148,8 @@ The nine Greenroom videos (Drive: `Master Classes/Greenroom Videos`, GR01 to GR0
 To change a course's text or quiz later, edit `scripts/masterclasses.mts` and run step 2 again. To add an episode (GR10 …), add its folder to `masterclass-media` and an entry to `scripts/masterclasses.mts`, then run both steps.
 
 ## 6. Vercel
+
+> **Done on 2026-11-09:** project `agents-hub` in team travel-xm (Pro), production branch `main`, Node 24.x, `hub.travelxm.com` connected. The variables are split by type: Sensitive (service role key, R2 keys, recovery secret, Drive key), Config (the five `NEXT_PUBLIC_` ones) and Plain (the rest); `hub-production.env` holds them in that order. Still to add: `N8N_AGENTS_WEBHOOK_URL`, Sensitive, Production only.
 
 1. Use a **Pro** team. Hobby is for non-commercial use only.
 2. Add New → Project → import `CostaRicaTravelXM/agents-hub`. Framework: Next.js. Root directory: the repository root. Production branch: `main`.
