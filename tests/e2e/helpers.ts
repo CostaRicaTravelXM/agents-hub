@@ -13,8 +13,8 @@ export async function signIn(page: Page, email: string, password = PASSWORD) {
 /** The reader resumes where the shared demo account left off, so a test starts by going to page 1. */
 export async function openBookAtPageOne(page: Page) {
   await page.goto("/books");
-  await page.getByRole("link", { name: /Working with TravelXM/ }).click();
-  await expect(page).toHaveURL(/\/read\/working-with-travelxm/);
+  await page.getByRole("link", { name: /Costa Rica Golf Magazine/ }).click();
+  await expect(page).toHaveURL(/\/read\/costa-rica-golf-magazine/);
   const label = page.getByText(/^Pages? 1(–2)? of \d+/);
   await expect(async () => {
     await page.keyboard.press("Home");

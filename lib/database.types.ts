@@ -925,13 +925,47 @@ export type Database = {
           },
         ]
       }
+      hub_fam_trip_groups: {
+        Row: {
+          fam_trip_id: string
+          group_id: string
+        }
+        Insert: {
+          fam_trip_id: string
+          group_id: string
+        }
+        Update: {
+          fam_trip_id?: string
+          group_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hub_fam_trip_groups_fam_trip_id_fkey"
+            columns: ["fam_trip_id"]
+            isOneToOne: false
+            referencedRelation: "hub_fam_trips"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hub_fam_trip_groups_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hub_fam_trips: {
         Row: {
+          audience: string
           body: Json | null
           created_at: string
           cta_label: string
           cta_url: string | null
           expect: string | null
+          file_key: string | null
+          file_name: string | null
+          file_size: number | null
           id: string
           image_alt: string | null
           image_key: string | null
@@ -943,16 +977,20 @@ export type Database = {
           starts_on: string | null
           status: Database["public"]["Enums"]["course_status"]
           summary: string
-          timing_label: string
+          timing_label: string | null
           title: string
           updated_at: string
         }
         Insert: {
+          audience?: string
           body?: Json | null
           created_at?: string
           cta_label?: string
           cta_url?: string | null
           expect?: string | null
+          file_key?: string | null
+          file_name?: string | null
+          file_size?: number | null
           id?: string
           image_alt?: string | null
           image_key?: string | null
@@ -964,16 +1002,20 @@ export type Database = {
           starts_on?: string | null
           status?: Database["public"]["Enums"]["course_status"]
           summary: string
-          timing_label: string
+          timing_label?: string | null
           title: string
           updated_at?: string
         }
         Update: {
+          audience?: string
           body?: Json | null
           created_at?: string
           cta_label?: string
           cta_url?: string | null
           expect?: string | null
+          file_key?: string | null
+          file_name?: string | null
+          file_size?: number | null
           id?: string
           image_alt?: string | null
           image_key?: string | null
@@ -985,7 +1027,7 @@ export type Database = {
           starts_on?: string | null
           status?: Database["public"]["Enums"]["course_status"]
           summary?: string
-          timing_label?: string
+          timing_label?: string | null
           title?: string
           updated_at?: string
         }
@@ -2544,6 +2586,14 @@ export type Database = {
       ensure_enrollment: {
         Args: { p_course: string; p_user: string }
         Returns: undefined
+      }
+      fam_trip_access: {
+        Args: { p_trip: string }
+        Returns: {
+          can_apply: boolean
+          group_names: string[]
+          group_only: boolean
+        }[]
       }
       fill_profile_from_answers: {
         Args: { p_answers: Json; p_user: string }

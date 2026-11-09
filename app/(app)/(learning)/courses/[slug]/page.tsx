@@ -5,7 +5,7 @@ import { Award, BookOpenText, FileText, ListChecks, PlayCircle, RotateCcw, Users
 import { requireViewer } from "@/lib/auth";
 import { getCourseDetail } from "@/lib/queries";
 import { createClient } from "@/lib/supabase/server";
-import { LEVEL_LABEL, flattenLessons, lessonHref, nextLesson } from "@/lib/course";
+import { flattenLessons, lessonHref, nextLesson } from "@/lib/course";
 import { CourseHero } from "@/components/learning/course-hero";
 import { Syllabus } from "@/components/learning/syllabus";
 import { ResourceList } from "@/components/learning/resource-list";
@@ -55,17 +55,17 @@ export default async function CoursePage({ params }: PageProps<"/courses/[slug]"
       <CourseHero
         courseId={course.id}
         coverKey={course.cover_key}
-        meta={`${LEVEL_LABEL[course.level]} · ${modules.length} modules · ${formatDuration(totalSeconds)}`}
+        meta={`Masterclass · ${formatDuration(totalSeconds)}`}
         title={course.title}
         subtitle={course.subtitle}
-        back={{ href: "/courses", label: "Courses" }}
+        back={{ href: "/courses", label: "Masterclasses" }}
       />
 
       <div className="xm-container mt-8 grid gap-8 md:mt-12 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
         <div className="min-w-0 space-y-12">
           <section aria-labelledby="about-heading">
             <h2 id="about-heading" className="xm-title-sm">
-              About this course
+              About this masterclass
             </h2>
             <p className="xm-body mt-4 max-w-2xl">{course.description}</p>
             <div className="mt-5 flex flex-wrap gap-2">

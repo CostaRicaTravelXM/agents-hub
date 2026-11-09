@@ -47,3 +47,6 @@ supabase/.branches
 test-results/
 playwright-report/
 .seed-cache/
+
+# design review screenshots (local only)
+/.impeccable/review/

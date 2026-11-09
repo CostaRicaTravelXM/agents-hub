@@ -5,8 +5,8 @@ import { openBookAtPageOne, signIn } from "./helpers";
 test("the book reader shows a spread and turns pages with keys, buttons and the slider", async ({ page }) => {
   await signIn(page, "agent@travelxm.test");
   const total = await openBookAtPageOne(page);
-  test.skip(total < 4, "The demo book needs at least four pages");
-  await expect(page.getByRole("heading", { name: "Working with TravelXM" })).toBeVisible();
+  test.skip(total < 4, "The magazine needs at least four pages");
+  await expect(page.getByRole("heading", { name: "Costa Rica Golf Magazine 2026–2027" })).toBeVisible();
 
   // Both pages and the controls fit on the screen without scrolling.
   await expect(page.getByRole("img", { name: /page 1$/ })).toBeVisible();

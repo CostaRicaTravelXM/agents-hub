@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { PlaneTakeoff } from "lucide-react";
 import { requireViewer } from "@/lib/auth";
 import { listFamTrips } from "@/lib/hub/queries";
+import { famTripTiming } from "@/lib/hub/fam";
 import { Page, PageHeader } from "@/components/shell/app-shell";
 import { MediaCard } from "@/components/hub/media-card";
 import { Badge, EmptyState } from "@/components/ui/surface";
@@ -31,8 +32,9 @@ export default async function FamTripsPage() {
                 priority={i < 3}
                 badges={
                   <>
-                    <Badge className="bg-white text-ink">{t.timing_label}</Badge>
+                    <Badge className="bg-white text-ink">{famTripTiming(t)}</Badge>
                     <Badge className="bg-white text-ink">{t.nights} nights</Badge>
+                    {t.audience === "groups" ? <Badge className="bg-white text-ink">Group trip</Badge> : null}
                   </>
                 }
                 meta={t.regions.join(", ")}

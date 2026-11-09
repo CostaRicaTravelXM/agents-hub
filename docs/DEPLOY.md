@@ -1,6 +1,6 @@
 # Putting the Agents Hub live
 
-The steps in order, from this laptop to `agents.travelxm.com`. Each step says what to check before moving on. Steps marked **Stop** are where you send the output to Claude before going further.
+The steps in order, from this laptop to `hub.travelxm.com`. Each step says what to check before moving on. Steps marked **Stop** are where you send the output to Claude before going further.
 
 What you will end up with:
 
@@ -34,6 +34,8 @@ The order is slightly different from "GitHub, Vercel, images": Vercel needs the 
 
 ## 2. Cloudflare takes over travelxm.com's DNS
 
+> **Done on 2026-11-09.** GoDaddy points at `santino` and `zara.ns.cloudflare.com`. All DigitalOcean records were copied, all DNS only, and every mail record (MX, SPF, DKIM, DMARC, Zoho verification) was checked to answer the same from Cloudflare as from DigitalOcean. Never proxy the mail records. The steps below stay as the record of how, and for undoing it.
+
 This is the riskiest step: if a record is missed, email or a live site stops working. Do it on a quiet day, and keep the DigitalOcean records untouched until a week after the move.
 
 1. **Export what exists.** In DigitalOcean, open Networking → Domains → `travelxm.com` and take a screenshot or copy of every record. Pay special attention to:
@@ -58,6 +60,8 @@ This is the riskiest step: if a record is missed, email or a live site stops wor
 
 ## 3. Cloudflare R2 (photos and videos)
 
+> **Steps 1 and 2 done on 2026-11-09:** both buckets exist, and `media.travelxm.com` serves `academy-public` over HTTPS. Continue at step 3.
+
 1. In Cloudflare → R2, create two buckets: `academy-public` and `academy-private`.
 2. Open `academy-public` → Settings → **Custom Domains** → add `media.travelxm.com`. Leave `academy-private` without any public access.
 3. On **both** buckets, under Object lifecycle rules, make sure there is a rule that **aborts incomplete multipart uploads after 7 days**. Add it if missing. Big videos go up in parts, and a cancelled upload would otherwise leave its parts behind.
@@ -75,7 +79,7 @@ This is the riskiest step: if a record is missed, email or a live site stops wor
    R2_FORCE_PATH_STYLE=false
    R2_PRIVATE_BUCKET=academy-private
    R2_PUBLIC_BUCKET=academy-public
-   STORAGE_CORS_ORIGINS=https://agents.travelxm.com,https://travelxm-agents-hub-git-main-<team>.vercel.app
+   STORAGE_CORS_ORIGINS=https://hub.travelxm.com,https://travelxm-agents-hub-git-main-<team>.vercel.app
    ```
 
    Keep it outside the project so it can never be committed, and so a local `next build` never picks it up.
@@ -92,7 +96,7 @@ This is the riskiest step: if a record is missed, email or a live site stops wor
 | What | Bucket | Served |
 |---|---|---|
 | Course covers, posters, FAM trip, offer and book photos | `academy-public` | `media.travelxm.com`, cached by Cloudflare for a year |
-| Lesson videos and files, resources, book and offer PDFs | `academy-private` | Signed links that expire, after the Hub checks the agent may see them |
+| Lesson videos and files, resources, book, offer and FAM trip itinerary PDFs | `academy-private` | Signed links that expire, after the Hub checks the agent may see them |
 
 Signed links can't go through a custom domain, so videos come straight from R2 rather than from Cloudflare's cache. Cloudflare also caches nothing over 512 MB on the Free, Pro and Business plans. Compress videos before uploading: 1080p, under 1 GB per video. If agents report buffering on phones, Cloudflare Stream is the next step.
 
@@ -138,12 +142,36 @@ The Hub's database changes run against the same project as the live Agents Porta
 
    Expected: 0 courses, 0 offers, 0 books, 13 FAM trips, 1 Marketing link, 0 demo accounts. If anything else shows up, send it to Claude before deleting anything.
 6. **Sign-in addresses.** Authentication → URL Configuration → Redirect URLs, add:
-   - `https://agents.travelxm.com/auth/confirm`
-   - `https://agents.travelxm.com/auth/callback`
+   - `https://hub.travelxm.com/auth/confirm`
+   - `https://hub.travelxm.com/auth/callback`
    - `https://travelxm-agents-hub-git-main-<team>.vercel.app/**` (preview)
 
-   The **Site URL** is shared with the Portal, so only change it when the domains switch in step 7.
+   The **Site URL** is shared with the Portal, so leave it as it is here (see section 7, step 3).
 7. **SMTP:** Authentication → SMTP should already send from TravelXM for the Portal. Check that it does.
+
+## 4b. Masterclasses (videos to R2, courses to Supabase)
+
+The nine Greenroom videos from Drive (`Master Classes/Greenroom Videos`, GR01 to GR09) are already compressed for the web (1080p, about 2 to 3 Mbit/s) and sit in `C:\Users\Keiron\Desktop\TravelXM Learning\masterclass-media\`, one folder per episode with `web.mp4`, `poster.jpg`, `duration.txt` and the transcript. The course text and quizzes are in `scripts/masterclasses.mts`.
+
+1. **Videos to R2.** Needs step 3 done. Shows the plan first, then uploads with `--yes`. Re-running skips what is already there.
+
+   ```bash
+   node --env-file=C:/Users/Keiron/Desktop/hub-production.env scripts/import-masterclasses.mts upload --media "C:/Users/Keiron/Desktop/TravelXM Learning/masterclass-media"
+   node --env-file=C:/Users/Keiron/Desktop/hub-production.env scripts/import-masterclasses.mts upload --media "C:/Users/Keiron/Desktop/TravelXM Learning/masterclass-media" --yes
+   ```
+
+   It writes `scripts/masterclasses-media.json` (the storage keys). Commit that file. The keys come from the file contents, so the same videos give the same keys locally and in production.
+2. **Courses to Supabase.** Needs step 4's `db push` done. Creates one course per masterclass: the video, an 8-question quiz (80% to pass) and a certificate.
+
+   ```bash
+   node --env-file=C:/Users/Keiron/Desktop/hub-production.env scripts/import-masterclasses.mts apply
+   node --env-file=C:/Users/Keiron/Desktop/hub-production.env scripts/import-masterclasses.mts apply --yes
+   ```
+
+   New courses are saved as **drafts**. Check them in Admin → Courses, then publish from there, or run the last command again with `--publish`. Re-running updates the courses in place: agents keep their progress and certificates.
+3. The check query in step 4.5 now shows 9 courses.
+
+To change a course's text or quiz later, edit `scripts/masterclasses.mts` and run step 2 again. To add an episode (GR10 …), add its folder to `masterclass-media` and an entry to `scripts/masterclasses.mts`, then run both steps.
 
 ## 5. Vercel
 
@@ -154,13 +182,13 @@ The Hub's database changes run against the same project as the live Agents Porta
 
    | Variable | Value |
    |---|---|
-   | `NEXT_PUBLIC_APP_URL` | `https://agents.travelxm.com` |
+   | `NEXT_PUBLIC_APP_URL` | `https://hub.travelxm.com` |
    | `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Settings → API → Project URL |
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Settings → API → anon key |
    | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Settings → API → service_role key. **Secret** |
    | `NEXT_PUBLIC_AUTH_COOKIE_DOMAIN` | `.travelxm.com`, which shares the sign-in with the Portal |
    | `NEXT_PUBLIC_GOOGLE_AUTH` | `true` only if Google sign-in is set up in Supabase |
-   | `NEXT_PUBLIC_AGENTS_PORTAL_URL` | The Portal's address, for example `https://portal.travelxm.com` |
+   | `NEXT_PUBLIC_AGENTS_PORTAL_URL` | `https://agents.travelxm.com` (the Portal keeps its address) |
    | `AUTH_RECOVERY_SECRET` | A long random string: `openssl rand -base64 32`. **Secret** |
    | `GOOGLE_DRIVE_API_KEY` | The Drive key, restricted to the Drive API. **Secret**, never `NEXT_PUBLIC_` |
    | `N8N_AGENTS_WEBHOOK_URL` | The n8n "TravelXM — Agents Hub" webhook. **Production only**: leave it empty in Preview so test sign-ups don't create Zoho leads |
@@ -181,8 +209,8 @@ On a real iPhone, a real iPad and a laptop, signed in as a test agent:
 - [ ] FAM trip → **Register interest**: the form scrolls all the way to **Submit** with a finger (send one test, then delete that lead in Zoho)
 - [ ] Marketing Assets: folders open, a photo previews, a PDF previews, a video plays
 - [ ] Learning: once a course with a video exists, the video plays and the lesson completes
-- [ ] Books: once a book exists, the reader turns pages
-- [ ] Certificates: the certificate PDF downloads, with the toucan
+- [ ] Books: once the Golf Magazine is added (section 7, step 6), it opens and the reader turns pages
+- [ ] Certificates: the certificate PDF downloads, with the toucan, and its QR code opens the verify page on a phone
 - [ ] As admin: upload a course cover photo, then a video over 100 MB, and both save
 - [ ] `curl -sI https://media.travelxm.com/<a photo key>` twice: the second answer says `cf-cache-status: HIT`
 
@@ -207,13 +235,13 @@ On a real iPhone, a real iPad and a laptop, signed in as a test agent:
    update profiles set role = 'admin' where email = 'you@travelxm.com';
    ```
 
-3. **Domains.** Today `agents.travelxm.com` is the Portal. The plan so far: the Hub takes `agents.travelxm.com` and the Portal moves to `portal.travelxm.com`.
-   1. Add `portal.travelxm.com` to the Portal's Vercel project and set the Portal's own app address to it.
-   2. Move `agents.travelxm.com` to the Hub's Vercel project.
-   3. In Supabase, set the Site URL to `https://agents.travelxm.com`.
-4. **n8n:** in the "TravelXM — Agents Hub" workflow, point the welcome email's button at `https://agents.travelxm.com/login` and remove the old `Sign Access Link` step.
-5. **TravelXM Front:** set `NEXT_PUBLIC_AGENTS_HUB_URL=https://agents.travelxm.com`, then deploy it so `/agents` sends visitors to the Hub.
-6. Add real content in `/admin`: courses (including the Masterclasses category), offers and books.
+3. **Domain.** The Hub lives at `hub.travelxm.com`; the Portal keeps `agents.travelxm.com`. The DNS record is already in Cloudflare (CNAME `hub` → `cname.vercel-dns.com`, DNS only).
+   1. In the Hub's Vercel project → Settings → Domains, add `hub.travelxm.com`. Vercel finds the record and issues the certificate.
+   2. In Supabase, decide the Site URL together with the Portal's release: it is the fallback address in every sign-in email for both apps. The Hub's own links never depend on it, because they come from `NEXT_PUBLIC_APP_URL`.
+4. **n8n:** in the "TravelXM — Agents Hub" workflow, point the welcome email’s button at `https://hub.travelxm.com/login` and remove the old `Sign Access Link` step.
+5. **TravelXM Front:** set `NEXT_PUBLIC_AGENTS_HUB_URL=https://hub.travelxm.com`, then deploy it so `/agents` sends visitors to the Hub.
+6. **The Golf Magazine.** In `/admin/books/new`: title "Costa Rica Golf Magazine 2026–2027", author "Travel XM", description "Where golf meets paradise: 5 tournaments, 15 courses and 6 resorts across Costa Rica." Upload `news/Costa Rica Golf Magazine by Travel XM optimized.pdf` as the PDF and `news/Costa Rica Golf Magazine cover.jpg` as the cover (both in the `TravelXM Learning` folder), set it to Published, save, then press **Prepare pages** until every page is ready.
+7. Add the rest of the real content in `/admin`: courses (including the Masterclasses category), offers, FAM trip itinerary PDFs, and the agency groups for group-only trips (`/admin/groups`, one group per agency).
 
 ## Before launch: your decisions
 

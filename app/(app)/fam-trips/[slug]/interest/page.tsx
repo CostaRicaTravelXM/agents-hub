@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { requireViewer } from "@/lib/auth";
-import { getFamTrip } from "@/lib/hub/queries";
+import { getFamTrip, getFamTripAccess } from "@/lib/hub/queries";
 import { prefilledCtaUrl } from "@/lib/hub/cta";
 import { InterestPage } from "@/components/hub/interest-page";
 
@@ -12,6 +12,9 @@ export default async function FamTripInterestPage({ params }: PageProps<"/fam-tr
   const { slug } = await params;
   const trip = await getFamTrip(slug);
   if (!trip) notFound();
+  // Group trips: the form is for members only. Never render its link for anyone else.
+  const access = await getFamTripAccess(trip.id);
+  if (!access.canApply) redirect(`/fam-trips/${trip.slug}`);
   return (
     <InterestPage
       back={{ href: `/fam-trips/${trip.slug}`, label: trip.title }}

@@ -39,7 +39,7 @@ export default async function OfferPage({ params }: PageProps<"/offers/[slug]">)
   ) : offer.file_key ? (
     <Button asChild size="lg" block>
       <a href={`/api/hub/offers/${offer.id}/file`} target="_blank" rel="noopener noreferrer">
-        <FileText aria-hidden /> Open the PDF
+        <FileText aria-hidden /> Open the details (PDF)
       </a>
     </Button>
   ) : offer.link_url ? (
@@ -56,7 +56,7 @@ export default async function OfferPage({ params }: PageProps<"/offers/[slug]">)
         <li>
           <Button asChild variant="secondary" size="lg" block>
             <a href={`/api/hub/offers/${offer.id}/file`} target="_blank" rel="noopener noreferrer">
-              <FileText aria-hidden /> Open the PDF
+              <FileText aria-hidden /> Open the details (PDF)
             </a>
           </Button>
         </li>

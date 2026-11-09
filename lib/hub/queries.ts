@@ -25,6 +25,17 @@ export const getFamTrip = cache(async (slug: string): Promise<FamTrip | null> =>
   return data;
 });
 
+export type FamTripAccess = { groupOnly: boolean; canApply: boolean; groupNames: string[] };
+
+/** Whether the viewer may fill in the trip's interest form. Group trips are open to their groups' members only. */
+export const getFamTripAccess = cache(async (tripId: string): Promise<FamTripAccess> => {
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("fam_trip_access", { p_trip: tripId });
+  const row = data?.[0];
+  if (!row) return { groupOnly: false, canApply: false, groupNames: [] };
+  return { groupOnly: row.group_only, canApply: row.can_apply, groupNames: row.group_names ?? [] };
+});
+
 /* ---------- Current offers ---------- */
 /** Published offers that have started and not ended. RLS already hides expired ones from agents. */
 export const listCurrentOffers = cache(async (): Promise<Offer[]> => {

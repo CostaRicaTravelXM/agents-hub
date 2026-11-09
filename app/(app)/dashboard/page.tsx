@@ -4,6 +4,7 @@ import { ChevronRight, PlayCircle } from "lucide-react";
 import { requireViewer } from "@/lib/auth";
 import { getCatalog, getCourseDetail } from "@/lib/queries";
 import { hubCounts, listCurrentOffers, listFamTrips } from "@/lib/hub/queries";
+import { famTripTiming } from "@/lib/hub/fam";
 import { lessonHref, nextLesson } from "@/lib/course";
 import { HOME_MODULES } from "@/components/shell/nav-config";
 import { Page } from "@/components/shell/app-shell";
@@ -113,7 +114,7 @@ export default async function DashboardPage() {
                   <span className="absolute inset-x-0 bottom-0 z-10 block p-4">
                     <span className="block font-ui text-[18px] leading-[1.2] font-semibold text-white">{t.title}</span>
                     <span className="mt-1 block text-[15px] text-white/90">
-                      {t.timing_label}, {t.nights} nights
+                      {famTripTiming(t)}, {t.nights} nights
                     </span>
                   </span>
                 </Link>

@@ -13,8 +13,8 @@ export default async function CoursesPage({ searchParams }: PageProps<"/courses"
   return (
     <Page className="pt-6 md:pt-8">
       <PageHeader
-        title="Learn Costa Rica"
-        lead="Destination guides, masterclasses and the Costa Rica Specialist certification."
+        title="Masterclasses"
+        lead="Recorded sessions from the TravelXM team in San José. Watch one, pass the quiz and get a certificate your clients can check."
       />
       <Catalog courses={courses} initialCategory={typeof category === "string" ? category : undefined} />
     </Page>

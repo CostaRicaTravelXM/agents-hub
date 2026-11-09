@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAnonClient } from "@/lib/supabase/server";
 import { renderCertificate } from "@/lib/certificate-pdf";
+import { certificateVerifyUrl } from "@/lib/certificate-url";
 import { env } from "@/lib/env";
 
 export const runtime = "nodejs";
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/certific
     course: cert.course_title,
     code: cert.code,
     issuedAt: cert.issued_at,
-    verifyUrl: `${env.appUrl.replace(/^https?:\/\//, "")}/verify/${cert.code}`,
+    verifyUrl: certificateVerifyUrl(env.appUrl, cert.code),
   });
   const download = request.nextUrl.searchParams.get("download") === "1";
   const filename = `TravelXM-${cert.course_title.replace(/[^A-Za-z0-9]+/g, "-")}-${cert.code}.pdf`;

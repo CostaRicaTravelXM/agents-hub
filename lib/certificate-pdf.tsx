@@ -2,6 +2,7 @@ import "server-only";
 import path from "node:path";
 import { readFileSync } from "node:fs";
 import { Document, Font, Image, Page, StyleSheet, Text, View, renderToBuffer } from "@react-pdf/renderer";
+import QRCode from "qrcode";
 
 const root = process.cwd();
 let registered = false;
@@ -38,16 +39,26 @@ const s = StyleSheet.create({
   footValue: { marginTop: 4, fontFamily: "Montserrat", fontWeight: 500, fontSize: 11, color: "#000000" },
   signLine: { width: 160, borderTopWidth: 1, borderTopColor: "#3D3733", paddingTop: 6 },
   toucan: { position: "absolute", right: -22, top: 36, width: 140, height: 99 },
+  verify: { flexDirection: "row", alignItems: "flex-end" },
+  verifyText: { alignItems: "flex-end", marginRight: 10 },
+  qr: { width: 64, height: 64 },
 });
+
+/** Ink on the page's cream, so the code reads as part of the certificate. */
+function qrPng(url: string) {
+  return QRCode.toDataURL(url, { margin: 0, width: 384, errorCorrectionLevel: "M", color: { dark: "#3D3733", light: "#FDF6E3" } });
+}
 
 export async function renderCertificate(opts: {
   recipient: string;
   course: string;
   code: string;
   issuedAt: string;
+  /** Full URL of the public verify page, scheme included: it goes into the QR code. */
   verifyUrl: string;
 }) {
   registerFonts();
+  const qr = await qrPng(opts.verifyUrl);
   const logo = { data: readFileSync(path.join(root, "public/brand/travelxm-logo.png")), format: "png" as const };
   const toucan = { data: readFileSync(path.join(root, "public/brand/cutouts/toucan.png")), format: "png" as const };
   const issued = new Date(opts.issuedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
@@ -78,9 +89,13 @@ export async function renderCertificate(opts: {
               <Text style={s.footLabel}>TravelXM Academy</Text>
               <Text style={s.footValue}>San José, Costa Rica</Text>
             </View>
-            <View style={{ alignItems: "flex-end" }}>
-              <Text style={s.footLabel}>Verify · {opts.code}</Text>
-              <Text style={[s.footValue, { fontSize: 9 }]}>{opts.verifyUrl}</Text>
+            <View style={s.verify}>
+              <View style={s.verifyText}>
+                <Text style={s.footLabel}>Scan to verify</Text>
+                <Text style={s.footValue}>{opts.code}</Text>
+              </View>
+              {/* eslint-disable-next-line jsx-a11y/alt-text */}
+              <Image src={qr} style={s.qr} />
             </View>
           </View>
           {/* eslint-disable-next-line jsx-a11y/alt-text */}

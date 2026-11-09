@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
 import { signIn } from "./helpers";
+import { courses } from "../../scripts/seed-content.mts";
+
+const first = courses[0];
 
 test("mobile app shell: no top bar, five tabs, the More sheet and the course content sheet", async ({ page }) => {
   await signIn(page, "agent@travelxm.test");
@@ -26,11 +29,11 @@ test("mobile app shell: no top bar, five tabs, the More sheet and the course con
   await expect(sheet).toBeHidden();
 
   await tabs.getByRole("link", { name: "Learning" }).click();
-  await expect(page.getByRole("heading", { name: "Learn Costa Rica" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Masterclasses", exact: true })).toBeVisible();
   await page.getByRole("navigation", { name: "Learning" }).getByRole("link", { name: "Progress" }).click();
   await expect(page.getByRole("heading", { name: "Progress", exact: true })).toBeVisible();
 
-  await page.goto("/courses/costa-rica-specialist");
+  await page.goto(`/courses/${first.slug}`);
   await page.getByRole("link", { name: /Continue learning/ }).click();
   await page.getByRole("button", { name: "Course content" }).click();
   await expect(page.getByRole("dialog", { name: "Course content" })).toBeVisible();

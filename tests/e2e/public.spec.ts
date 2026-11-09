@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("landing page and protected routes", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Become a Costa Rica Specialist/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Free Costa Rica masterclasses/ })).toBeVisible();
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/login\?next=%2Fdashboard/);
 });

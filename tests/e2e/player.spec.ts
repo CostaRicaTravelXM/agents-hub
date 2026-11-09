@@ -1,10 +1,13 @@
 import { expect, test } from "@playwright/test";
 import { adminClient } from "./admin-client";
 import { signIn } from "./helpers";
+import { courses } from "../../scripts/seed-content.mts";
+
+const first = courses[0];
 
 test("the lesson video takes the screen and the course content opens from a button", async ({ page }) => {
   await signIn(page, "agent@travelxm.test");
-  await page.goto("/courses/costa-rica-specialist");
+  await page.goto(`/courses/${first.slug}`);
   const start = page.locator('a[href^="/learn/"]').first();
   await page.goto((await start.getAttribute("href"))!);
 
@@ -24,18 +27,18 @@ test("the lesson video takes the screen and the course content opens from a butt
 
   await page.getByRole("button", { name: "Course content" }).click();
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole("link", { name: /How to book with TravelXM/ })).toBeVisible();
+  await expect(dialog.getByRole("link", { name: /^Quiz/ })).toBeVisible();
 
   // Choosing a lesson closes the panel and goes there.
-  await dialog.getByRole("link", { name: /How to book with TravelXM/ }).click();
+  await dialog.getByRole("link", { name: /^Quiz/ }).click();
   await expect(dialog).toHaveCount(0);
-  await expect(page.getByRole("heading", { level: 1, name: "How to book with TravelXM" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Quiz" })).toBeVisible();
 });
 
 test("a course shows one main action at every size", async ({ page }) => {
   await signIn(page, "agent@travelxm.test");
-  await page.goto("/courses/costa-rica-specialist");
-  await expect(page.getByRole("heading", { level: 1, name: "Costa Rica Specialist" })).toBeVisible();
+  await page.goto(`/courses/${first.slug}`);
+  await expect(page.getByRole("heading", { level: 1, name: first.title })).toBeVisible();
   const main = page.locator('main a[href^="/learn/"]').filter({ hasText: /Continue|Start|Review/ });
   await expect(main.locator("visible=true")).toHaveCount(1);
 });

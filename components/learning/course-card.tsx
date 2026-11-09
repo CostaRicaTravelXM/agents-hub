@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ViewTransition } from "react";
 import { Award, Lock, Users } from "lucide-react";
 import type { CourseSummary } from "@/lib/queries";
-import { LEVEL_LABEL } from "@/lib/course";
 import { Badge, ProgressBar } from "@/components/ui/surface";
 import { Cover } from "@/components/learning/cover";
 import { CardAction } from "@/components/hub/media-card";
@@ -27,7 +26,7 @@ export function CourseCard({ course, priority }: { course: CourseSummary; priori
           <Cover imageKey={course.cover_key} alt="" zoomOnHover priority={priority} sizes="(min-width: 1280px) 380px, (min-width: 768px) 45vw, 100vw" />
         </ViewTransition>
         <div className="absolute top-3 left-3 flex flex-wrap gap-2">
-          {course.category ? <Badge className="bg-white text-ink">{course.category.name}</Badge> : <Badge className="bg-white text-ink">{LEVEL_LABEL[course.level]}</Badge>}
+          {course.category ? <Badge className="bg-white text-ink">{course.category.name}</Badge> : null}
           {course.visibility === "groups" ? (
             <Badge tone="warning">
               <Users aria-hidden /> Partners

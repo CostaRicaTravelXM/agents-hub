@@ -133,7 +133,7 @@ export default async function ProgressPage() {
             body="Open any lesson and your progress starts recording automatically."
             action={
               <Button asChild>
-                <Link href="/courses">Browse courses</Link>
+                <Link href="/courses">Browse masterclasses</Link>
               </Button>
             }
           />

@@ -38,6 +38,7 @@ const s3 = new S3Client({
   forcePathStyle: process.env.R2_FORCE_PATH_STYLE === "true",
 });
 const privateBucket = process.env.R2_PRIVATE_BUCKET ?? "academy-private";
+const publicBucket = process.env.R2_PUBLIC_BUCKET ?? "academy-public";
 
 function must<T>(res: { data: T; error: { message: string } | null }, what: string): NonNullable<T> {
   if (res.error) throw new Error(`${what}: ${res.error.message}`);
@@ -128,103 +129,60 @@ async function makePdf(eyebrow: string, title: string, sections: Section[]) {
   return Buffer.from(await renderToBuffer(tree as never));
 }
 
-/** A book: one branded Letter page per chapter, so the reader has real pages to turn. */
-async function makeBookPdf(title: string, chapters: { title: string; sections: Section[] }[]) {
-  const logo = { data: readFileSync(path.join(root, "public/brand/travelxm-logo.png")), format: "png" as const };
-  const cover = h(
-    Page,
-    { key: "cover", size: "LETTER", style: pdfStyles.page },
-    h(Image, { src: logo, style: pdfStyles.logo }),
-    h(View, { style: { marginTop: 180 } }, h(Text, { style: pdfStyles.eyebrow }, "Advisor handbook"), h(Text, { style: { ...pdfStyles.title, fontSize: 44 } }, title)),
-    h(View, { style: pdfStyles.rule }),
-    h(Text, null, "Everything an advisor needs to quote, book and look after clients in Costa Rica."),
-  );
-  const pages = chapters.map((c, idx) =>
-    h(
-      Page,
-      { key: idx, size: "LETTER", style: pdfStyles.page },
-      h(Text, { style: pdfStyles.eyebrow }, `Chapter ${idx + 1}`),
-      h(Text, { style: pdfStyles.title }, c.title),
-      h(View, { style: pdfStyles.rule }),
-      ...c.sections.map((sec, j) =>
-        h(
-          View,
-          { key: j, wrap: false },
-          h(Text, { style: pdfStyles.h2 }, sec.heading),
-          ...(sec.paragraphs ?? []).map((t, k) => h(Text, { key: k, style: pdfStyles.p }, t)),
-          ...(sec.rows ?? []).map(([l, r], k) =>
-            h(View, { key: `r${k}`, style: pdfStyles.row }, h(Text, { style: pdfStyles.cellL }, l), h(Text, { style: pdfStyles.cellR }, r)),
-          ),
-        ),
-      ),
-      h(View, { style: pdfStyles.foot, fixed: true }, h(Text, null, title), h(Text, { render: ({ pageNumber }: { pageNumber: number }) => `Page ${pageNumber}` })),
-    ),
-  );
-  return Buffer.from(await renderToBuffer(h(Document, { title, author: "TravelXM" }, cover, ...pages) as never));
-}
+// ---------------------------------------------------------------- the magazine
+/**
+ * The Costa Rica Golf Magazine is the one real publication TravelXM has, so the
+ * local Books section shows it instead of a made-up book. Production gets it
+ * through /admin/books (see docs/DEPLOY.md), not through this seed.
+ */
+const MAGAZINE = {
+  slug: "costa-rica-golf-magazine",
+  title: "Costa Rica Golf Magazine 2026–2027",
+  author: "Travel XM",
+  description: "Where golf meets paradise: 5 tournaments, 15 courses and 6 resorts across Costa Rica.",
+  file: path.join(root, "assets/books/costa-rica-golf-magazine.pdf"),
+  fileName: "Costa Rica Golf Magazine by Travel XM.pdf",
+  fileKey: "documents/books/costa-rica-golf-magazine.pdf",
+  coverKey: "images/books/costa-rica-golf-magazine-cover.jpg",
+};
 
-const BOOK_KEY = "documents/demo/working-with-travelxm-book.pdf";
-const makeDemoBook = () =>
-  makeBookPdf("Working with TravelXM", [
-    { title: "Who to call", sections: [
-      { heading: "Your contacts", rows: [["Sales and quotes", "sales@travelxm.com, reply within one business day"], ["Operations, 24/7", "WhatsApp line in the final documents"], ["Accounts", "Commission statements and invoices"]] },
-      { heading: "Before you write", paragraphs: ["Have the travel dates, the number of guests and their ages, and the budget per person. A complete request is quoted the same day."] },
-    ] },
-    { title: "Quoting a trip", sections: [
-      { heading: "What to send us", paragraphs: ["Dates, party size, room types, the pace your clients enjoy and anything they want to avoid.", "We reply with a day-by-day itinerary, two hotel levels and a net price with your commission shown."] },
-      { heading: "How long a quote holds", rows: [["Rates", "Valid 14 days from the quote date"], ["Rooms", "Not held until the deposit"], ["Changes", "As many as you need before booking"]] },
-    ] },
-    { title: "Booking terms", sections: [
-      { heading: "Payment", rows: [["Deposit", "30% confirms the booking, rooms held 72 h"], ["Balance", "45 days before arrival"], ["Final documents", "Within 48 h of the balance"], ["Commission", "Paid within 15 days of the clients' return"]] },
-    ] },
-    { title: "Cancellations", sections: [
-      { heading: "The rules", paragraphs: ["More than 60 days before arrival: deposit refunded less hotel penalties.", "Between 60 and 30 days: 50% of the package.", "Fewer than 30 days: non-refundable."] },
-      { heading: "Insurance", paragraphs: ["Recommend travel insurance at booking. It is the one thing clients thank you for when plans change."] },
-    ] },
-    { title: "Arenal and Monteverde", sections: [
-      { heading: "Arenal", rows: [["From San José", "3 h by road"], ["Nights", "3 recommended"], ["Signature", "Hot springs, hanging bridges, La Fortuna waterfall"]] },
-      { heading: "Monteverde", rows: [["From Arenal", "3 to 3.5 h"], ["Nights", "2 minimum"], ["Signature", "Reserve walk at 7:00, night walk, canopy bridges"]] },
-    ] },
-    { title: "The Pacific coast", sections: [
-      { heading: "Manuel Antonio", rows: [["From Monteverde", "4 h by road"], ["Park", "Closed on Tuesdays, timed tickets"], ["Nights", "3 recommended"]] },
-      { heading: "Guanacaste", rows: [["Airport", "Liberia, 45 min to most resorts"], ["Season", "Driest from December to April"], ["Signature", "Beach resorts, sailing, Rincón de la Vieja"]] },
-    ] },
-    { title: "Emergencies", sections: [
-      { heading: "If something goes wrong", paragraphs: ["If a client is delayed, injured or loses documents, contact operations first. We coordinate transfers, hotels and, if needed, the embassy."] },
-      { heading: "Afterwards", paragraphs: ["We send you a short written summary the next working day, so you can follow up with your clients with the facts in hand."] },
-    ] },
-  ]);
-
-/** Page count and shape, so the reader opens straight away. */
-async function inspectDemoBook(bytes: Buffer) {
+/** Uploads the PDF, and its first page as the cover. Returns the hub_books fields that describe it. */
+async function uploadMagazine() {
+  const bytes = readFileSync(MAGAZINE.file);
   const { pdf } = await import("pdf-to-img");
   const sharp = (await import("sharp")).default;
-  const doc = await pdf(new Uint8Array(bytes), { scale: 0.4 });
-  const meta = await sharp(await doc.getPage(1)).metadata();
+  const doc = await pdf(new Uint8Array(bytes), { scale: 2 });
+  const first = await doc.getPage(1);
   const page_count = doc.length;
   await doc.destroy();
-  return { page_count, page_aspect: meta.width && meta.height ? Math.round((meta.width / meta.height) * 10000) / 10000 : null };
+  const meta = await sharp(first).metadata();
+  const cover = await sharp(first).resize({ width: 900 }).jpeg({ quality: 82, mozjpeg: true }).toBuffer();
+  await upload(MAGAZINE.fileKey, bytes, "application/pdf");
+  await s3.send(
+    new PutObjectCommand({ Bucket: publicBucket, Key: MAGAZINE.coverKey, Body: cover, ContentType: "image/jpeg", CacheControl: "public, max-age=31536000, immutable" }),
+  );
+  return {
+    slug: MAGAZINE.slug,
+    title: MAGAZINE.title,
+    author: MAGAZINE.author,
+    description: MAGAZINE.description,
+    cover_key: MAGAZINE.coverKey,
+    file_key: MAGAZINE.fileKey,
+    file_name: MAGAZINE.fileName,
+    file_size: bytes.length,
+    page_count,
+    page_aspect: meta.width && meta.height ? Math.round((meta.width / meta.height) * 10000) / 10000 : null,
+    status: "published" as const,
+  };
 }
 
 const pdfs: Record<string, () => Promise<Buffer>> = {
-  [BOOK_KEY]: makeDemoBook,
   "documents/demo/advisor-handbook.pdf": () =>
     makePdf("Advisor handbook", "Working with TravelXM", [
       { heading: "Who to call", rows: [["Sales and quotes", "sales@travelxm.com · reply within one business day"], ["Operations, 24/7", "WhatsApp line in the final documents"], ["Accounts", "Commission statements and invoices"]] },
       { heading: "Booking terms", rows: [["Deposit", "30% confirms the booking, rooms held 72 h"], ["Balance", "45 days before arrival"], ["Final documents", "Within 48 h of the balance"], ["Commission", "Paid within 15 days of the clients' return"]] },
       { heading: "Cancellations", paragraphs: ["More than 60 days before arrival: deposit refunded less hotel penalties.", "Between 60 and 30 days: 50% of the package.", "Fewer than 30 days: non-refundable. Recommend travel insurance at booking."] },
       { heading: "Emergencies", paragraphs: ["If a client is delayed, injured or loses documents, contact operations first. We coordinate transfers, hotels and, if needed, the embassy."] },
-    ]),
-  "documents/demo/destination-fact-sheets.pdf": () =>
-    makePdf("Fact sheets", "Signature destinations", [
-      { heading: "Arenal & La Fortuna", rows: [["From San José", "3 h by road"], ["Altitude", "About 500 m"], ["Nights", "3 recommended"], ["Signature", "Hot springs, hanging bridges, La Fortuna waterfall"]] },
-      { heading: "Monteverde", rows: [["From Arenal", "3–3.5 h (jeep-boat-jeep or road)"], ["Altitude", "About 1,400 m, bring a jacket"], ["Nights", "2 minimum"], ["Signature", "Reserve walk at 7:00, night walk, canopy bridges"]] },
-      { heading: "Manuel Antonio", rows: [["From Monteverde", "4 h by road"], ["Park", "Closed on Tuesdays, timed tickets"], ["Nights", "3 recommended"], ["Signature", "Guided park walk, catamaran, ridge-top sunsets"]] },
-    ]),
-  "documents/demo/arenal-fact-sheet.pdf": () =>
-    makePdf("Fact sheet", "Arenal & La Fortuna", [
-      { heading: "Getting there", rows: [["San José airport", "3 h"], ["Liberia airport", "2.5 h"], ["Monteverde", "3–3.5 h"]] },
-      { heading: "What we book", paragraphs: ["Hanging bridges with a naturalist guide, 2.5 h, best at 7:30.", "La Fortuna waterfall, 500 steps each way, swim at the base.", "Hot springs day pass or a resort with springs on site.", "Lake Arenal kayak or a sunset boat."] },
     ]),
   "documents/demo/partner-rate-sheet.pdf": () =>
     makePdf("Partners only · 2027", "Group rate sheet", [
@@ -284,67 +242,8 @@ async function createUser(u: { email: string; full_name: string; company: string
 }
 
 // ---------------------------------------------------------------- hub
-/** Two masterclasses, two offers and one book, reusing the generated demo media. */
+/** Two offers reusing the generated demo media, plus the real Golf Magazine in Books. */
 async function seedHub() {
-  const videoKeys = Object.keys(photoForVideo);
-  const posterFor = (key: string) => photoForVideo[key]?.replace(/^public/, "") ?? null;
-  const { data: category } = await supabase.from("categories").select("id").eq("slug", "masterclasses").single();
-  const masterclasses = [
-    {
-      slug: "selling-costa-rica-with-confidence",
-      title: "Selling Costa Rica with confidence",
-      speaker: "Andrea Solís, TravelXM",
-      description: "How to open the conversation, which three itineraries cover most clients, and the questions that close the sale.",
-      video: videoKeys[0],
-    },
-    {
-      slug: "arenal-and-monteverde-in-one-week",
-      title: "Arenal and Monteverde in one week",
-      speaker: "Diego Mora, TravelXM",
-      description: "Pacing, transfers and the hotels that make the classic loop feel effortless.",
-      video: videoKeys[1] ?? videoKeys[0],
-    },
-  ];
-  for (const [i, m] of masterclasses.entries()) {
-    const { data: course } = await supabase
-      .from("courses")
-      .upsert(
-        {
-          slug: m.slug,
-          title: m.title,
-          subtitle: m.speaker,
-          description: m.description,
-          cover_key: posterFor(m.video),
-          category_id: category!.id,
-          status: "published",
-          visibility: "public",
-          estimated_minutes: Math.ceil(VIDEO_SECONDS / 60),
-          certificate_enabled: false,
-          sort_order: 1000 + i,
-          published_at: new Date().toISOString(),
-        },
-        { onConflict: "slug" },
-      )
-      .select("id")
-      .single();
-    const { count } = await supabase.from("modules").select("id", { count: "exact", head: true }).eq("course_id", course!.id);
-    if (count) continue;
-    const { data: mod } = await supabase.from("modules").insert({ course_id: course!.id, title: "Masterclass", sort_order: 0 }).select("id").single();
-    must(
-      await supabase.from("lessons").insert({
-        module_id: mod!.id,
-        course_id: course!.id,
-        title: m.title,
-        summary: m.speaker,
-        type: "video",
-        sort_order: 0,
-        duration_seconds: VIDEO_SECONDS,
-        video_key: m.video,
-        poster_key: posterFor(m.video),
-      }),
-      "masterclass lesson",
-    );
-  }
   const soon = new Date();
   soon.setDate(soon.getDate() + 45);
   must(
@@ -372,43 +271,28 @@ async function seedHub() {
     ]),
     "offers",
   );
-  const bytes = await makeDemoBook();
-  must(
-    await supabase.from("hub_books").insert({
-      slug: "working-with-travelxm",
-      title: "Working with TravelXM",
-      author: "TravelXM",
-      description: "The advisor handbook: who to call, booking terms, cancellations and what to do in an emergency.",
-      cover_key: "/photos/monteverde-puente-colgante-canopy.jpg",
-      file_key: BOOK_KEY,
-      file_name: "Working with TravelXM.pdf",
-      file_size: bytes.length,
-      ...(await inspectDemoBook(bytes)),
-      status: "published",
-    }),
-    "book",
-  );
+  must(await supabase.from("hub_books").insert(await uploadMagazine()), "magazine");
 }
 
-/** `npm run seed -- --book`: replace only the demo book, for a database that must not be reset. */
-async function refreshDemoBook() {
-  const bytes = await makeDemoBook();
-  await upload(BOOK_KEY, bytes, "application/pdf");
-  const { data: row } = await supabase.from("hub_books").select("file_version").eq("slug", "working-with-travelxm").maybeSingle();
-  if (!row) throw new Error("The demo book row does not exist");
+/**
+ * `npm run seed -- --book`: put the magazine in Books on a database that must not
+ * be reset. Replaces the old generated "Working with TravelXM" book if it is there.
+ */
+async function refreshMagazine() {
+  const fields = await uploadMagazine();
+  must(await supabase.from("hub_books").delete().eq("slug", "working-with-travelxm"), "old demo book");
+  const { data: row } = await supabase.from("hub_books").select("file_version").eq("slug", MAGAZINE.slug).maybeSingle();
+  // A new file_version makes the reader drop page images rendered from an older PDF.
   must(
-    await supabase
-      .from("hub_books")
-      .update({ file_key: BOOK_KEY, file_size: bytes.length, file_version: row.file_version + 1, ...(await inspectDemoBook(bytes)) })
-      .eq("slug", "working-with-travelxm"),
-    "book",
+    await supabase.from("hub_books").upsert({ ...fields, file_version: (row?.file_version ?? 0) + 1 }, { onConflict: "slug" }),
+    "magazine",
   );
-  console.log("Demo book replaced.");
+  console.log("Costa Rica Golf Magazine is in Books.");
 }
 
 // ---------------------------------------------------------------- main
 async function main() {
-  if (process.argv.includes("--book")) return refreshDemoBook();
+  if (process.argv.includes("--book")) return refreshMagazine();
 
   const { count } = await supabase.from("courses").select("id", { count: "exact", head: true });
   if ((count ?? 0) > 0) {
@@ -444,7 +328,7 @@ async function main() {
   }
 
   console.log("· creating catalog");
-  const cats = must(await supabase.from("categories").insert(categories.map((c, idx) => ({ ...c, sort_order: idx }))).select(), "categories");
+  const cats = must(await supabase.from("categories").upsert(categories.map((c, idx) => ({ ...c, sort_order: idx })), { onConflict: "slug" }).select(), "categories");
   const catId = Object.fromEntries(cats.map((c) => [c.slug, c.id]));
 
   type LessonRow = { id: string; type: string; module: number; required: boolean; quizId?: string; questions?: { id: string; correct: string[] }[] };
@@ -570,7 +454,7 @@ async function main() {
       .single(),
     "group",
   );
-  must(await supabase.from("course_groups").insert({ course_id: courseMap["groups-incentives-2027"].id, group_id: group.id }), "course_groups");
+  must(await supabase.from("course_groups").insert({ course_id: courseMap["partner-briefing-2027"].id, group_id: group.id }), "course_groups");
   const partnerAgents = [1, 3, 4, 7];
   must(
     await supabase.from("group_members").insert(
@@ -581,32 +465,16 @@ async function main() {
 
   console.log("· simulating ten weeks of learning activity");
   // [agent index, course slug, share of required lessons completed]
-  const plan: [number, string, number][] = [
-    [0, "costa-rica-specialist", 0.4],
-    [0, "arenal-la-fortuna", 1],
-    [1, "costa-rica-specialist", 1],
-    [1, "groups-incentives-2027", 1],
-    [1, "manuel-antonio", 0.5],
-    [2, "costa-rica-specialist", 1],
-    [2, "monteverde-cloud-forest", 1],
-    [3, "costa-rica-specialist", 0.75],
-    [3, "groups-incentives-2027", 0.5],
-    [4, "costa-rica-specialist", 1],
-    [4, "arenal-la-fortuna", 0.6],
-    [4, "groups-incentives-2027", 0.25],
-    [5, "costa-rica-specialist", 0.2],
-    [5, "tortuguero-canals", 1],
-    [6, "arenal-la-fortuna", 1],
-    [6, "costa-rica-specialist", 0.55],
-    [7, "costa-rica-specialist", 1],
-    [7, "costa-ballena-whales", 0.5],
-    [8, "monteverde-cloud-forest", 0.5],
-    [8, "costa-rica-specialist", 0.1],
-    [9, "manuel-antonio", 1],
-    [9, "arenal-la-fortuna", 0.3],
-    [10, "costa-rica-specialist", 0.3],
-    [11, "costa-ballena-whales", 1],
-  ];
+  const open = courses.filter((c) => c.visibility !== "groups" && c.status !== "draft").map((c) => c.slug);
+  // The demo agent has the first masterclass half done and the second finished.
+  const plan: [number, string, number][] = [[0, open[0], 0.5]];
+  if (open[1]) plan.push([0, open[1], 1]);
+  plan.push([1, "partner-briefing-2027", 1], [3, "partner-briefing-2027", 0.5]);
+  for (let ai = 1; ai < agents.length; ai++) {
+    for (let j = 0; j < Math.min(1 + (ai % 3), open.length); j++) {
+      plan.push([ai, open[(ai + j) % open.length], (ai + j) % 2 ? 0.5 : 1]);
+    }
+  }
 
   for (const [ai, slug, share] of plan) {
     const userId = agentIds[ai];
@@ -676,11 +544,9 @@ async function main() {
     );
   }
 
-  // Extra browsing so "most viewed destinations" has a shape.
+  // Extra browsing so "most viewed" has a shape.
   const browse: { user_id: string; course_id: string; event: string; created_at: string }[] = [];
-  const weights: Record<string, number> = {
-    "arenal-la-fortuna": 26, "manuel-antonio": 18, "monteverde-cloud-forest": 15, "costa-ballena-whales": 11, "tortuguero-canals": 7, "costa-rica-specialist": 30,
-  };
+  const weights: Record<string, number> = Object.fromEntries(open.map((slug, i) => [slug, Math.max(6, 30 - i * 4)]));
   for (const [slug, n] of Object.entries(weights)) {
     for (let k = 0; k < n; k++) {
       browse.push({ user_id: agentIds[Math.floor(rand() * agentIds.length)], course_id: courseMap[slug].id, event: "course_view", created_at: daysAgo(Math.floor(rand() * 28)) });

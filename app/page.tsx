@@ -10,7 +10,6 @@ import { ArrowRight, BadgeCheck, ChevronDown, Clock, Mail, PlayCircle, Smartphon
 import { HOME_MODULES, MODULE_TINT } from "@/components/shell/nav-config";
 import { getViewer } from "@/lib/auth";
 import { getPublicCatalog, type PublicCourse } from "@/lib/queries";
-import { LEVEL_LABEL } from "@/lib/course";
 import { BrandLink, Cutout } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { Badge, Card } from "@/components/ui/surface";
@@ -22,27 +21,32 @@ import { cn, formatDuration } from "@/lib/utils";
 export const metadata: Metadata = {
   title: { absolute: "TravelXM Agents Hub · For travel advisors who sell Costa Rica" },
   description:
-    "Free Costa Rica training and certification, masterclasses, FAM trips, current offers, books and marketing assets for travel advisors, from TravelXM in San José.",
+    "Free Costa Rica masterclasses with a certificate your clients can check, plus FAM trips, current offers, books and marketing assets for travel advisors, from TravelXM in San José.",
 };
 
 function courseTime(c: Pick<PublicCourse, "estimated_minutes" | "durationSeconds">) {
   return formatDuration(c.estimated_minutes ? c.estimated_minutes * 60 : c.durationSeconds);
 }
 
+/** "15 to 32 minutes each" across the videos, so the promise matches the catalog. */
+function lengthRange(classes: PublicCourse[]) {
+  const minutes = classes.map((c) => Math.round(c.durationSeconds / 60)).filter((m) => m > 0);
+  if (!minutes.length) return null;
+  const lo = Math.min(...minutes);
+  const hi = Math.max(...minutes);
+  return lo === hi ? `About ${lo} minutes` : `${lo} to ${hi} minutes each`;
+}
+
 export default async function HomePage() {
   const [viewer, catalog] = await Promise.all([getViewer(), getPublicCatalog()]);
-  // The course the certificate promise is about. With no certificate course yet
-  // (a fresh launch), the landing promises only what the Hub really has.
-  const specialist =
-    catalog.find((c) => c.slug === "costa-rica-specialist" && c.certificate_enabled) ??
-    catalog.find((c) => c.featured && c.certificate_enabled) ??
-    catalog.find((c) => c.certificate_enabled) ??
-    null;
-  const others = catalog.filter((c) => c.id !== specialist?.id);
-  // Courses without a cover photo render as a blank slot; keep them off the
-  // landing whenever enough courses have one.
-  const withCover = others.filter((c) => c.cover_key);
-  const destinations = (withCover.length >= 3 ? withCover : others).slice(0, 6);
+  // Every course is a masterclass. The sample certificate needs one that issues
+  // certificates; with none yet (a fresh launch), the landing promises only what exists.
+  const featured = catalog.find((c) => c.featured && c.certificate_enabled) ?? catalog.find((c) => c.certificate_enabled) ?? null;
+  const length = lengthRange(catalog);
+  // Masterclasses without a cover render as a blank slot; keep them off the
+  // landing whenever enough have one.
+  const withCover = catalog.filter((c) => c.cover_key);
+  const shown = (withCover.length >= 3 ? withCover : catalog).slice(0, 9);
   const join = viewer ? "/dashboard" : "/register";
   const signIn = (next?: string) => (viewer ? (next ?? "/dashboard") : `/login${next ? `?next=${encodeURIComponent(next)}` : ""}`);
 
@@ -89,11 +93,11 @@ export default async function HomePage() {
               desktop the details sit under the actions in the left column. */}
           <div className="xm-reveal lg:self-end">
             <h1 id="hero-heading" className="xm-hero max-w-[12ch]">
-              {specialist ? "Become a Costa Rica Specialist" : "Everything you need to sell Costa Rica"}
+              {featured ? "Free Costa Rica masterclasses" : "Everything you need to sell Costa Rica"}
             </h1>
             <p className="xm-lead mt-5 max-w-xl md:mt-6">
               The Agents Hub is where TravelXM, the team in San José that runs your clients&apos; trips, gives advisors everything:
-              free training with a certificate your clients can check, masterclasses, FAM trips, current offers and marketing material.
+              masterclasses with a certificate your clients can check, FAM trips, current offers and marketing material.
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap md:mt-8">
               {viewer ? (
@@ -137,14 +141,14 @@ export default async function HomePage() {
               </div>
               <p className="xm-meta absolute top-5 left-5 z-10 hidden lg:block">Arenal, La Fortuna</p>
             </div>
-            {specialist ? (
+            {featured ? (
               <>
                 <div className="xm-settle relative z-10 mx-4 -mt-16 sm:mx-12 sm:-mt-40 lg:absolute lg:bottom-12 lg:-left-10 lg:mx-0 lg:mt-0 lg:w-[400px]">
                   <Card className="shadow-raised">
                     <Badge tone="warning" className="absolute top-3 right-3 z-10">
                       Sample
                     </Badge>
-                    <CertificateArt compact name="Your name here" courseTitle={specialist.title} footer="Issued when you pass the final exam" />
+                    <CertificateArt compact name="Your name here" courseTitle={featured.title} footer="Issued when you pass the quiz" />
                   </Card>
                 </div>
                 <div className="mt-4 flex items-center gap-3 rounded-lg bg-card p-4 shadow-card lg:absolute lg:top-14 lg:-right-6 lg:mt-0 lg:shadow-raised">
@@ -168,7 +172,7 @@ export default async function HomePage() {
               </li>
               <li className="inline-flex items-center gap-2">
                 <Clock aria-hidden className="size-5 shrink-0 stroke-[1.75] text-success" />
-                {specialist ? `About ${courseTime(specialist)}` : "Short lessons"}
+                {length ?? "Short lessons"}
               </li>
               <li className="inline-flex items-center gap-2">
                 <Smartphone aria-hidden className="size-5 shrink-0 stroke-[1.75] text-success" /> Works on any device
@@ -205,42 +209,37 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* ---------- What you learn to earn it ---------- */}
-        {specialist?.modules.length ? (
-          <section aria-labelledby="syllabus-heading" className="bg-sunken py-16 md:py-24">
+        {/* ---------- How a masterclass earns the certificate ---------- */}
+        {featured ? (
+          <section aria-labelledby="how-heading" className="bg-sunken py-16 md:py-24">
             <div className="xm-container grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:gap-16">
               <div className="lg:sticky lg:top-28 lg:self-start">
-                <h2 id="syllabus-heading" className="xm-title-sm">
-                  What you learn to earn it
+                <h2 id="how-heading" className="xm-title-sm">
+                  Watch, pass the quiz, get the certificate
                 </h2>
                 <p className="xm-lead mt-4 max-w-md text-muted">
-                  The {specialist.title} course, module by module. Watch, read, then pass the final exam. Your place is saved, so you
-                  can stop between client calls and carry on later.
-                </p>
-                <p className="mt-6 font-ui text-[15px] font-semibold text-ink">
-                  {specialist.lessonCount} lessons, {courseTime(specialist)}
-                  {specialist.level ? `, ${LEVEL_LABEL[specialist.level]}` : ""}
+                  Each masterclass is one recorded session from the TravelXM team in San José, followed by a short quiz. Your place is
+                  saved, so you can stop between client calls and carry on later.
                 </p>
                 <Button asChild size="lg" className="mt-6">
-                  <Link href={viewer ? `/courses/${specialist.slug}` : "/register"}>
-                    {viewer ? "Open the course" : "Start the course free"} <ArrowRight aria-hidden />
+                  <Link href={viewer ? "/courses" : "/register"}>
+                    {viewer ? "See the masterclasses" : "Start free"} <ArrowRight aria-hidden />
                   </Link>
                 </Button>
               </div>
 
               <ol className="space-y-3">
-                {specialist.modules.map((m, i) => (
-                  <li key={m.id} className="flex items-start gap-4 rounded-lg bg-card p-5 shadow-card md:p-6">
+                {[
+                  { title: "Watch the session", body: `${length ?? "Short videos"}. Pause any time and pick up where you left off, on any device.` },
+                  { title: "Pass the quiz", body: "A few questions on what you just watched. Score 80% or more to pass, and try again as often as you need." },
+                ].map((step, i) => (
+                  <li key={step.title} className="flex items-start gap-4 rounded-lg bg-card p-5 shadow-card md:p-6">
                     <span className="grid size-10 shrink-0 place-items-center rounded-pill bg-ink font-display text-[18px] font-bold text-white">
                       {i + 1}
                     </span>
                     <div className="min-w-0">
-                      <h3 className="font-ui text-[19px] leading-snug font-semibold text-ink">{m.title}</h3>
-                      {m.description ? <p className="mt-1.5 text-[15px] text-muted">{m.description}</p> : null}
-                      <p className="mt-2 font-ui text-[15px] font-medium text-body">
-                        {m.lessonCount} {m.lessonCount === 1 ? "lesson" : "lessons"}
-                        {m.durationSeconds ? `, ${formatDuration(m.durationSeconds)}` : ""}
-                      </p>
+                      <h3 className="font-ui text-[18px] leading-snug font-semibold text-ink">{step.title}</h3>
+                      <p className="mt-1.5 text-[16px] text-body">{step.body}</p>
                     </div>
                   </li>
                 ))}
@@ -248,27 +247,25 @@ export default async function HomePage() {
                   <span className="grid size-10 shrink-0 place-items-center rounded-pill bg-toucan text-black">
                     <BadgeCheck aria-hidden className="size-5 stroke-[1.75]" />
                   </span>
-                  <p className="font-ui text-[17px] font-semibold">Pass the exam and your certificate is ready to download.</p>
+                  <p className="font-ui text-[17px] font-semibold">Your certificate is ready to download, with a code your clients can check.</p>
                 </li>
               </ol>
             </div>
           </section>
         ) : null}
 
-        {/* ---------- Destination courses ---------- */}
-        {destinations.length ? (
+        {/* ---------- The masterclasses ---------- */}
+        {shown.length ? (
           <section aria-labelledby="courses-heading" className="xm-container py-16 md:py-24">
-            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-              <div className="max-w-2xl">
-                <h2 id="courses-heading" className="xm-title-sm">
-                  Then go deeper, one destination at a time
-                </h2>
-                <p className="xm-lead mt-4 text-muted">The places your clients ask about, taught by the people who book them every day.</p>
-              </div>
+            <div className="max-w-2xl">
+              <h2 id="courses-heading" className="xm-title-sm">
+                The masterclasses
+              </h2>
+              <p className="xm-lead mt-4 text-muted">The trips your clients ask about, taught by the people who run them every day.</p>
             </div>
             <ul className="mt-10 grid grid-cols-1 gap-x-5 gap-y-9 sm:grid-cols-2 xl:grid-cols-6">
-              {destinations.map((c, i) => (
-                <li key={c.id} className={lastRowSpan(i, destinations.length)}>
+              {shown.map((c, i) => (
+                <li key={c.id} className={lastRowSpan(i, shown.length)}>
                   <PublicCourseCard course={c} href={viewer ? `/courses/${c.slug}` : signIn(`/courses/${c.slug}`)} />
                 </li>
               ))}
@@ -286,7 +283,7 @@ export default async function HomePage() {
               <p className="xm-lead mt-4 max-w-md text-muted">No tech skills needed. If you can read an email, you can use the Hub.</p>
             </div>
             <div className="divide-y divide-line overflow-hidden rounded-lg bg-card shadow-card">
-              {faqs(specialist).map((f) => (
+              {faqs(length).map((f) => (
                 <details key={f.q} className="group">
                   <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-ui text-[17px] font-semibold text-ink transition-colors duration-120 ease-standard hover:bg-sunken/50 md:px-6 [&::-webkit-details-marker]:hidden">
                     {f.q}
@@ -348,15 +345,18 @@ function PublicCourseCard({ course, href }: { course: PublicCourse; href: string
     <Link href={href} className="group flex h-full flex-col rounded-lg">
       <div className="relative aspect-[16/10] overflow-hidden rounded-lg bg-sunken">
         <Cover imageKey={course.cover_key} alt="" zoomOnHover sizes="(min-width: 1280px) 380px, (min-width: 640px) 45vw, 100vw" />
-        <div className="absolute top-3 left-3 flex gap-2">
-          <Badge className="bg-white text-ink">{course.category ?? LEVEL_LABEL[course.level]}</Badge>
-        </div>
+        {course.category ? (
+          <div className="absolute top-3 left-3 flex gap-2">
+            <Badge className="bg-white text-ink">{course.category}</Badge>
+          </div>
+        ) : null}
       </div>
       <div className="flex flex-1 flex-col px-1 pt-4">
         <h3 className="font-ui text-[20px] leading-[1.25] font-semibold tracking-[-0.01em] text-ink">{course.title}</h3>
         {course.subtitle ? <p className="mt-1.5 line-clamp-2 text-[16px] text-body">{course.subtitle}</p> : null}
         <p className="mt-2 text-[15px] text-muted">
-          {course.modules.length} {course.modules.length === 1 ? "module" : "modules"}, {courseTime(course)}
+          {courseTime(course)}
+          {course.certificate_enabled ? ", quiz and certificate" : ""}
         </p>
         <CardAction label="Free with your account" />
       </div>
@@ -364,9 +364,9 @@ function PublicCourseCard({ course, href }: { course: PublicCourse; href: string
   );
 }
 
-function faqs(specialist: PublicCourse | null) {
+function faqs(length: string | null) {
   return [
-    { q: "Does it cost anything?", a: "No. The Agents Hub and its courses are free for travel advisors who sell Costa Rica." },
+    { q: "Does it cost anything?", a: "No. The Agents Hub and its masterclasses are free for travel advisors who sell Costa Rica." },
     {
       q: "I am an independent agent, not part of an agency. Can I join?",
       a: "Yes. When you create your account, tick “I am a solo or independent agent” and leave the agency empty.",
@@ -377,8 +377,8 @@ function faqs(specialist: PublicCourse | null) {
     },
     {
       q: "How long does it take?",
-      a: specialist
-        ? `The ${specialist.title} takes about ${courseTime(specialist)} in total, in short lessons. Your place is saved on every device, so you can stop and carry on whenever you like.`
+      a: length
+        ? `Each masterclass is one video (${length.replace(/ each$/, "").replace(/^About/, "about")}) and a short quiz. Your place is saved on every device, so you can stop and carry on whenever you like.`
         : "Lessons are short and your place is saved on every device, so you can stop and carry on whenever you like.",
     },
     {

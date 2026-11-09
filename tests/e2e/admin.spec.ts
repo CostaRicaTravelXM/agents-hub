@@ -1,6 +1,9 @@
 import path from "node:path";
 import { expect, test } from "@playwright/test";
 import { signIn } from "./helpers";
+import { courses } from "../../scripts/seed-content.mts";
+
+const first = courses[0];
 
 test.describe("admin CMS", () => {
   test("agents cannot open the admin portal", async ({ page }) => {
@@ -58,7 +61,7 @@ test.describe("admin CMS", () => {
     const op = await outsider.newPage();
     await signIn(op, "agent@travelxm.test");
     await op.goto("/courses");
-    await expect(op.getByRole("heading", { name: "Costa Rica Specialist" })).toBeVisible();
+    await expect(op.getByRole("heading", { name: first.title })).toBeVisible();
     await expect(op.getByRole("heading", { name: title })).toHaveCount(0);
     await outsider.close();
   });

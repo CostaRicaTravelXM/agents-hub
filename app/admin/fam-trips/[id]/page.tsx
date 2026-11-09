@@ -17,7 +17,11 @@ export default async function EditFamTripsPage({ params }: PageProps<"/admin/fam
   await requireStaff();
   const { id } = await params;
   const supabase = await createClient();
-  const { data: item } = await supabase.from("hub_fam_trips").select("*").eq("id", id).maybeSingle();
+  const [{ data: item }, { data: groups }, { data: picked }] = await Promise.all([
+    supabase.from("hub_fam_trips").select("*").eq("id", id).maybeSingle(),
+    supabase.from("groups").select("id, name, group_members(user_id)").order("name"),
+    supabase.from("hub_fam_trip_groups").select("group_id").eq("fam_trip_id", id),
+  ]);
   if (!item) notFound();
   return (
     <>
@@ -40,7 +44,11 @@ export default async function EditFamTripsPage({ params }: PageProps<"/admin/fam
         }
       />
       <div className="rounded-lg bg-card p-5 shadow-card md:p-8">
-        <FamTripForm item={item} />
+        <FamTripForm
+          item={item}
+          groups={(groups ?? []).map((g) => ({ id: g.id, name: g.name, members: g.group_members.length }))}
+          groupIds={(picked ?? []).map((p) => p.group_id)}
+        />
       </div>
     </>
   );

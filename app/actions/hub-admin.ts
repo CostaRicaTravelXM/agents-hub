@@ -45,46 +45,67 @@ type Id = { id: string };
 
 /* ================================================================ FAM trips */
 const famSegment = z.enum(["classic", "luxury", "romance", "wellness", "adventure", "family", "groups", "business"]);
-const famTripSchema = z.object({
-  title: z.string().trim().min(3, "Give the trip a title").max(160),
-  slug: slugField,
-  timing_label: z.string().trim().min(2, "When does it run? For example “Nov 2026”").max(40),
-  starts_on: isoDate,
-  nights: z.coerce.number().int().min(1, "At least one night").max(30),
-  regions: z.array(z.string().trim().min(1).max(60)).max(10),
-  segments: z.array(famSegment).max(8),
-  summary: z.string().trim().min(10, "Write a one-line summary").max(600),
-  expect: nullableText(1000),
-  body: z.any().optional(),
-  image_key: mediaKey,
-  image_alt: nullableText(200),
-  cta_url: httpsUrl,
-  cta_label: z.string().trim().min(2).max(40).optional().transform((v) => v || "Register interest"),
-  status,
-});
+const famTripSchema = z
+  .object({
+    title: z.string().trim().min(3, "Give the trip a title").max(160),
+    slug: slugField,
+    // Empty: the dates aren't set yet, and agents see "Dates to be confirmed".
+    timing_label: nullableText(40),
+    starts_on: isoDate,
+    nights: z.coerce.number().int().min(1, "At least one night").max(30),
+    regions: z.array(z.string().trim().min(1).max(60)).max(10),
+    segments: z.array(famSegment).max(8),
+    summary: z.string().trim().min(10, "Write a one-line summary").max(600),
+    expect: nullableText(1000),
+    body: z.any().optional(),
+    image_key: mediaKey,
+    image_alt: nullableText(200),
+    cta_url: httpsUrl,
+    cta_label: z.string().trim().min(2).max(40).optional().transform((v) => v || "Register interest"),
+    file_key: mediaKey,
+    file_name: z.string().max(260).nullable().optional(),
+    file_size: z.number().int().nonnegative().nullable().optional(),
+    audience: z.enum(["open", "groups"]).default("open"),
+    group_ids: z.array(uuid).max(50).default([]),
+    status,
+  })
+  .refine((v) => v.audience === "open" || v.group_ids.length > 0, {
+    message: "Choose at least one group, or open the trip to all agents",
+    path: ["group_ids"],
+  });
 
 export async function saveFamTrip(id: string | null, input: z.input<typeof famTripSchema>): Promise<Result<Id>> {
   try {
     const { supabase } = await staffClient();
-    const v = famTripSchema.parse(input);
+    const { group_ids, ...v } = famTripSchema.parse(input);
     const row = { ...v, slug: slugify(v.slug || v.title), body: (v.body ?? null) as Json };
+    let tripId: string;
     if (id) {
-      const { data: before } = await supabase.from("hub_fam_trips").select("image_key").eq("id", uuid.parse(id)).single();
-      const { error } = await supabase.from("hub_fam_trips").update(row).eq("id", id);
+      tripId = uuid.parse(id);
+      const { data: before } = await supabase.from("hub_fam_trips").select("image_key, file_key").eq("id", tripId).single();
+      const { error } = await supabase.from("hub_fam_trips").update(row).eq("id", tripId);
       if (error) throw error;
       if (before?.image_key && before.image_key !== v.image_key) await deleteObject("public", before.image_key);
-      refresh();
-      return { ok: true, data: { id } };
+      if (before?.file_key && before.file_key !== v.file_key) await deleteObject("private", before.file_key);
+    } else {
+      const { data: last } = await supabase.from("hub_fam_trips").select("sort_order").order("sort_order", { ascending: false }).limit(1).maybeSingle();
+      const { data, error } = await supabase
+        .from("hub_fam_trips")
+        .insert({ ...row, sort_order: (last?.sort_order ?? -1) + 1 })
+        .select("id")
+        .single();
+      if (error) throw error;
+      tripId = data.id;
     }
-    const { data: last } = await supabase.from("hub_fam_trips").select("sort_order").order("sort_order", { ascending: false }).limit(1).maybeSingle();
-    const { data, error } = await supabase
-      .from("hub_fam_trips")
-      .insert({ ...row, sort_order: (last?.sort_order ?? -1) + 1 })
-      .select("id")
-      .single();
-    if (error) throw error;
+    // An open trip keeps no group rows, so switching back to "all agents" leaves nothing stale.
+    const { error: clearError } = await supabase.from("hub_fam_trip_groups").delete().eq("fam_trip_id", tripId);
+    if (clearError) throw clearError;
+    if (v.audience === "groups") {
+      const { error: groupError } = await supabase.from("hub_fam_trip_groups").insert(group_ids.map((g) => ({ fam_trip_id: tripId, group_id: g })));
+      if (groupError) throw groupError;
+    }
     refresh();
-    return { ok: true, data: { id: data.id } };
+    return { ok: true, data: { id: tripId } };
   } catch (e) {
     return fail(e);
   }
@@ -93,10 +114,10 @@ export async function saveFamTrip(id: string | null, input: z.input<typeof famTr
 export async function deleteFamTrip(id: string): Promise<Result> {
   try {
     const { supabase } = await staffClient();
-    const { data: t } = await supabase.from("hub_fam_trips").select("image_key").eq("id", uuid.parse(id)).single();
+    const { data: t } = await supabase.from("hub_fam_trips").select("image_key, file_key").eq("id", uuid.parse(id)).single();
     const { error } = await supabase.from("hub_fam_trips").delete().eq("id", id);
     if (error) throw error;
-    await deleteObject("public", t?.image_key);
+    await Promise.all([deleteObject("public", t?.image_key), deleteObject("private", t?.file_key)]);
     refresh();
     return { ok: true };
   } catch (e) {

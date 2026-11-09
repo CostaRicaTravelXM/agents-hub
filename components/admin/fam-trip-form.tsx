@@ -1,19 +1,25 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Globe, Users } from "lucide-react";
 import { deleteFamTrip, saveFamTrip } from "@/app/actions/hub-admin";
-import { Checkbox, Field, Input, Textarea } from "@/components/ui/form";
+import { Checkbox, Field, Input, Radio, RadioGroup, Textarea } from "@/components/ui/form";
 import { notify } from "@/components/ui/toast";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
+import { Uploader } from "@/components/admin/uploader";
 import { FormFooter, PhotoField, StatusField, TitleSlugFields, useSlug, type Status } from "@/components/admin/hub-form-bits";
 import { FAM_SEGMENTS } from "@/lib/hub/fam";
 import type { Tables } from "@/lib/database.types";
+import { cn } from "@/lib/utils";
 
 type FamTrip = Tables<"hub_fam_trips">;
 type Segment = "classic" | "luxury" | "romance" | "wellness" | "adventure" | "family" | "groups" | "business";
+type Audience = "open" | "groups";
+export type GroupOption = { id: string; name: string; members: number };
 
-export function FamTripForm({ item }: { item?: FamTrip }) {
+export function FamTripForm({ item, groups, groupIds: initialGroupIds = [] }: { item?: FamTrip; groups: GroupOption[]; groupIds?: string[] }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const s = useSlug(item?.title ?? "", item?.slug ?? "", Boolean(item));
@@ -29,6 +35,11 @@ export function FamTripForm({ item }: { item?: FamTrip }) {
   const [imageAlt, setImageAlt] = useState(item?.image_alt ?? "");
   const [ctaUrl, setCtaUrl] = useState(item?.cta_url ?? "");
   const [ctaLabel, setCtaLabel] = useState(item?.cta_label ?? "Register interest");
+  const [file, setFile] = useState<{ key: string; name: string; size: number | null } | null>(
+    item?.file_key ? { key: item.file_key, name: item.file_name ?? "itinerary.pdf", size: item.file_size ?? null } : null,
+  );
+  const [audience, setAudience] = useState<Audience>((item?.audience as Audience) ?? "open");
+  const [groupIds, setGroupIds] = useState<string[]>(initialGroupIds);
   const [status, setStatus] = useState<Status>(item?.status ?? "draft");
   const [error, setError] = useState<string | null>(null);
 
@@ -50,6 +61,11 @@ export function FamTripForm({ item }: { item?: FamTrip }) {
         image_alt: imageAlt,
         cta_url: ctaUrl,
         cta_label: ctaLabel,
+        file_key: file?.key ?? null,
+        file_name: file?.name ?? null,
+        file_size: file?.size ?? null,
+        audience,
+        group_ids: audience === "groups" ? groupIds : [],
         status,
       });
       if (!r.ok) {
@@ -72,8 +88,8 @@ export function FamTripForm({ item }: { item?: FamTrip }) {
       <div className="space-y-5">
         <TitleSlugFields s={s} base="/fam-trips" />
         <div className="grid gap-5 sm:grid-cols-3">
-          <Field label="When" htmlFor="timing" hint="As agents see it, e.g. “Nov 2026”.">
-            <Input id="timing" value={timing} onChange={(e) => setTiming(e.target.value)} maxLength={40} required />
+          <Field label="When" htmlFor="timing" optional hint="As agents see it, e.g. “Nov 2026”. Leave empty and agents see “Dates to be confirmed”.">
+            <Input id="timing" value={timing} onChange={(e) => setTiming(e.target.value)} maxLength={40} />
           </Field>
           <Field label="Start date" htmlFor="starts_on" optional hint="For sorting, once confirmed.">
             <Input id="starts_on" type="date" value={startsOn} onChange={(e) => setStartsOn(e.target.value)} />
@@ -121,6 +137,59 @@ export function FamTripForm({ item }: { item?: FamTrip }) {
             <Input id="cta_label" value={ctaLabel} onChange={(e) => setCtaLabel(e.target.value)} maxLength={40} />
           </Field>
         </div>
+        <fieldset>
+          <legend className="font-ui text-[14px] font-semibold text-ink">Who can apply</legend>
+          <RadioGroup value={audience} onValueChange={(v) => setAudience(v as Audience)} className="mt-2 grid gap-3 md:grid-cols-2">
+            {[
+              { id: "open" as const, icon: Globe, title: "All agents", body: "Anyone signed in can fill in the interest form." },
+              { id: "groups" as const, icon: Users, title: "Only agents in these groups", body: "Every agent sees the trip. Only members of the groups get the form." },
+            ].map((o) => (
+              <label
+                key={o.id}
+                className={cn(
+                  "flex cursor-pointer gap-3 rounded-md border-2 p-4 transition-colors duration-120",
+                  audience === o.id ? "border-primary bg-primary/5" : "border-line hover:border-ink",
+                )}
+              >
+                <Radio value={o.id} className="mt-0.5" />
+                <span>
+                  <span className="flex items-center gap-2 font-ui text-[15px] font-semibold text-ink">
+                    <o.icon aria-hidden className="size-4 stroke-[2] text-muted" /> {o.title}
+                  </span>
+                  <span className="block text-[15px] text-muted">{o.body}</span>
+                </span>
+              </label>
+            ))}
+          </RadioGroup>
+          {audience === "groups" ? (
+            <div className="mt-4 rounded-md border border-line p-4">
+              <p className="mb-3 font-ui text-[14px] font-semibold text-ink">Groups that can apply</p>
+              {groups.length ? (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {groups.map((g) => (
+                    <label key={g.id} className="flex items-center gap-3 rounded-md bg-page px-3 py-2.5 text-[15px]">
+                      <Checkbox
+                        checked={groupIds.includes(g.id)}
+                        onCheckedChange={(c) => setGroupIds((ids) => (c === true ? [...ids, g.id] : ids.filter((x) => x !== g.id)))}
+                      />
+                      <span className="flex-1 text-ink">{g.name}</span>
+                      <span className="text-[15px] text-muted">{g.members} members</span>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[15px] text-muted">No groups yet.</p>
+              )}
+              <p className="mt-3 text-[15px] text-muted">
+                One group per agency. Add its agents, or send them the group’s invite link, in{" "}
+                <Link href="/admin/groups" className="xm-link">
+                  Groups
+                </Link>
+                .
+              </p>
+            </div>
+          ) : null}
+        </fieldset>
         <StatusField value={status} onChange={setStatus} />
         <FormFooter
           pending={pending}
@@ -136,6 +205,15 @@ export function FamTripForm({ item }: { item?: FamTrip }) {
         <Field label="Photo description" htmlFor="image_alt" optional hint="For screen readers: what is in the photo.">
           <Input id="image_alt" value={imageAlt} onChange={(e) => setImageAlt(e.target.value)} maxLength={200} />
         </Field>
+        <Uploader
+          kind="document"
+          scope="fam-trips"
+          label="Itinerary PDF"
+          hint="The programme or trip details. Every agent who can see the trip can open it. Up to 200 MB."
+          current={file}
+          onUploaded={(u) => setFile({ key: u.key, name: u.name, size: u.size })}
+          onClear={() => setFile(null)}
+        />
       </div>
     </form>
   );

@@ -3,6 +3,7 @@ import { buildAgentsHubPayload } from "@/lib/hub/crm-payload";
 import { isZohoForm, prefilledCtaUrl } from "@/lib/hub/cta";
 import { toEmbedUrl } from "@/lib/hub/video-embed";
 import { clampPage, modeFor, pageBox, pageLabel, pickWidth, spreadPages, spreadStart } from "@/lib/books";
+import { famTripTiming } from "@/lib/hub/fam";
 
 describe("CRM hand-off payload", () => {
   const now = new Date("2026-11-06T12:00:00Z");
@@ -92,5 +93,14 @@ describe("reader page math", () => {
   it("picks the sharper render on retina screens", () => {
     expect(pickWidth(400, 1)).toBe(800);
     expect(pickWidth(400, 3)).toBe(1600);
+  });
+});
+
+describe("FAM trip dates", () => {
+  it("shows the label when the dates are set", () => {
+    expect(famTripTiming({ timing_label: "Nov 2026" })).toBe("Nov 2026");
+  });
+  it.each([null, "", "   "])("reads “Dates to be confirmed” when there is no label (%j)", (label) => {
+    expect(famTripTiming({ timing_label: label })).toBe("Dates to be confirmed");
   });
 });

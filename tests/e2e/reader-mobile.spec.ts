@@ -17,7 +17,7 @@ async function swipe(page: Page, fromX: number, toX: number, y: number) {
 test("the book reader on a small screen: one page, swipe, buttons and Go to page", async ({ page }) => {
   await signIn(page, "agent@travelxm.test");
   const total = await openBookAtPageOne(page);
-  test.skip(total < 2, "The demo book has a single page");
+  test.skip(total < 2, "The magazine has a single page");
 
   // One whole page, never cut at the edge, and the controls on screen.
   await expect(page.getByRole("img", { name: /page 1$/ })).toBeVisible();

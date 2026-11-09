@@ -15,6 +15,7 @@ describe("where admin uploads land", () => {
     ["course resource", "document", "resources-0f9e8d7c", "Rates 2027.xlsx", "private", "documents/resources-0f9e8d7c/a1b2c3d4-rates-2027.xlsx"],
     ["book PDF", "document", "books", "Working.pdf", "private", "documents/books/a1b2c3d4-working.pdf"],
     ["offer PDF", "document", "offers", "Flyer.pdf", "private", "documents/offers/a1b2c3d4-flyer.pdf"],
+    ["FAM trip itinerary", "document", "fam-trips", "Itinerario Nosara.pdf", "private", "documents/fam-trips/a1b2c3d4-itinerario-nosara.pdf"],
   ] as const)("%s", (_, kind, scope, filename, bucket, key) => {
     const d = uploadDestination(kind, filename, scope, R);
     expect(d).toEqual({ bucket, key });

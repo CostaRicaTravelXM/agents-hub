@@ -46,8 +46,8 @@ export function Catalog({ courses, initialCategory }: { courses: CourseSummary[]
     return (
       <EmptyState
         icon={<GraduationCap aria-hidden />}
-        title="Courses are on their way"
-        body="The TravelXM team is preparing the first courses. They appear here as soon as they are published."
+        title="Masterclasses are on their way"
+        body="The TravelXM team is preparing the first masterclasses. They appear here as soon as they are published."
       />
     );
   }
@@ -78,7 +78,7 @@ export function Catalog({ courses, initialCategory }: { courses: CourseSummary[]
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search destinations and topics"
+            placeholder="Search masterclasses"
             className="h-12 w-full rounded-pill border border-control bg-card pr-12 pl-11 text-[16px] text-ink placeholder:text-muted transition-colors duration-120 focus-visible:border-ink focus-visible:outline-none"
           />
           {query ? (
@@ -95,8 +95,8 @@ export function Catalog({ courses, initialCategory }: { courses: CourseSummary[]
       </div>
 
       {categories.length > 1 ? (
-        <div className="scrollbar-none -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 md:mx-0 md:px-0" role="tablist" aria-label="Destination">
-          {[["all", "All destinations"] as [string, string], ...categories].map(([slug, name]) => (
+        <div className="scrollbar-none -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 md:mx-0 md:px-0" role="tablist" aria-label="Topic">
+          {[["all", "All topics"] as [string, string], ...categories].map(([slug, name]) => (
             <button
               key={slug}
               role="tab"
@@ -114,7 +114,7 @@ export function Catalog({ courses, initialCategory }: { courses: CourseSummary[]
       ) : null}
 
       <p className="mt-6 text-[15px] text-muted" aria-live="polite">
-        {filtered.length} {filtered.length === 1 ? "course" : "courses"}
+        {filtered.length} {filtered.length === 1 ? "masterclass" : "masterclasses"}
       </p>
 
       {filtered.length ? (
@@ -127,8 +127,8 @@ export function Catalog({ courses, initialCategory }: { courses: CourseSummary[]
         <EmptyState
           className="mt-4"
           icon={<Search aria-hidden />}
-          title="No courses match"
-          body="Try another destination or clear the filters."
+          title="No masterclasses match"
+          body="Try another word or clear the filters."
           action={
             <button
               className="xm-link font-ui text-[15px] font-semibold"
