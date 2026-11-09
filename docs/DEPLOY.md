@@ -8,7 +8,7 @@ The steps in order, from this laptop to `hub.travelxm.com`. The Hub stands on it
 | DNS | Cloudflare (moved from DigitalOcean) | Done |
 | Photos | R2 bucket `academy-public`, served by the Cloudflare CDN at `media.travelxm.com` | Bucket and domain done, access key to do |
 | Videos and PDFs | R2 bucket `academy-private`, opened with short-lived signed links | Bucket done, access key to do |
-| Database and sign-in | New Supabase project `agents-hub` (TravelXM organization, East US) | To do |
+| Database and sign-in | New Supabase project `agents-hub` (TravelXM organization, East US) | Project, database, sign-in settings and templates done; SMTP and keys to do |
 | App | Vercel, building from `main`, at `hub.travelxm.com` | To do |
 | Marketing Assets | Stays in Google Drive | Nothing to move |
 
@@ -66,6 +66,8 @@ Done: buckets `academy-public` and `academy-private`, and `media.travelxm.com` s
 Videos and PDFs come straight from R2, not from Cloudflare's cache: signed links can't go through a custom domain, and Cloudflare caches nothing over 512 MB on the Free to Business plans. R2 charges nothing for downloads. If agents report buffering on phones, Cloudflare Stream is the next step.
 
 ## 4. Supabase: the new project
+
+> **Done on 2026-11-09:** project `agents-hub` (ref `fkqwdfhfljhnjdjcuhkh`, East US) created and linked; all 17 migrations applied; the check in step 3 matched (0 courses, 13 FAM trips, 1 Marketing link, 0 accounts); steps 4, 5 and 8 applied with `supabase config push` from a production-only config (Site URL, redirect, password rules, the four TravelXM email templates). Security advisor: no errors, only warnings about functions the app calls on purpose. Still to do: step 6 (keys into the env file and Vercel) and step 7 (SMTP).
 
 1. **Create it.** supabase.com → TravelXM organization → New project:
    - Name `agents-hub`, compute Micro, region **East US (North Virginia)** (next to Vercel's default region and the R2 buckets)
