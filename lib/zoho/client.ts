@@ -11,7 +11,7 @@ import type { ZohoModule, ZohoRecord } from "@/lib/zoho/fields";
  * queued in the database.
  */
 
-export type ZohoFailure = { ok: false; reason: "not_configured" | "auth" | "http" | "network"; message: string };
+export type ZohoFailure = { ok: false; reason: "not_configured" | "auth" | "http" | "network"; message: string; body?: unknown };
 export type ZohoResult<T> = { ok: true; data: T } | ZohoFailure;
 
 const TIMEOUT_MS = 8_000;
@@ -89,7 +89,7 @@ async function call<T>(method: "GET" | "POST" | "PUT", path: string, body?: unkn
     // A search with no match answers 204 with no body.
     if (res.status === 204) return { ok: true, data: null };
     const json = (await res.json().catch(() => null)) as T | null;
-    if (!res.ok) return fail("http", `Zoho responded ${res.status}: ${describe(json)}`);
+    if (!res.ok) return { ...fail("http", `Zoho responded ${res.status}: ${describe(json)}`), body: json };
     return { ok: true, data: json };
   } catch (e) {
     return fail("network", e instanceof Error ? e.message : String(e));
@@ -102,7 +102,13 @@ function describe(json: unknown) {
   return [first?.code ?? j?.code, first?.message ?? j?.message].filter(Boolean).join(" ") || "no details";
 }
 
-type RowResult = { code?: string; status?: string; message?: string; action?: string; details?: { id?: string } };
+type RowResult = {
+  code?: string;
+  status?: string;
+  message?: string;
+  action?: string;
+  details?: { id?: string; api_name?: string; duplicate_record?: { id?: string; module?: { api_name?: string } } };
+};
 
 function firstRow(json: { data?: RowResult[] } | null): ZohoResult<RowResult> {
   const row = json?.data?.[0];
@@ -143,19 +149,45 @@ export async function findAdvisor(email: string): Promise<ZohoResult<FoundRecord
   return findByEmail("Leads", email);
 }
 
-/** Creates the Lead, or updates the one that already has this email. Never creates a duplicate. */
-export async function upsertLead(record: ZohoRecord): Promise<ZohoResult<{ id: string; created: boolean }>> {
-  const res = await call<{ data?: RowResult[] }>("POST", "/Leads/upsert", {
-    data: [record],
-    duplicate_check_fields: ["Email"],
+/** Lead fields Zoho cannot do without; never dropped to get past a duplicate. */
+const REQUIRED_LEAD_FIELDS = new Set(["Email", "Last_Name", "Company"]);
+
+/**
+ * Creates a Lead and never changes an existing record.
+ *
+ * This is a plain insert, not an upsert: this CRM marks Phone (and Email) as
+ * unique, and an upsert updates whichever record matches any unique field, so
+ * two advisors sharing an office phone would be merged into one Lead.
+ *
+ * - Zoho already has this email: that record is returned untouched (`created: false`).
+ * - Another unique field clashes (the phone): the Lead is created without that field.
+ */
+export async function createLead(record: ZohoRecord): Promise<ZohoResult<{ id: string; module: ZohoModule; created: boolean; dropped: string[] }>> {
+  const data = { ...record };
+  const dropped: string[] = [];
+  for (let attempt = 0; attempt < 4; attempt++) {
     // Workflow rules run, so a "welcome email" rule set up in Zoho fires for new leads.
-    trigger: ["workflow"],
-  });
-  if (!res.ok) return res;
-  const row = firstRow(res.data);
-  if (!row.ok) return row;
-  if (!row.data.details?.id) return fail("http", "Zoho did not return the record id");
-  return { ok: true, data: { id: row.data.details.id, created: row.data.action === "insert" } };
+    const res = await call<{ data?: RowResult[] }>("POST", "/Leads", { data: [data], trigger: ["workflow"] });
+    const row = (res.ok ? res.data : (res.body as { data?: RowResult[] } | null | undefined))?.data?.[0];
+    if (row?.status === "success" && row.details?.id) return { ok: true, data: { id: row.details.id, module: "Leads", created: true, dropped } };
+    if (row?.code === "DUPLICATE_DATA") {
+      const field = row.details?.api_name;
+      const existing = row.details?.duplicate_record;
+      if (field === "Email" && existing?.id) {
+        const zohoModule: ZohoModule = existing.module?.api_name === "Contacts" ? "Contacts" : "Leads";
+        return { ok: true, data: { id: existing.id, module: zohoModule, created: false, dropped } };
+      }
+      if (field && field in data && !REQUIRED_LEAD_FIELDS.has(field)) {
+        delete data[field];
+        dropped.push(field);
+        continue;
+      }
+    }
+    if (!res.ok) return res;
+    const checked = firstRow(res.data);
+    return checked.ok ? fail("http", "Zoho did not return the record id") : checked;
+  }
+  return fail("http", "Zoho kept refusing the Lead as a duplicate");
 }
 
 export async function updateRecord(module: ZohoModule, id: string, record: ZohoRecord): Promise<ZohoResult<true>> {

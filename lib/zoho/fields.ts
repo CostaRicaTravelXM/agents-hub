@@ -41,7 +41,7 @@ export type LeadInput = {
   channel?: string | null;
 };
 
-/** A Zoho Lead from our values. Empty optional values are left out so an upsert never blanks a field. */
+/** A Zoho Lead from our values. Empty optional values are left out. */
 export function buildZohoLead(input: LeadInput): ZohoRecord {
   const f = ZOHO_FIELDS;
   const record: ZohoRecord = {

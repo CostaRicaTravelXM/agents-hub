@@ -5,7 +5,7 @@ import { env } from "@/lib/env";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { Tables } from "@/lib/database.types";
 import { CAMPAIGN, CAMPAIGN_LABEL, campaignTags, normalizeEmail } from "@/lib/campaigns/thanksgiving";
-import { addTags, findAdvisor, upsertLead, zohoConfigured } from "@/lib/zoho/client";
+import { addTags, createLead, findAdvisor, zohoConfigured } from "@/lib/zoho/client";
 import { buildZohoLead, INDEPENDENT_COMPANY } from "@/lib/zoho/fields";
 
 export type Claim = Tables<"hub_campaign_claims">;
@@ -269,8 +269,9 @@ export async function retryFailedInvites(origin: string, limit = 100) {
 /* ---------------------------------------------------------------- Zoho hand-off */
 /**
  * Sends one claim's current state to Zoho. Safe to call any number of times:
- * the lease lets one request through, and everything sent is idempotent (an
- * upsert by email and tags). Never throws.
+ * the lease lets one request through, and everything sent is idempotent (a
+ * Lead is only created when Zoho has no record with that email, then tags).
+ * Never throws.
  *
  * While Zoho is not connected this does nothing and the claim stays queued
  * (version > synced_version) for syncPendingClaims().
@@ -298,7 +299,7 @@ export async function syncClaim(claimId: string): Promise<"sent" | "skipped" | "
         recordId = found.data.id;
       } else {
         // Zoho does not know them: they become a Lead with what they typed.
-        const lead = await upsertLead(
+        const lead = await createLead(
           buildZohoLead({
             firstName: claim.first_name ?? "",
             lastName: claim.last_name ?? "",
@@ -311,7 +312,7 @@ export async function syncClaim(claimId: string): Promise<"sent" | "skipped" | "
           }),
         );
         if (lead.ok) {
-          zohoModule = "Leads";
+          zohoModule = lead.data.module;
           recordId = lead.data.id;
         } else lastError = lead.message;
       }

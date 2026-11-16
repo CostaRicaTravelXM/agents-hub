@@ -4,7 +4,7 @@ import { needsWelcome } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { createServiceClient } from "@/lib/supabase/server";
 import { buildAgentsHubPayload, buildAgentsHubZohoLead } from "@/lib/hub/crm-payload";
-import { addTags, findAdvisor, upsertLead, zohoConfigured } from "@/lib/zoho/client";
+import { addTags, createLead, findAdvisor, zohoConfigured } from "@/lib/zoho/client";
 
 /** Written on a Zoho record that already existed when its owner joined the Hub. */
 export const HUB_MEMBER_TAG = "Agents Hub member";
@@ -41,9 +41,16 @@ export async function ensureCrmLead(viewer: Viewer): Promise<void> {
         if (tagged.ok) zohoRecordId = found.data.id;
         else lastError = tagged.message;
       } else {
-        const res = await upsertLead(buildAgentsHubZohoLead(viewer.profile, viewer.email));
-        if (res.ok) zohoRecordId = res.data.id;
-        else lastError = res.message;
+        const res = await createLead(buildAgentsHubZohoLead(viewer.profile, viewer.email));
+        if (!res.ok) lastError = res.message;
+        else {
+          zohoRecordId = res.data.id;
+          // Zoho had the email after all (the search index can lag): tag it like any known record.
+          if (!res.data.created) {
+            const tagged = await addTags(res.data.module, res.data.id, [HUB_MEMBER_TAG]);
+            if (!tagged.ok) lastError = tagged.message;
+          }
+        }
       }
     } else {
       try {

@@ -91,7 +91,9 @@ Everything was tested against a stand-in server, not Zoho itself. Check these on
 - the search scope: if a lookup answers `OAUTH_SCOPE_MISMATCH`, the scope list above is missing something for search;
 - the tag call (`POST /crm/v7/{module}/{id}/actions/add_tags` with a `tags` list in the body);
 - that `Thanksgiving 2026` is accepted as a Lead Source value (add it to the picklist in Zoho if not);
-- which workflow rules fire: the upsert asks Zoho to run workflows.
+- which workflow rules fire: creating a Lead asks Zoho to run workflows.
+
+Checked on 2026-11-16 against the real CRM: Email and Phone are unique fields on Leads. The Hub therefore creates Leads with a plain insert, never an upsert, which would have merged two advisors who share a phone. When the phone is already on another record, the new Lead is created without a phone.
 
 ## Decisions still open
 

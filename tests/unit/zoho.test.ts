@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { addTags, findAdvisor, resetZohoToken, upsertLead, zohoConfigured } from "@/lib/zoho/client";
+import { addTags, createLead, findAdvisor, resetZohoToken, zohoConfigured } from "@/lib/zoho/client";
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 const token = () => json({ access_token: "tok-1", expires_in: 3600 });
@@ -48,7 +48,7 @@ describe("Zoho CRM client", () => {
     const calls = zoho();
     expect(zohoConfigured()).toBe(false);
     expect(await findAdvisor("a@b.test")).toMatchObject({ ok: false, reason: "not_configured" });
-    expect(await upsertLead({ Email: "a@b.test" })).toMatchObject({ ok: false, reason: "not_configured" });
+    expect(await createLead({ Email: "a@b.test" })).toMatchObject({ ok: false, reason: "not_configured" });
     expect(calls).toHaveLength(0);
   });
 
@@ -79,16 +79,33 @@ describe("Zoho CRM client", () => {
     expect(await findAdvisor("sol@x.test")).toEqual({ ok: true, data: { module: "Leads", id: "222", firstName: "", lastName: "Solo", company: "Independent" } });
   });
 
-  it("upserts a Lead by email so no duplicate is created", async () => {
-    const calls = zoho(token(), json({ data: [{ code: "SUCCESS", status: "success", action: "insert", details: { id: "333" } }] }, 201));
-    expect(await upsertLead({ Email: "new@x.test", Last_Name: "New" })).toEqual({ ok: true, data: { id: "333", created: true } });
-    expect(calls[1]).toMatchObject({ url: "https://api.zoho.test/crm/v7/Leads/upsert", method: "POST" });
-    expect(calls[1].body).toMatchObject({ data: [{ Email: "new@x.test", Last_Name: "New" }], duplicate_check_fields: ["Email"] });
+  it("creates a Lead with a plain insert, never an upsert", async () => {
+    const calls = zoho(token(), json({ data: [{ code: "SUCCESS", status: "success", details: { id: "333" } }] }, 201));
+    expect(await createLead({ Email: "new@x.test", Last_Name: "New" })).toEqual({ ok: true, data: { id: "333", module: "Leads", created: true, dropped: [] } });
+    expect(calls[1]).toMatchObject({ url: "https://api.zoho.test/crm/v7/Leads", method: "POST" });
+    expect(calls[1].body).toEqual({ data: [{ Email: "new@x.test", Last_Name: "New" }], trigger: ["workflow"] });
+  });
+
+  it("leaves another advisor's Lead alone when the phone is already used, and creates this one without the phone", async () => {
+    const clash = { code: "DUPLICATE_DATA", status: "error", message: "duplicate data", details: { api_name: "Phone", duplicate_record: { id: "777", module: { api_name: "Leads" } } } };
+    const calls = zoho(token(), json({ data: [clash] }, 400), json({ data: [{ code: "SUCCESS", status: "success", details: { id: "888" } }] }, 201));
+    expect(await createLead({ Email: "second@x.test", Last_Name: "Second", Company: "Shared Office", Phone: "+1 305 555 0100" })).toEqual({
+      ok: true,
+      data: { id: "888", module: "Leads", created: true, dropped: ["Phone"] },
+    });
+    expect(calls[2].body).toEqual({ data: [{ Email: "second@x.test", Last_Name: "Second", Company: "Shared Office" }], trigger: ["workflow"] });
+  });
+
+  it("returns the record Zoho already has for this email, untouched", async () => {
+    const clash = { code: "DUPLICATE_DATA", status: "error", message: "duplicate data", details: { api_name: "Email", duplicate_record: { id: "555", module: { api_name: "Contacts" } } } };
+    const calls = zoho(token(), json({ data: [clash] }, 400));
+    expect(await createLead({ Email: "known@x.test", Last_Name: "Known" })).toEqual({ ok: true, data: { id: "555", module: "Contacts", created: false, dropped: [] } });
+    expect(calls).toHaveLength(2);
   });
 
   it("reports a record Zoho refused, with its reason", async () => {
     zoho(token(), json({ data: [{ code: "MANDATORY_NOT_FOUND", status: "error", message: "required field not found" }] }, 202));
-    expect(await upsertLead({ Email: "x@x.test" })).toMatchObject({ ok: false, reason: "http", message: expect.stringContaining("MANDATORY_NOT_FOUND") });
+    expect(await createLead({ Email: "x@x.test" })).toMatchObject({ ok: false, reason: "http", message: expect.stringContaining("MANDATORY_NOT_FOUND") });
   });
 
   it("adds tags without replacing the existing ones", async () => {
