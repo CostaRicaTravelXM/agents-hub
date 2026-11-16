@@ -26,7 +26,7 @@ Opening the gift registers the advisor in two places:
 
 The Hub profile is filled without retyping: from the four fields for a new advisor, and from the Zoho record (name and agency) for a known one. The browser only ever sees the known advisor's details masked.
 
-An advisor who already has a Hub account gets no email; the last screen tells them to sign in. "Send it again" on the last screen re-sends the link, three times an hour at most.
+An advisor who already has a Hub account gets a sign-in email instead, once per claim: the Hub's normal sign-in link email (`supabase/templates/magic-link.html`) with the gift wording and a link back to the kit. The account is marked `gift_email` only while that email is sent, so their later sign-in emails stay plain. Both templates must be pasted into the production dashboard (Authentication → Emails → Confirm signup and Magic link). "Send it again" on the last screen re-sends the link, three times an hour at most.
 
 The email is the Hub's normal sign-up email (`supabase/templates/confirmation.html`), sent by Supabase through the Zoho SMTP account. For advisors who come from the gift it has its own wording ("Your gift is claimed. Your Agents Hub is ready too") and lists what the Hub offers. The hosted Supabase project does not read this file: paste the template into Authentication → Emails → Confirm signup in the production dashboard.
 

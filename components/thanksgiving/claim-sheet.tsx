@@ -286,7 +286,9 @@ function HubNote({ hub }: { hub: HubAccess }) {
         <h3 id="gift-hub" className="font-ui text-[20px] leading-tight font-semibold text-ink">
           Your Agents Hub is waiting
         </h3>
-        <p className="text-[16px] text-body">You already have an Agents Hub account. Sign in to find:</p>
+        <p className="text-[16px] text-body">
+          You already have an Agents Hub account. We emailed a one-tap sign-in link to <span className="font-semibold break-all text-ink">{hub.email}</span>. Inside you will find:
+        </p>
         {inside}
         <Button asChild block variant="secondary">
           <Link href="/login?next=%2F">

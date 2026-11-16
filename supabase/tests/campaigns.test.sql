@@ -2,7 +2,7 @@
 --   npx supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(19);
+select plan(20);
 
 -- ---------------------------------------------------------------- fixtures
 insert into auth.users (id, email, email_confirmed_at, raw_user_meta_data, aud, role) values
@@ -57,6 +57,7 @@ select is((select count(*)::int from public.hub_campaign_claims where campaign =
 -- ---------------------------------------------------------------- Hub invite
 select has_column('public', 'hub_campaign_claims', 'hub_invited_at', 'a claim records when its Hub invite was sent');
 select has_column('public', 'hub_campaign_claims', 'hub_invite_error', 'and why the last try failed');
+select has_column('public', 'hub_campaign_claims', 'hub_member_emailed_at', 'and when an advisor with an account was emailed instead');
 
 select * from finish();
 rollback;

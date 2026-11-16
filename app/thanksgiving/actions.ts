@@ -26,7 +26,8 @@ async function openGift(claimId: string, email: string): Promise<ActionResult> {
   await setClaimCookie(claimId, true);
   const [origin, member] = await Promise.all([appOrigin(), hasHubAccount(email)]);
   after(async () => {
-    if (!member) await inviteClaimToHub(claimId, origin);
+    // New advisors get the invite; advisors with an account get a sign-in link. Both carry the gift.
+    await inviteClaimToHub(claimId, origin);
     await syncClaim(claimId);
   });
   return { ok: true, next: { step: "gift", hub: { email, member } } };
@@ -191,8 +192,8 @@ export async function resendHubInvite(): Promise<{ ok: boolean; message: string 
   if (!held?.unlocked) return { ok: false, message: "Please enter your email again." };
   const { claim } = held;
   if (!(await allow("gift-invite-email", claim.email, 3, HOUR))) return { ok: false, message: "We already sent it a few times. Check your spam folder, or try again in an hour." };
-  const result = await inviteClaimToHub(claim.id, await appOrigin());
-  if (result === "member") return { ok: true, message: "You already have a Hub account. Sign in with this email." };
+  const result = await inviteClaimToHub(claim.id, await appOrigin(), { resend: true });
+  if (result === "member") return { ok: true, message: `Sent. Look for a sign-in link from TravelXM at ${claim.email}.` };
   if (result === "sent") return { ok: true, message: `Sent. Look for an email from TravelXM at ${claim.email}.` };
   return { ok: false, message: "We could not send it just now. Wait a minute and try again." };
 }

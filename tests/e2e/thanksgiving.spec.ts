@@ -237,3 +237,39 @@ test("someone else typing a confirmed email sees masked details and gets nothing
   await expect(page.getByLabel("Email")).toBeVisible();
   await context.close();
 });
+
+test("an advisor who already has a Hub account gets a sign-in email with the gift wording", async ({ browser }) => {
+  // Supabase sends one email a minute to the same address; the invite above was the last one.
+  const { data: before } = await admin.from("hub_campaign_claims").select("hub_invited_at").eq("email", email).single();
+  const wait = 62_000 - (Date.now() - new Date(before!.hub_invited_at!).getTime());
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  if (wait > 0) await page.waitForTimeout(wait);
+
+  await page.goto("/thanksgiving");
+  await (await claimButton(page)).click();
+  await page.getByLabel("Email").fill(email);
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Yes, open my gift" }).click();
+  await expect(page.getByText("We emailed a one-tap sign-in link to")).toBeVisible();
+
+  await expect
+    .poll(async () => (await admin.from("hub_campaign_claims").select("hub_member_emailed_at").eq("email", email).single()).data?.hub_member_emailed_at ?? null)
+    .not.toBeNull();
+  const { messages } = (await (await fetch(`${MAILPIT}/search?query=${encodeURIComponent(`to:"${email}"`)}`)).json()) as { messages: { ID: string }[] };
+  expect(messages.length).toBe(2);
+  const mail = (await (await fetch(`${MAILPIT}/message/${messages[0].ID}`)).json()) as { HTML: string };
+  expect(mail.HTML).toContain("Your Agents Hub is waiting");
+  expect(mail.HTML).toMatch(/href="[^"]*\/thanksgiving"[^>]*>Download your Selling Kit/);
+
+  // The mark that gave this email its wording is gone, so later sign-in emails are plain.
+  const { data: profile } = await admin.from("profiles").select("id").eq("email", email).single();
+  await expect.poll(async () => (await admin.auth.admin.getUserById(profile!.id)).data.user?.user_metadata?.gift_email ?? null).toBeNull();
+
+  // The link signs them in.
+  const href = /href="([^"]*token_hash[^"]*)"/.exec(mail.HTML)![1];
+  await page.goto(href.replaceAll("&amp;", "&"));
+  await page.waitForURL((u) => !u.pathname.startsWith("/auth") && !u.pathname.startsWith("/login"));
+  await expect(page.getByRole("link", { name: /Your Thanksgiving gift/ })).toBeVisible();
+  await context.close();
+});

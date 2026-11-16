@@ -144,34 +144,71 @@ export async function appOrigin() {
 }
 
 /**
- * True when this email has a Hub account its owner has actually opened, so no
- * invite is needed. Sending an invite creates the account straight away, still
- * unconfirmed; that one does not count, and can be sent the link again.
+ * The id of the Hub account for this email, when its owner has actually opened
+ * it. Sending an invite creates the account straight away, still unconfirmed;
+ * that one does not count, and can be sent the link again.
  */
-export async function hasHubAccount(email: string) {
+async function hubAccountId(email: string): Promise<string | null> {
   try {
     const supabase = createServiceClient();
     const { data } = await supabase.from("profiles").select("id").eq("email", email).limit(1);
-    if (!data?.length) return false;
+    if (!data?.length) return null;
     const { data: found } = await supabase.auth.admin.getUserById(data[0].id);
-    return Boolean(found.user?.email_confirmed_at);
+    return found.user?.email_confirmed_at ? data[0].id : null;
   } catch {
-    return false;
+    return null;
   }
+}
+
+/** True when this email has a Hub account its owner has opened, so no invite is needed. */
+export async function hasHubAccount(email: string) {
+  return Boolean(await hubAccountId(email));
+}
+
+/**
+ * Emails an advisor who already has a Hub account a one-tap sign-in link, with
+ * the gift wording and the way back to the kit. Once per claim unless `resend`.
+ *
+ * Supabase renders the sign-in email from the account's metadata, so the
+ * account is marked with gift_email for the moment of the send and unmarked
+ * right after; their later sign-in emails stay plain.
+ */
+async function emailMemberGift(claim: Claim, userId: string, origin: string, resend: boolean): Promise<"member" | "failed"> {
+  if (claim.hub_member_emailed_at && !resend) return "member";
+  const supabase = createServiceClient();
+  let failure: string | null = null;
+  try {
+    await supabase.auth.admin.updateUserById(userId, { user_metadata: { gift_email: CAMPAIGN } });
+    const { error } = await supabase.auth.signInWithOtp({
+      email: claim.email,
+      // Straight to Hub Home, where the gift tile is.
+      options: { shouldCreateUser: false, emailRedirectTo: `${origin}/auth/confirm?next=${encodeURIComponent("/dashboard")}` },
+    });
+    if (error) failure = error.code ?? error.message;
+  } finally {
+    await supabase.auth.admin.updateUserById(userId, { user_metadata: { gift_email: null } });
+  }
+  await supabase
+    .from("hub_campaign_claims")
+    .update(failure ? { hub_invite_error: failure } : { hub_member_emailed_at: new Date().toISOString(), hub_invite_error: null })
+    .eq("id", claim.id);
+  return failure ? "failed" : "member";
 }
 
 /**
  * Emails the advisor a link that creates their Hub account and signs them in.
  * Nothing is usable until the link is opened, so typing someone else's email
  * gives no access. The profile is filled from the claim: what a new advisor
- * typed, or what Zoho holds for a known one. Never throws.
+ * typed, or what Zoho holds for a known one. An advisor who already has an
+ * account gets a sign-in email instead ("member"). Never throws.
  */
-export async function inviteClaimToHub(claimId: string, origin: string): Promise<"sent" | "member" | "failed" | "skipped"> {
+export async function inviteClaimToHub(claimId: string, origin: string, opts: { resend?: boolean } = {}): Promise<"sent" | "member" | "failed" | "skipped"> {
   try {
     const supabase = createServiceClient();
     const { data: claim } = await supabase.from("hub_campaign_claims").select("*").eq("id", claimId).single();
     if (!claim?.confirmed_at) return "skipped";
-    if (await hasHubAccount(claim.email)) return "member";
+    const memberId = await hubAccountId(claim.email);
+    if (memberId) return await emailMemberGift(claim, memberId, origin, Boolean(opts.resend));
 
     const first = claim.first_name?.trim() ?? "";
     const last = claim.last_name?.trim() ?? "";
@@ -207,7 +244,7 @@ export async function inviteClaimToHub(claimId: string, origin: string): Promise
   }
 }
 
-/** Re-sends the invites that failed (most often the hourly email limit). */
+/** Re-sends the invites and member emails that failed (most often the hourly email limit). */
 export async function retryFailedInvites(origin: string, limit = 100) {
   const tally = { sent: 0, member: 0, failed: 0, skipped: 0 };
   const { data: rows } = await createServiceClient()
@@ -216,6 +253,7 @@ export async function retryFailedInvites(origin: string, limit = 100) {
     .eq("campaign", CAMPAIGN)
     .not("confirmed_at", "is", null)
     .is("hub_invited_at", null)
+    .is("hub_member_emailed_at", null)
     .not("hub_invite_error", "is", null)
     .order("created_at")
     .limit(limit);

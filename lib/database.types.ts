@@ -892,6 +892,7 @@ export type Database = {
           first_name: string | null
           hub_invite_error: string | null
           hub_invited_at: string | null
+          hub_member_emailed_at: string | null
           id: string
           is_independent: boolean
           kit_downloaded_at: string | null
@@ -919,6 +920,7 @@ export type Database = {
           first_name?: string | null
           hub_invite_error?: string | null
           hub_invited_at?: string | null
+          hub_member_emailed_at?: string | null
           id?: string
           is_independent?: boolean
           kit_downloaded_at?: string | null
@@ -946,6 +948,7 @@ export type Database = {
           first_name?: string | null
           hub_invite_error?: string | null
           hub_invited_at?: string | null
+          hub_member_emailed_at?: string | null
           id?: string
           is_independent?: boolean
           kit_downloaded_at?: string | null
