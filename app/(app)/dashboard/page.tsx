@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronRight, PlayCircle } from "lucide-react";
+import { ChevronRight, Gift, PlayCircle } from "lucide-react";
 import { requireViewer } from "@/lib/auth";
+import { hasConfirmedClaim } from "@/lib/campaigns/claims";
 import { getCatalog, getCourseDetail } from "@/lib/queries";
 import { hubCounts, listCurrentOffers, listFamTrips } from "@/lib/hub/queries";
 import { famTripTiming } from "@/lib/hub/fam";
@@ -31,7 +32,13 @@ function SectionTitle({ id, title, href, label }: { id: string; title: string; h
 
 export default async function DashboardPage() {
   const viewer = await requireViewer();
-  const [catalog, counts, trips, offers] = await Promise.all([getCatalog(viewer.id), hubCounts(), listFamTrips(), listCurrentOffers()]);
+  const [catalog, counts, trips, offers, hasGift] = await Promise.all([
+    getCatalog(viewer.id),
+    hubCounts(),
+    listFamTrips(),
+    listCurrentOffers(),
+    hasConfirmedClaim(viewer.email),
+  ]);
 
   const inProgress = catalog
     .filter((c) => c.enrollment && !c.enrollment.completed_at)
@@ -92,6 +99,21 @@ export default async function DashboardPage() {
           Everything in the Hub
         </h2>
         <ul className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-3">
+          {/* Only for advisors who opened the Thanksgiving gift: the way back to their kit. */}
+          {hasGift ? (
+            <li>
+              <Link
+                href="/thanksgiving"
+                className="group flex h-full min-h-[148px] flex-col rounded-lg border border-line bg-card p-4 transition-[border-color,box-shadow] duration-200 ease-standard hover:border-ink md:min-h-[172px] md:p-5"
+              >
+                <span className="grid size-12 shrink-0 place-items-center rounded-md bg-sunset/20 text-ink md:size-14">
+                  <Gift aria-hidden className="size-6 stroke-[1.75]" />
+                </span>
+                <span className="mt-4 block font-ui text-[17px] leading-tight font-semibold tracking-[-0.01em] text-ink md:text-[20px]">Your Thanksgiving gift</span>
+                <span className="mt-1 block text-[15px] leading-snug text-muted md:text-[16px]">Costa Rica Selling Kit</span>
+              </Link>
+            </li>
+          ) : null}
           {HOME_MODULES.map((item) => (
             <li key={item.id}>
               <ModuleTile item={item} count={countFor(item.id)} />

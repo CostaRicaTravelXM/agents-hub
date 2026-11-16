@@ -266,7 +266,10 @@ export function NameForm({
   );
 }
 
-export function RegisterForm({ next, google }: { next?: string; google: boolean }) {
+/** What an advisor already told us on a public campaign page, so they do not type it twice. */
+export type RegisterDefaults = { email?: string; firstName?: string; lastName?: string; company?: string; isIndependent?: boolean };
+
+export function RegisterForm({ next, google, defaults }: { next?: string; google: boolean; defaults?: RegisterDefaults }) {
   const [state, action, pending] = useActionState(signUp, undefined);
   const [useLink, setUseLink] = useState(false);
   if (useLink) return <RegisterWithLinkForm next={next} onBack={() => setUseLink(false)} />;
@@ -285,19 +288,19 @@ export function RegisterForm({ next, google }: { next?: string; google: boolean 
         <FormError state={state} />
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="First name" htmlFor="first_name" error={fe.first_name}>
-            <Input id="first_name" name="first_name" autoComplete="given-name" required aria-invalid={!!fe.first_name} />
+            <Input id="first_name" name="first_name" defaultValue={defaults?.firstName} autoComplete="given-name" required aria-invalid={!!fe.first_name} />
           </Field>
           <Field label="Last name" htmlFor="last_name" error={fe.last_name}>
-            <Input id="last_name" name="last_name" autoComplete="family-name" required aria-invalid={!!fe.last_name} />
+            <Input id="last_name" name="last_name" defaultValue={defaults?.lastName} autoComplete="family-name" required aria-invalid={!!fe.last_name} />
           </Field>
         </div>
         <Field label="Email" htmlFor="email" error={fe.email}>
-          <Input id="email" name="email" type="email" autoComplete="email" inputMode="email" required aria-invalid={!!fe.email} />
+          <Input id="email" name="email" type="email" defaultValue={defaults?.email} autoComplete="email" inputMode="email" required aria-invalid={!!fe.email} />
         </Field>
         <Field label="Password" htmlFor="password" error={fe.password} hint="At least 8 characters.">
           <PasswordInput id="password" name="password" autoComplete="new-password" required aria-invalid={!!fe.password} />
         </Field>
-        <AgencyFields error={fe.company} />
+        <AgencyFields company={defaults?.company} isIndependent={defaults?.isIndependent} error={fe.company} />
         <Button type="submit" block size="lg" loading={pending}>
           Create account
         </Button>

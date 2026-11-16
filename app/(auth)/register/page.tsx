@@ -1,18 +1,39 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { RegisterForm } from "@/components/auth-forms";
+import { RegisterForm, type RegisterDefaults } from "@/components/auth-forms";
+import { currentClaim } from "@/lib/campaigns/claims";
 import { env } from "@/lib/env";
 
 export const metadata: Metadata = { title: "Create your account" };
 
+/**
+ * An advisor who just opened a campaign gift in this browser gets the form
+ * filled in. Names come back only when they typed them here themselves: details
+ * we looked up in Zoho stay masked until the email is verified by signing up.
+ */
+async function giftDefaults(): Promise<RegisterDefaults | undefined> {
+  const held = await currentClaim();
+  if (!held?.unlocked) return undefined;
+  const { claim } = held;
+  if (claim.known) return { email: claim.email };
+  return {
+    email: claim.email,
+    firstName: claim.first_name ?? undefined,
+    lastName: claim.last_name ?? undefined,
+    company: claim.company ?? undefined,
+    isIndependent: claim.is_independent,
+  };
+}
+
 export default async function RegisterPage({ searchParams }: PageProps<"/register">) {
   const sp = await searchParams;
   const next = typeof sp.next === "string" ? sp.next : undefined;
+  const defaults = await giftDefaults();
   return (
     <div className="xm-reveal">
       <h1 className="xm-title">Create your account</h1>
       <p className="mt-3 mb-7 text-[17px] text-muted">Free for travel advisors who sell Costa Rica. It takes about a minute.</p>
-      <RegisterForm next={next} google={env.googleAuth} />
+      <RegisterForm next={next} google={env.googleAuth} defaults={defaults} />
       <p className="mt-7 text-[15px] text-body">
         Already have an account?{" "}
         <Link href={`/login${next ? `?next=${encodeURIComponent(next)}` : ""}`} className="xm-link font-semibold">

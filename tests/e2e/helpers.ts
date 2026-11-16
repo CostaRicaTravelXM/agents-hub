@@ -25,10 +25,10 @@ export async function openBookAtPageOne(page: Page) {
   return Number((await label.textContent())!.match(/of (\d+)/)![1]);
 }
 
-const MAILPIT = "http://127.0.0.1:54324/api/v1";
+export const MAILPIT ="http://127.0.0.1:54324/api/v1";
 
 /** Reads the confirmation link Supabase sent to Mailpit and opens it. */
-async function confirmEmail(page: Page, email: string) {
+export async function confirmEmail(page: Page, email: string) {
   await expect
     .poll(
       async () => {

@@ -43,4 +43,28 @@ export const env = {
   get n8nAgentsWebhookUrl() {
     return process.env.N8N_AGENTS_WEBHOOK_URL || undefined;
   },
+  /**
+   * Zoho CRM API (a dedicated Self Client, narrow scopes; see docs/THANKSGIVING.md).
+   * With all three set, the Hub writes leads to Zoho itself and n8n is no longer used.
+   */
+  get zoho() {
+    const clientId = process.env.ZOHO_CLIENT_ID;
+    const clientSecret = process.env.ZOHO_CLIENT_SECRET;
+    const refreshToken = process.env.ZOHO_REFRESH_TOKEN;
+    if (!clientId || !clientSecret || !refreshToken) return undefined;
+    return {
+      clientId,
+      clientSecret,
+      refreshToken,
+      /** Data centre: accounts.zoho.com / zohoapis.com (US), .eu, .in, .com.au, .jp, zohocloud.ca. */
+      accountsUrl: (process.env.ZOHO_ACCOUNTS_URL || "https://accounts.zoho.com").replace(/\/$/, ""),
+      apiUrl: (process.env.ZOHO_API_URL || "https://www.zohoapis.com").replace(/\/$/, ""),
+    };
+  },
+  /** Cloudflare Turnstile for the public gift page. Unset skips the check. */
+  get turnstile() {
+    const siteKey = process.env.TURNSTILE_SITE_KEY;
+    const secret = process.env.TURNSTILE_SECRET_KEY;
+    return siteKey && secret ? { siteKey, secret } : undefined;
+  },
 };

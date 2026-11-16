@@ -75,6 +75,6 @@ function redirectWithCookies(url: URL, from: NextResponse) {
 export const config = {
   matcher: [
     // Everything except static assets, images and the PWA files.
-    "/((?!_next/static|_next/image|favicon.ico|brand/|photos/|icons/|manifest.webmanifest|sw.js|offline|icon.png|.*\\.(?:png|jpg|jpeg|webp|svg|gif|ico|mp4|pdf)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|brand/|photos/|icons/|manifest.webmanifest|sw.js|offline|icon.png|.*\\.(?:png|jpg|jpeg|webp|svg|gif|ico|mp4|webm|pdf)$).*)",
   ],
 };

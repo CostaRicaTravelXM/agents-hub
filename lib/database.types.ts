@@ -880,6 +880,90 @@ export type Database = {
         }
         Relationships: []
       }
+      hub_campaign_claims: {
+        Row: {
+          campaign: string
+          channel: string
+          company: string | null
+          confirmed_at: string | null
+          created_at: string
+          email: string
+          fam_opened_at: string | null
+          first_name: string | null
+          hub_invite_error: string | null
+          hub_invited_at: string | null
+          id: string
+          is_independent: boolean
+          kit_downloaded_at: string | null
+          known: boolean
+          last_error: string | null
+          last_name: string | null
+          phone: string | null
+          sync_attempts: number
+          sync_claimed_at: string | null
+          synced_at: string | null
+          synced_version: number
+          updated_at: string
+          version: number
+          zoho_module: string | null
+          zoho_record_id: string | null
+        }
+        Insert: {
+          campaign: string
+          channel?: string
+          company?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          email: string
+          fam_opened_at?: string | null
+          first_name?: string | null
+          hub_invite_error?: string | null
+          hub_invited_at?: string | null
+          id?: string
+          is_independent?: boolean
+          kit_downloaded_at?: string | null
+          known?: boolean
+          last_error?: string | null
+          last_name?: string | null
+          phone?: string | null
+          sync_attempts?: number
+          sync_claimed_at?: string | null
+          synced_at?: string | null
+          synced_version?: number
+          updated_at?: string
+          version?: number
+          zoho_module?: string | null
+          zoho_record_id?: string | null
+        }
+        Update: {
+          campaign?: string
+          channel?: string
+          company?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          email?: string
+          fam_opened_at?: string | null
+          first_name?: string | null
+          hub_invite_error?: string | null
+          hub_invited_at?: string | null
+          id?: string
+          is_independent?: boolean
+          kit_downloaded_at?: string | null
+          known?: boolean
+          last_error?: string | null
+          last_name?: string | null
+          phone?: string | null
+          sync_attempts?: number
+          sync_claimed_at?: string | null
+          synced_at?: string | null
+          synced_version?: number
+          updated_at?: string
+          version?: number
+          zoho_module?: string | null
+          zoho_record_id?: string | null
+        }
+        Relationships: []
+      }
       hub_crm_leads: {
         Row: {
           attempts: number
@@ -889,6 +973,7 @@ export type Database = {
           payload: Json | null
           sent_at: string | null
           user_id: string
+          zoho_record_id: string | null
         }
         Insert: {
           attempts?: number
@@ -898,6 +983,7 @@ export type Database = {
           payload?: Json | null
           sent_at?: string | null
           user_id: string
+          zoho_record_id?: string | null
         }
         Update: {
           attempts?: number
@@ -907,6 +993,7 @@ export type Database = {
           payload?: Json | null
           sent_at?: string | null
           user_id?: string
+          zoho_record_id?: string | null
         }
         Relationships: [
           {
@@ -1123,6 +1210,24 @@ export type Database = {
           updated_at?: string
           valid_from?: string | null
           valid_until?: string | null
+        }
+        Relationships: []
+      }
+      hub_rate_hits: {
+        Row: {
+          at: string
+          bucket: string
+          key: string
+        }
+        Insert: {
+          at?: string
+          bucket: string
+          key: string
+        }
+        Update: {
+          at?: string
+          bucket?: string
+          key?: string
         }
         Relationships: []
       }
@@ -2524,6 +2629,7 @@ export type Database = {
       }
       assert_staff: { Args: never; Returns: undefined }
       can_access_course: { Args: { p_course: string }; Returns: boolean }
+      claim_hub_campaign_sync: { Args: { p_id: string }; Returns: number }
       claim_hub_crm_lead: {
         Args: { p_payload: Json; p_user: string }
         Returns: boolean
@@ -2603,6 +2709,15 @@ export type Database = {
       gen_join_code: { Args: never; Returns: string }
       get_quiz: { Args: { p_lesson: string }; Returns: Json }
       get_shared_trip: { Args: { p_token: string }; Returns: Json }
+      hub_rate_allow: {
+        Args: {
+          p_bucket: string
+          p_key: string
+          p_max: number
+          p_window_seconds: number
+        }
+        Returns: boolean
+      }
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       is_verified_agent: { Args: never; Returns: boolean }
