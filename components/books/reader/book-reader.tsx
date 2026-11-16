@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { preloadPage } from "@/components/books/reader/page-cache";
 import { PageImage } from "@/components/books/reader/page-image";
 import { ReaderControls } from "@/components/books/reader/reader-controls";
 import { ReaderTopBar } from "@/components/books/reader/reader-top-bar";
@@ -65,6 +66,8 @@ export function BookReader({ book, startPage }: { book: ReaderBook; startPage: n
 
   const angle = useRef(0);
   const animating = useRef(false);
+  // Which way the reader last turned: pages are fetched ahead in that direction.
+  const lastDir = useRef<Dir>(1);
   const gesture = useRef<{ id: number; x: number; y: number; t: number; active: boolean; dir: Dir } | null>(null);
 
   const step = stepFor(mode);
@@ -123,14 +126,13 @@ export function BookReader({ book, startPage }: { book: ReaderBook; startPage: n
     return () => document.removeEventListener("fullscreenchange", onFs);
   }, []);
 
-  /* ---------- preload the neighbouring spreads ---------- */
+  /* ---------- fetch ahead: three turns in the direction of reading, one behind ---------- */
   useEffect(() => {
-    const wanted = new Set<number>();
-    for (const p of [...spreadPages(first + step, mode, book.pageCount), ...spreadPages(Math.max(1, first - step), mode, book.pageCount)]) wanted.add(p);
-    for (const p of wanted) {
-      if (p < 1 || p > book.pageCount) continue;
-      const img = new Image();
-      img.src = pageImageUrl(book.id, p, width, book.fileVersion);
+    const ahead = lastDir.current;
+    // Nearest first, so the very next turn is ready before the ones after it.
+    for (const start of [first + ahead * step, first - ahead * step, first + ahead * step * 2, first + ahead * step * 3]) {
+      if (start < 1 || start > book.pageCount) continue;
+      for (const p of spreadPages(start, mode, book.pageCount)) preloadPage(pageImageUrl(book.id, p, width, book.fileVersion));
     }
   }, [first, mode, step, width, book]);
 
@@ -149,6 +151,7 @@ export function BookReader({ book, startPage }: { book: ReaderBook; startPage: n
 
   const commit = useCallback(
     (dir: Dir) => {
+      lastDir.current = dir;
       setFirst((f) => clampPage(f + dir * stepFor(mode), book.pageCount));
     },
     [mode, book.pageCount],

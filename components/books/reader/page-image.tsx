@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RotateCcw } from "lucide-react";
+import { isPageReady, markPageReady } from "@/components/books/reader/page-cache";
 import { pageImageUrl, type PageWidth } from "@/lib/books";
 
 /** One rendered page. A failed load shows a retry tile instead of a blank. */
@@ -25,6 +26,9 @@ export function PageImage({
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setFailed(false), [page, width]);
   const src = `${pageImageUrl(bookId, page, width, version)}${attempt ? `&r=${attempt}` : ""}`;
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+  // Already downloaded (it was fetched ahead): show it at once, with no fade. Decided once per page.
+  const instant = useMemo(() => isPageReady(src), [src]);
   if (failed) {
     return (
       <div className="grid size-full place-items-center bg-sunken p-6 text-center">
@@ -44,9 +48,34 @@ export function PageImage({
       </div>
     );
   }
+  const loaded = instant || loadedSrc === src;
   return (
-    // Plain <img>: the route serves a private, already-sized WebP, so next/image would only add a hop.
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={src} alt={alt} draggable={false} decoding="async" loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} onError={() => setFailed(true)} />
+    <div className="relative size-full">
+      {/* Never the previous page: until this one arrives the paper shows that it is on its way. */}
+      {loaded ? null : (
+        <div className="xm-page-wait" role="status">
+          <span>Loading page {page}</span>
+        </div>
+      )}
+      {/* Plain <img>: the route serves a private, already-sized WebP, so next/image would only add a hop.
+          Keyed by its address, so a new page starts from an empty image instead of keeping the old picture. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        key={src}
+        src={src}
+        alt={alt}
+        draggable={false}
+        decoding="async"
+        loading={priority ? "eager" : "lazy"}
+        fetchPriority={priority ? "high" : "auto"}
+        className={instant ? undefined : "xm-page-fade"}
+        data-loaded={loaded}
+        onLoad={() => {
+          markPageReady(src);
+          setLoadedSrc(src);
+        }}
+        onError={() => setFailed(true)}
+      />
+    </div>
   );
 }

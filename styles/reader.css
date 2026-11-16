@@ -26,6 +26,45 @@
   -webkit-user-drag: none;
 }
 
+/* A page that is still downloading: it arrives with a short fade, and the paper
+   says so if it takes more than a moment. Pages fetched ahead skip both. */
+.xm-page img.xm-page-fade {
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+.xm-page img.xm-page-fade[data-loaded="true"] {
+  opacity: 1;
+}
+.xm-page-wait {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(100deg, rgba(61, 55, 51, 0) 30%, rgba(61, 55, 51, 0.05) 50%, rgba(61, 55, 51, 0) 70%) 0 0 / 300% 100% var(--reader-paper);
+  animation: xm-page-wait 1.4s linear infinite;
+}
+.xm-page-wait span {
+  font-family: var(--font-subtitle);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-muted);
+  opacity: 0;
+  animation: xm-page-wait-label var(--duration-fast) var(--ease-standard) 0.4s forwards;
+}
+@keyframes xm-page-wait {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+@keyframes xm-page-wait-label {
+  to {
+    opacity: 1;
+  }
+}
+
 /* Hairline shadow in the gutter of a spread. */
 .xm-spine::before {
   content: "";
@@ -113,5 +152,11 @@
 @media (prefers-reduced-motion: reduce) {
   .xm-leaf {
     display: none;
+  }
+  .xm-page img.xm-page-fade {
+    transition: none;
+  }
+  .xm-page-wait {
+    animation: none;
   }
 }
