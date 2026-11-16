@@ -61,8 +61,9 @@ export async function lookupGift(input: { email: string; channel?: string; token
 
   const ip = await clientIp();
   if (!(await passesTurnstile(input.token, ip))) return { ok: false, error: "We could not confirm you are a person. Please reload the page and try again." };
-  // About ten lookups an hour per connection and five per address: fine for a typo, useless for harvesting.
-  const [ipOk, emailOk] = await Promise.all([allow("gift-lookup-ip", ip, 10, HOUR), allow("gift-lookup-email", email, 5, HOUR)]);
+  // Sixty lookups an hour per connection, since an agency office shares one, and five per address:
+  // fine for a typo, slow for harvesting.
+  const [ipOk, emailOk] = await Promise.all([allow("gift-lookup-ip", ip, 60, HOUR), allow("gift-lookup-email", email, 5, HOUR)]);
   if (!ipOk || !emailOk) return { ok: false, error: "Too many tries. Please wait an hour and try again." };
 
   try {

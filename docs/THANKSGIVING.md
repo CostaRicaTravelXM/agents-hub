@@ -117,7 +117,7 @@ Who gets it: only advisors who are new to Zoho and signed up on the Hub. Advisor
 
 - **iPhone.** Safari could not be run on this machine. Open the page on a real iPhone (same Wi-Fi, `http://<this computer's address>:3000/thanksgiving`) and check that the gift has no black box behind it and that the button opens the sheet. Try Low Power Mode too: the page should show a still gift with a working button.
 - **Production media.** Upload the kit with `node --env-file=<production env> scripts/upload-campaign-kit.mts "<pdf>" --apply`. The videos are served from the app's own files, which is fine at this size.
-- **Turnstile.** Set `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` to turn the bot check on. Without them only the limits apply: 10 lookups an hour per connection and 5 per email.
+- **Turnstile.** Set `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` to turn the bot check on. Without them only the limits apply: 60 lookups an hour per connection and 5 per email.
 - **Database.** The migration must be applied to production with the rest of the release (`docs/DEPLOY.md`).
 - **The Hub must be live.** The page is part of the Hub, so it goes out when the Hub does.
 
