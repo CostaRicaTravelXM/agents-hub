@@ -29,9 +29,9 @@ export default async function VerifyPage({ params }: PageProps<"/verify/[code]">
                 <BadgeCheck aria-hidden className="size-7 stroke-[1.75]" />
               </span>
               <p className="mt-6 inline-flex items-center gap-2 font-ui text-[15px] font-semibold text-success">This certificate is genuine</p>
-              <h1 className="mt-3 font-serif text-[34px] leading-tight font-bold text-ink italic">{cert.recipient_name}</h1>
+              <h1 className="mt-3 font-serif text-[34px] leading-tight font-bold text-ink">{cert.recipient_name}</h1>
               <p className="mt-2 text-[17px] text-body">has completed</p>
-              <p className="mt-2 font-certificate text-[36px] leading-none text-ink uppercase md:text-[44px]">{cert.course_title}</p>
+              <p className="mt-2 font-serif text-[28px] leading-tight font-bold text-ink uppercase md:text-[34px]">{cert.course_title}</p>
               <dl className="mt-8 grid grid-cols-2 gap-6 border-t border-line pt-6">
                 <div>
                   <dt className="xm-micro text-muted">Issued</dt>

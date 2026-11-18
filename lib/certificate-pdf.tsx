@@ -1,52 +1,72 @@
 import "server-only";
 import path from "node:path";
 import { readFileSync } from "node:fs";
-import { Document, Font, Image, Page, StyleSheet, Text, View, renderToBuffer } from "@react-pdf/renderer";
+import { Document, Font, Image, Page, StyleSheet, Text, renderToBuffer } from "@react-pdf/renderer";
+import { openSync } from "fontkit";
 import QRCode from "qrcode";
+import { CERT, fitSize, layoutCourse, type Measure } from "@/lib/certificate-layout";
 
 const root = process.cwd();
+const fontPath = (name: string) => path.join(root, "assets/fonts", name);
+const FONTS = {
+  playfair: fontPath("PlayfairDisplay-Bold.ttf"),
+  medium: fontPath("Montserrat-Medium.ttf"),
+  bold: fontPath("Montserrat-Bold.ttf"),
+};
+
 let registered = false;
 function registerFonts() {
   if (registered) return;
   registered = true;
-  const f = (name: string) => path.join(root, "assets/fonts", name);
-  Font.register({ family: "Anton", src: f("Anton-Regular.ttf") });
-  Font.register({ family: "Playfair", src: f("PlayfairDisplay-BoldItalic.ttf"), fontStyle: "italic", fontWeight: 700 });
+  Font.register({ family: "Playfair", src: FONTS.playfair, fontWeight: 700 });
   Font.register({
     family: "Montserrat",
     fonts: [
-      { src: f("Montserrat-Medium.ttf"), fontWeight: 500 },
-      { src: f("Montserrat-SemiBold.ttf"), fontWeight: 600 },
+      { src: FONTS.medium, fontWeight: 500 },
+      { src: FONTS.bold, fontWeight: 700 },
     ],
   });
-  Font.register({ family: "Arimo", fonts: [{ src: f("Arimo-Regular.ttf") }, { src: f("Arimo-Bold.ttf"), fontWeight: 700 }] });
   Font.registerHyphenationCallback((word) => [word]);
 }
 
+const measurers = new Map<string, Measure>();
+function measurer(file: string): Measure {
+  let m = measurers.get(file);
+  if (!m) {
+    const font = openSync(file);
+    m = (text, size) => (font.layout(text).advanceWidth / font.unitsPerEm) * size;
+    measurers.set(file, m);
+  }
+  return m;
+}
+
+/** Canva pixels to PDF points: the design is 1123 × 794 px, A4 landscape is 841.89 × 595.28 pt. */
+const pt = (px: number) => (px * 841.89) / CERT.width;
+const LINE = 1.2;
+
+/** A one-line box whose text is centred on (centerX, centerY), all in Canva pixels. */
+function centered(centerY: number, size: number, lines = 1, lineHeight = LINE, centerX: number = CERT.centerX, width = 900) {
+  return {
+    position: "absolute" as const,
+    left: pt(centerX - width / 2),
+    width: pt(width),
+    top: pt(centerY - (size * lineHeight * lines) / 2),
+    textAlign: "center" as const,
+    lineHeight,
+  };
+}
+
 const s = StyleSheet.create({
-  page: { backgroundColor: "#FDF6E3", padding: 28, fontFamily: "Arimo", color: "#3D3733" },
-  frame: { flex: 1, borderWidth: 4, borderColor: "#3D3733", padding: 44, position: "relative" },
-  inner: { flex: 1, alignItems: "center", justifyContent: "center", paddingBottom: 48 },
-  logo: { width: 84, height: 84 },
-  eyebrow: { marginTop: 18, fontFamily: "Montserrat", fontWeight: 600, fontSize: 10, letterSpacing: 2.2, color: "#70A91B", textTransform: "uppercase" },
-  lead: { marginTop: 20, fontSize: 12, color: "#6B625C" },
-  name: { marginTop: 8, fontFamily: "Playfair", fontStyle: "italic", fontWeight: 700, fontSize: 38, color: "#000000", textAlign: "center" },
-  rule: { marginTop: 14, width: 64, height: 4, backgroundColor: "#70A91B" },
-  course: { marginTop: 16, fontFamily: "Anton", fontSize: 34, color: "#000000", textTransform: "uppercase", textAlign: "center", lineHeight: 1 },
-  body: { marginTop: 18, fontSize: 11.5, color: "#3D3733", textAlign: "center", maxWidth: 440, lineHeight: 1.55 },
-  foot: { position: "absolute", left: 44, right: 44, bottom: 36, flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end" },
-  footLabel: { fontFamily: "Montserrat", fontWeight: 600, fontSize: 8, letterSpacing: 1.4, color: "#6B625C", textTransform: "uppercase" },
-  footValue: { marginTop: 4, fontFamily: "Montserrat", fontWeight: 500, fontSize: 11, color: "#000000" },
-  signLine: { width: 160, borderTopWidth: 1, borderTopColor: "#3D3733", paddingTop: 6 },
-  toucan: { position: "absolute", right: -22, top: 36, width: 140, height: 99 },
-  verify: { flexDirection: "row", alignItems: "flex-end" },
-  verifyText: { alignItems: "flex-end", marginRight: 10 },
-  qr: { width: 64, height: 64 },
+  page: { backgroundColor: CERT.paper, color: CERT.ink, fontFamily: "Montserrat" },
+  background: { position: "absolute", top: 0, left: 0, width: pt(CERT.width), height: pt(CERT.height) },
+  serif: { fontFamily: "Playfair", fontWeight: 700 },
+  label: { fontSize: pt(CERT.footer.labelSize), fontWeight: 700, letterSpacing: pt(CERT.footer.labelSize * CERT.footer.labelTracking) },
+  value: { fontSize: pt(CERT.footer.valueSize), fontWeight: 500 },
 });
 
-/** Ink on the page's cream, so the code reads as part of the certificate. */
+/** The verify page as a QR code, in the certificate's ink on its paper, with a one-module quiet zone. */
 function qrPng(url: string) {
-  return QRCode.toDataURL(url, { margin: 0, width: 384, errorCorrectionLevel: "M", color: { dark: "#3D3733", light: "#FDF6E3" } });
+  return QRCode.toDataURL(url, { margin: 1, width: 444, errorCorrectionLevel: "M", color: { dark: CERT.ink, light: CERT.paper } });
 }
 
 export async function renderCertificate(opts: {
@@ -59,48 +79,49 @@ export async function renderCertificate(opts: {
 }) {
   registerFonts();
   const qr = await qrPng(opts.verifyUrl);
-  const logo = { data: readFileSync(path.join(root, "public/brand/travelxm-logo.png")), format: "png" as const };
-  const toucan = { data: readFileSync(path.join(root, "public/brand/cutouts/toucan.png")), format: "png" as const };
+  const background = { data: readFileSync(path.join(root, "assets/certificate/background.jpg")), format: "jpg" as const };
   const issued = new Date(opts.issuedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+
+  const nameSize = fitSize(opts.recipient, measurer(FONTS.playfair), CERT.maxTextWidth, CERT.name.size, CERT.name.minSize);
+  const courseTitle = opts.course.toUpperCase();
+  const course = layoutCourse(courseTitle, measurer(FONTS.playfair));
+  const { footer, qr: qrBox } = CERT;
 
   const doc = (
     <Document title={`${opts.course} · ${opts.recipient}`} author="TravelXM Academy" subject="Certificate of completion">
-      <Page size="LETTER" orientation="landscape" style={s.page}>
-        <View style={s.frame}>
-          <View style={s.inner}>
-            {/* eslint-disable-next-line jsx-a11y/alt-text */}
-            <Image src={logo} style={s.logo} />
-            <Text style={s.eyebrow}>TravelXM Academy · Certificate of completion</Text>
-            <Text style={s.lead}>This certifies that</Text>
-            <Text style={s.name}>{opts.recipient}</Text>
-            <View style={s.rule} />
-            <Text style={s.lead}>has completed</Text>
-            <Text style={s.course}>{opts.course}</Text>
-            <Text style={s.body}>
-              and is recognized by TravelXM as a travel advisor trained to plan and sell this program. Pura Vida.
-            </Text>
-          </View>
-          <View style={s.foot}>
-            <View>
-              <Text style={s.footLabel}>Issued</Text>
-              <Text style={s.footValue}>{issued}</Text>
-            </View>
-            <View style={s.signLine}>
-              <Text style={s.footLabel}>TravelXM Academy</Text>
-              <Text style={s.footValue}>San José, Costa Rica</Text>
-            </View>
-            <View style={s.verify}>
-              <View style={s.verifyText}>
-                <Text style={s.footLabel}>Scan to verify</Text>
-                <Text style={s.footValue}>{opts.code}</Text>
-              </View>
-              {/* eslint-disable-next-line jsx-a11y/alt-text */}
-              <Image src={qr} style={s.qr} />
-            </View>
-          </View>
-          {/* eslint-disable-next-line jsx-a11y/alt-text */}
-          <Image src={toucan} style={s.toucan} />
-        </View>
+      <Page size="A4" orientation="landscape" style={s.page}>
+        {/* eslint-disable-next-line jsx-a11y/alt-text */}
+        <Image src={background} style={s.background} fixed />
+
+        <Text style={[s.serif, { fontSize: pt(nameSize), color: CERT.nameColor }, centered(CERT.name.centerY, nameSize)]}>
+          {opts.recipient}
+        </Text>
+        <Text
+          style={[
+            s.serif,
+            { fontSize: pt(course.size), color: CERT.courseColor },
+            centered(CERT.course.centerY, course.size, course.lines.length, CERT.course.lineHeight),
+          ]}
+        >
+          {course.lines.join("\n")}
+        </Text>
+
+        <Text style={[s.label, centered(footer.labelCenterY, footer.labelSize, 1, LINE, CERT.issuedCenterX, 240)]}>ISSUED</Text>
+        <Text style={[s.value, centered(footer.valueCenterY, footer.valueSize, 1, LINE, CERT.issuedCenterX, 240)]}>{issued}</Text>
+
+        {/* eslint-disable-next-line jsx-a11y/alt-text */}
+        <Image
+          src={qr}
+          style={{
+            position: "absolute",
+            left: pt(CERT.verifyCenterX - qrBox.size / 2),
+            top: pt(qrBox.bottom - qrBox.size),
+            width: pt(qrBox.size),
+            height: pt(qrBox.size),
+          }}
+        />
+        <Text style={[s.label, centered(footer.labelCenterY, footer.labelSize, 1, LINE, CERT.verifyCenterX, 240)]}>SCAN TO VERIFY</Text>
+        <Text style={[s.value, centered(footer.valueCenterY, footer.valueSize, 1, LINE, CERT.verifyCenterX, 240)]}>{opts.code}</Text>
       </Page>
     </Document>
   );

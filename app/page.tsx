@@ -148,7 +148,7 @@ export default async function HomePage() {
                     <Badge tone="warning" className="absolute top-3 right-3 z-10">
                       Sample
                     </Badge>
-                    <CertificateArt compact name="Your name here" courseTitle={featured.title} footer="Issued when you pass the quiz" />
+                    <CertificateArt name="Your name here" courseTitle={featured.title} issued="When you pass the quiz" />
                   </Card>
                 </div>
                 <div className="mt-4 flex items-center gap-3 rounded-lg bg-card p-4 shadow-card lg:absolute lg:top-14 lg:-right-6 lg:mt-0 lg:shadow-raised">

@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/surface";
 import { CopyLink } from "@/components/learning/copy-link";
 import { formatDate } from "@/lib/utils";
+import { certificateVerifyUrl } from "@/lib/certificate-url";
+import { env } from "@/lib/env";
 
 export const metadata: Metadata = { title: "Certificates" };
 
@@ -30,7 +32,9 @@ export default async function CertificatesPage() {
                   titleAs="h2"
                   name={c.recipient_name}
                   courseTitle={c.course_title}
-                  footer={`Issued ${formatDate(c.issued_at, { month: "long", day: "numeric", year: "numeric" })} · ${c.code}`}
+                  issued={formatDate(c.issued_at, { month: "long", day: "numeric", year: "numeric" })}
+                  code={c.code}
+                  verifyUrl={certificateVerifyUrl(env.appUrl, c.code)}
                 />
                 <div className="flex flex-wrap items-center gap-2 border-t border-line p-4">
                   <Button asChild>

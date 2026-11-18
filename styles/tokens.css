@@ -63,14 +63,14 @@
   --feedback-danger: #b4512b;
 
   /* Type families (next/font injects --nf-* on <html>) */
-  /* One family across the Hub. Anton and Playfair remain only on certificates. */
+  /* One family across the Hub. Montserrat and Playfair remain only on certificates. */
   --font-app: var(--nf-vietnam), "Be Vietnam Pro", Helvetica, Arial, sans-serif;
   --font-title: var(--font-app);
   --font-subtitle: var(--font-app);
   --font-body: var(--font-app);
   --font-body-alt: var(--font-app);
   --font-title-serif: var(--nf-playfair), "Playfair Display", Georgia, "Times New Roman", serif;
-  --font-certificate: var(--nf-anton), "Anton", "Arial Narrow", Helvetica, sans-serif;
+  --font-certificate: var(--nf-montserrat), "Montserrat", Helvetica, Arial, sans-serif;
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;

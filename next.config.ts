@@ -38,9 +38,9 @@ const nextConfig: NextConfig = {
     // Local development serves media from RustFS on localhost.
     dangerouslyAllowLocalIP: localMedia,
   },
-  // Brand fonts for the certificate PDF route.
+  // Brand fonts and the Canva background art for the certificate PDF route.
   outputFileTracingIncludes: {
-    "/api/certificates/[code]": ["./assets/fonts/**", "./public/brand/travelxm-logo.png", "./public/brand/cutouts/toucan.png"],
+    "/api/certificates/[code]": ["./assets/fonts/**", "./assets/certificate/**"],
     // Book rendering: the admin save/inspect/prepare actions and the page route.
     "/admin/books/*": BOOK_RENDER_FILES,
     "/api/hub/books/*/page/*": BOOK_RENDER_FILES,

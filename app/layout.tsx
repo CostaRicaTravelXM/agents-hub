@@ -1,11 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Anton, Be_Vietnam_Pro, Playfair_Display } from "next/font/google";
+import { Be_Vietnam_Pro, Montserrat, Playfair_Display } from "next/font/google";
 import { Toaster } from "@/components/ui/toast";
 import { ServiceWorkerRegister } from "@/components/sw-register";
 import "./globals.css";
 
 // Certificates only, so they are not preloaded on every page.
-const anton = Anton({ variable: "--nf-anton", weight: "400", subsets: ["latin"], display: "swap", preload: false });
+const montserrat = Montserrat({
+  variable: "--nf-montserrat",
+  weight: ["500", "700"],
+  subsets: ["latin"],
+  display: "swap",
+  preload: false,
+});
 const playfair = Playfair_Display({
   variable: "--nf-playfair",
   subsets: ["latin"],
@@ -44,7 +50,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${anton.variable} ${playfair.variable} ${vietnam.variable}`}
+      className={`${montserrat.variable} ${playfair.variable} ${vietnam.variable}`}
     >
       <body>
         {children}
