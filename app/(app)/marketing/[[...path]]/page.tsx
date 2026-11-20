@@ -119,7 +119,7 @@ export default async function MarketingPage({ params }: PageProps<"/marketing/[[
         <PageHeader title="Marketing Assets" lead={LEAD} />
       )}
 
-      <DriveBrowser key={basePath} items={folder.items} basePath={basePath} />
+      <DriveBrowser key={basePath} items={folder.items} basePath={basePath} folderPath={path.join("/")} />
 
       {!here && others.length ? (
         <section aria-labelledby="more-heading" className="mt-10 md:mt-14">

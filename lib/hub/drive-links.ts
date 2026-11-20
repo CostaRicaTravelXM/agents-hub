@@ -27,6 +27,37 @@ export function displayName(name: string) {
   return name.replace(/^\d+_\s*/, "") || name;
 }
 
+/** "Guide.pdf" or "1_Guide to the flyers": how to use the folder. It is shown first, on its own. */
+export function isGuide(item: Pick<DriveItem, "name" | "isFolder">) {
+  return !item.isFolder && /^guide\b/i.test(displayName(item.name));
+}
+
+/** Any canva.com or canva.link address, with or without the scheme, not glued to a longer host. */
+const CANVA_URL = /(?<![\w.-])(?:https?:\/\/)?(?:[a-z0-9-]+\.)*canva\.(?:com|link)\/[^\s<>"')\]]+/gi;
+
+/**
+ * The editable Canva design the team linked in a Drive comment, or null. A bare
+ * "canva.com" is not a design, so a link needs a path to count.
+ */
+export function canvaLinkIn(texts: string[]): string | null {
+  for (const text of texts) {
+    for (const [match] of text.matchAll(CANVA_URL)) {
+      let url: URL;
+      try {
+        url = new URL(/^https?:\/\//i.test(match) ? match : `https://${match}`);
+      } catch {
+        continue;
+      }
+      const host = url.hostname.toLowerCase();
+      if (host !== "canva.link" && host !== "canva.com" && !host.endsWith(".canva.com")) continue;
+      if (url.pathname.length < 2) continue;
+      url.protocol = "https:";
+      return url.toString();
+    }
+  }
+  return null;
+}
+
 export function fileKind(mimeType: string) {
   if (mimeType.startsWith("image/")) return "Photo";
   if (mimeType.startsWith("video/")) return "Video";

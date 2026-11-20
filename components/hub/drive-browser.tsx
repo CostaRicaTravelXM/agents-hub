@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Download, ExternalLink, FileText, Film, Folder, Image as ImageIcon, Search, X } from "lucide-react";
-import { canDownload, displayName, driveDownload, driveOpen, drivePreview, driveThumbnail, fileKind, opensInGoogleOnly, type DriveItem } from "@/lib/hub/drive-links";
+import { ArrowRight, Download, ExternalLink, FileText, Film, Folder, Image as ImageIcon, Search, X } from "lucide-react";
+import { canDownload, displayName, driveDownload, driveOpen, drivePreview, driveThumbnail, fileKind, isGuide, opensInGoogleOnly, type DriveItem } from "@/lib/hub/drive-links";
+import { CanvaLogo } from "@/components/brand/canva-logo";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/overlay";
 import { EmptyState } from "@/components/ui/surface";
@@ -44,7 +45,22 @@ function fileMeta(item: DriveItem) {
   return item.size ? `${fileKind(item.mimeType)}, ${formatBytes(item.size)}` : fileKind(item.mimeType);
 }
 
-function Preview({ item }: { item: DriveItem }) {
+/** The editable Canva design the team linked in the file's Drive comments, once it has loaded. */
+function useCanvaLink(item: DriveItem, folderPath: string) {
+  const [link, setLink] = useState<{ id: string; url: string | null } | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`/api/hub/drive/${encodeURIComponent(item.id)}/canva?path=${encodeURIComponent(folderPath)}`, { signal: controller.signal })
+      .then((r) => (r.ok ? r.json() : { url: null }))
+      .then((body: { url: string | null }) => setLink({ id: item.id, url: body.url }))
+      .catch(() => {});
+    return () => controller.abort();
+  }, [item.id, folderPath]);
+  return link?.id === item.id ? link.url : null;
+}
+
+function Preview({ item, folderPath }: { item: DriveItem; folderPath: string }) {
+  const canva = useCanvaLink(item, folderPath);
   return (
     <div>
       {opensInGoogleOnly(item) ? (
@@ -69,21 +85,54 @@ function Preview({ item }: { item: DriveItem }) {
             </a>
           </Button>
         )}
+        {canva ? (
+          <Button asChild variant="secondary" size="lg" className="animate-[xm-fade_200ms_var(--ease-standard)]">
+            <a href={canva} target="_blank" rel="noopener noreferrer">
+              <CanvaLogo /> Edit in Canva <span className="sr-only">(new tab)</span>
+            </a>
+          </Button>
+        ) : null}
       </div>
     </div>
   );
 }
 
-/** One Drive folder inside the Hub: its subfolders, then its files, each opening in place. */
-export function DriveBrowser({ items, basePath }: { items: DriveItem[]; basePath: string }) {
+/** "Start here": the folder's guide, before everything else. */
+function GuideCard({ item, onOpen }: { item: DriveItem; onOpen: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="group flex w-full items-stretch gap-4 rounded-lg border border-line bg-card p-3 text-left transition-colors duration-200 ease-standard hover:border-ink md:gap-6 md:p-4"
+    >
+      <span className="block aspect-[4/3] w-28 shrink-0 self-center overflow-hidden rounded-md bg-sunken md:w-48">
+        <Thumbnail item={item} />
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col justify-center py-1">
+        <span className="font-ui text-[15px] font-semibold tracking-[0.06em] text-muted uppercase">Start here</span>
+        <span className="mt-1 font-ui text-[20px] leading-tight font-semibold tracking-[-0.01em] text-ink">How to use these marketing assets</span>
+        <span className="mt-1 line-clamp-1 text-[15px] text-muted">
+          {displayName(item.name)} · {fileMeta(item)}
+        </span>
+        <span className="mt-3 inline-flex items-center gap-1.5 font-ui text-[16px] font-semibold text-link">
+          Read the guide <ArrowRight aria-hidden className="size-4 stroke-[2] transition-transform duration-200 ease-standard group-hover:translate-x-0.5" />
+        </span>
+      </span>
+    </button>
+  );
+}
+
+/** One Drive folder inside the Hub: its guide, its subfolders, then its files, each opening in place. */
+export function DriveBrowser({ items, basePath, folderPath }: { items: DriveItem[]; basePath: string; folderPath: string }) {
   const [query, setQuery] = useState("");
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [selected, setSelected] = useState<DriveItem | null>(null);
 
   const q = query.trim().toLowerCase();
   const matches = q ? items.filter((i) => i.name.toLowerCase().includes(q)) : items;
+  const guides = q ? [] : items.filter(isGuide);
   const folders = matches.filter((i) => i.isFolder);
-  const files = matches.filter((i) => !i.isFolder);
+  const files = matches.filter((i) => !i.isFolder && !guides.includes(i));
 
   if (!items.length) {
     return <EmptyState icon={<Folder aria-hidden />} title="This folder is empty" body="New files appear here within a few minutes of being added to Drive." />;
@@ -113,6 +162,16 @@ export function DriveBrowser({ items, basePath }: { items: DriveItem[]; basePath
             </button>
           ) : null}
         </label>
+      ) : null}
+
+      {guides.length ? (
+        <ul className="mb-8 grid gap-3 md:mb-10 md:max-w-2xl">
+          {guides.map((g) => (
+            <li key={g.id}>
+              <GuideCard item={g} onOpen={() => setSelected(g)} />
+            </li>
+          ))}
+        </ul>
       ) : null}
 
       {folders.length ? (
@@ -164,7 +223,7 @@ export function DriveBrowser({ items, basePath }: { items: DriveItem[]; basePath
       <Dialog open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}>
         {selected ? (
           <DialogContent title={displayName(selected.name)} description={fileMeta(selected)} side="sheet" className="md:w-[min(1040px,calc(100vw-64px))] md:max-w-none">
-            <Preview item={selected} />
+            <Preview item={selected} folderPath={folderPath} />
           </DialogContent>
         ) : null}
       </Dialog>

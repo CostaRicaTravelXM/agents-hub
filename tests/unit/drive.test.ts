@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DriveError, driveFolderId, listFolder, resolveDrivePath } from "@/lib/hub/drive";
-import { canDownload, displayName, fileKind, opensInGoogleOnly } from "@/lib/hub/drive-links";
+import { canvaLinkFor, DriveError, driveFolderId, listFolder, resolveDrivePath } from "@/lib/hub/drive";
+import { canDownload, canvaLinkIn, displayName, fileKind, isGuide, opensInGoogleOnly } from "@/lib/hub/drive-links";
 
 const ROOT = "rootFolder0001";
 const CHILD = "childFolder001";
@@ -40,6 +40,71 @@ describe("Drive links", () => {
     expect(canDownload(addOn)).toBe(false);
     expect(fileKind(addOn.mimeType)).toBe("Opens in Google");
     expect(opensInGoogleOnly({ mimeType: "application/vnd.google-apps.document" })).toBe(false);
+  });
+});
+
+describe("The folder guide", () => {
+  it("finds the guide by its name, sort prefix or not", () => {
+    expect(isGuide({ name: "Guide.pdf", isFolder: false })).toBe(true);
+    expect(isGuide({ name: "1_Guide to the flyers.pdf", isFolder: false })).toBe(true);
+    expect(isGuide({ name: "guide", isFolder: false })).toBe(true);
+  });
+
+  it("leaves folders and look-alike names alone", () => {
+    expect(isGuide({ name: "Guide", isFolder: true })).toBe(false);
+    expect(isGuide({ name: "Guidelines.pdf", isFolder: false })).toBe(false);
+    expect(isGuide({ name: "Tour guide flyer.jpg", isFolder: false })).toBe(false);
+  });
+});
+
+describe("Canva links in Drive comments", () => {
+  it("takes the first design link, short or long", () => {
+    expect(canvaLinkIn(["Editable version: https://canva.link/36jsprzdj8yuqyn"])).toBe("https://canva.link/36jsprzdj8yuqyn");
+    expect(canvaLinkIn(["no link here", "www.canva.com/design/DAG123/edit?utm=x and more"])).toBe("https://www.canva.com/design/DAG123/edit?utm=x");
+    expect(canvaLinkIn(["http://canva.link/abc", "https://canva.link/second"])).toBe("https://canva.link/abc");
+  });
+
+  it("ignores the bare homepage and other hosts that only look like Canva", () => {
+    expect(canvaLinkIn(["canva.com"])).toBeNull();
+    expect(canvaLinkIn(["http://canva.com/"])).toBeNull();
+    expect(canvaLinkIn(["https://canva.com.evil.net/design/x"])).toBeNull();
+    expect(canvaLinkIn(["https://notcanva.com/design/x"])).toBeNull();
+    expect(canvaLinkIn([])).toBeNull();
+  });
+});
+
+describe("canvaLinkFor", () => {
+  const fetchMock = vi.fn();
+  beforeEach(() => {
+    vi.stubEnv("GOOGLE_DRIVE_API_KEY", "secret-key");
+    vi.stubGlobal("fetch", fetchMock);
+    fetchMock.mockReset();
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  });
+
+  it("reads comments and replies, skipping deleted ones", async () => {
+    fetchMock.mockResolvedValueOnce(
+      respond({
+        comments: [
+          { content: "https://canva.link/deletedOne", deleted: true },
+          { content: "canva.com", replies: [{ content: "https://canva.link/gone", deleted: true }, { content: "Here: https://canva.link/realOne" }] },
+        ],
+      }),
+    );
+    expect(await canvaLinkFor("aFileInRoot01")).toBe("https://canva.link/realOne");
+    expect(String(fetchMock.mock.calls[0][0])).toContain("/aFileInRoot01/comments?");
+  });
+
+  it("never asks Google about a malformed id, and fails without leaking the key", async () => {
+    expect(await canvaLinkFor("../x")).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+    fetchMock.mockResolvedValueOnce(respond({ error: "denied" }, 403));
+    const error = await canvaLinkFor("aFileInRoot01").catch((e) => e);
+    expect(error).toBeInstanceOf(DriveError);
+    expect(error.message).not.toContain("secret-key");
   });
 });
 

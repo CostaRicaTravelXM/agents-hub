@@ -1,6 +1,6 @@
 import "server-only";
 import { env } from "@/lib/env";
-import type { DriveItem } from "@/lib/hub/drive-links";
+import { canvaLinkIn, type DriveItem } from "@/lib/hub/drive-links";
 
 const FOLDER_MIME = "application/vnd.google-apps.folder";
 const SHORTCUT_MIME = "application/vnd.google-apps.shortcut";
@@ -89,6 +89,26 @@ export async function listFolder(folderId: string): Promise<DriveItem[]> {
     if (!pageToken) break;
   }
   return items.sort(byFolderThenName);
+}
+
+type RawComment = { content?: string; deleted?: boolean; replies?: { content?: string; deleted?: boolean }[] };
+
+/** The Canva link the team left in a comment on the file, so advisors can edit their own copy. */
+export async function canvaLinkFor(fileId: string): Promise<string | null> {
+  if (!DRIVE_ID.test(fileId)) return null;
+  const key = env.googleDriveApiKey;
+  if (!key) throw new DriveError(null);
+  const query = new URLSearchParams({ fields: "comments(content,deleted,replies(content,deleted))", pageSize: "100", key });
+  let res: Response;
+  try {
+    res = await fetch(`${env.googleDriveApiUrl}/${fileId}/comments?${query}`, { next: { revalidate: REVALIDATE_SECONDS } });
+  } catch {
+    throw new DriveError(null);
+  }
+  if (!res.ok) throw new DriveError(res.status);
+  const { comments = [] } = (await res.json()) as { comments?: RawComment[] };
+  const texts = comments.filter((c) => !c.deleted).flatMap((c) => [c.content ?? "", ...(c.replies ?? []).filter((r) => !r.deleted).map((r) => r.content ?? "")]);
+  return canvaLinkIn(texts);
 }
 
 export type DriveFolder = { crumbs: { id: string; name: string }[]; items: DriveItem[] };
