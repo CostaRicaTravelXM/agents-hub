@@ -6,7 +6,8 @@ import { createServiceClient } from "@/lib/supabase/server";
 import type { Tables } from "@/lib/database.types";
 import { CAMPAIGN, CAMPAIGN_LABEL, campaignTags, normalizeEmail } from "@/lib/campaigns/thanksgiving";
 import { addTags, createLead, findAdvisor, zohoConfigured } from "@/lib/zoho/client";
-import { buildZohoLead, INDEPENDENT_COMPANY } from "@/lib/zoho/fields";
+import { buildZohoLead } from "@/lib/zoho/fields";
+import { advisorMetadata, hubAccount } from "@/lib/hub/invite";
 
 export type Claim = Tables<"hub_campaign_claims">;
 
@@ -150,11 +151,8 @@ export async function appOrigin() {
  */
 async function hubAccountId(email: string): Promise<string | null> {
   try {
-    const supabase = createServiceClient();
-    const { data } = await supabase.from("profiles").select("id").eq("email", email).limit(1);
-    if (!data?.length) return null;
-    const { data: found } = await supabase.auth.admin.getUserById(data[0].id);
-    return found.user?.email_confirmed_at ? data[0].id : null;
+    const account = await hubAccount(email);
+    return account?.confirmed ? account.id : null;
   } catch {
     return null;
   }
@@ -210,25 +208,12 @@ export async function inviteClaimToHub(claimId: string, origin: string, opts: { 
     const memberId = await hubAccountId(claim.email);
     if (memberId) return await emailMemberGift(claim, memberId, origin, Boolean(opts.resend));
 
-    const first = claim.first_name?.trim() ?? "";
-    const last = claim.last_name?.trim() ?? "";
-    const company = claim.company?.trim() ?? "";
-    const independent = claim.is_independent || company.toLowerCase() === INDEPENDENT_COMPANY.toLowerCase();
-    // With a full name and the agency answer the account skips the "finish your profile" step.
-    const complete = Boolean(first && last && (company || independent));
+    const { data } = advisorMetadata({ firstName: claim.first_name, lastName: claim.last_name, company: claim.company, isIndependent: claim.is_independent });
     const { error } = await supabase.auth.signInWithOtp({
       email: claim.email,
       options: {
         shouldCreateUser: true,
-        data: {
-          ...(first ? { first_name: first } : {}),
-          ...(last ? { last_name: last } : {}),
-          ...(first || last ? { full_name: [first, last].filter(Boolean).join(" ") } : {}),
-          company: independent ? null : company || null,
-          is_independent: independent,
-          ...(complete ? { hub_signup: true } : {}),
-          signup_campaign: CAMPAIGN,
-        },
+        data: { ...data, signup_campaign: CAMPAIGN },
         // Must carry a query string: the shared template appends &token_hash=….
         emailRedirectTo: `${origin}/auth/confirm?next=${encodeURIComponent("/")}`,
       },

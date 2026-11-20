@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Download, Search } from "lucide-react";
-import { requireStaff, ROLE_LABEL } from "@/lib/auth";
+import { isAdmin, requireStaff, ROLE_LABEL } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { AdminHeader, Table, Td, Th } from "@/components/admin/ui";
+import { InviteAgent } from "@/components/admin/invite-agent";
 import { Button } from "@/components/ui/button";
 import { Badge, EmptyState, ProgressBar } from "@/components/ui/surface";
 import { cn, formatCompactDuration, formatDate } from "@/lib/utils";
@@ -17,7 +18,7 @@ const ROLES = [
 ];
 
 export default async function AgentsPage({ searchParams }: PageProps<"/admin/agents">) {
-  await requireStaff();
+  const viewer = await requireStaff();
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q.trim().slice(0, 80) : "";
   const role = ROLES.some((r) => r.id === sp.role) ? String(sp.role) : "agent";
@@ -38,11 +39,14 @@ export default async function AgentsPage({ searchParams }: PageProps<"/admin/age
         title="Agents"
         description="Every registered advisor, their progress and their certificates."
         actions={
-          <Button asChild variant="secondary" size="sm">
-            <a href="/api/admin/export?type=enrollments">
-              <Download aria-hidden /> Export enrollments CSV
-            </a>
-          </Button>
+          <>
+            <Button asChild variant="secondary" size="sm">
+              <a href="/api/admin/export?type=enrollments">
+                <Download aria-hidden /> Export enrollments CSV
+              </a>
+            </Button>
+            {isAdmin(viewer.profile) ? <InviteAgent /> : null}
+          </>
         }
       />
 

@@ -7,6 +7,10 @@ import { toEmbedUrl } from "@/lib/hub/video-embed";
 import { adminClient, fail, nullableText, staffClient, uuid, type Result } from "@/lib/actions";
 import { deleteObject } from "@/lib/storage";
 import { slugify } from "@/lib/utils";
+import { allow, appOrigin } from "@/lib/campaigns/claims";
+import { hubAccount, inviteAdvisor } from "@/lib/hub/invite";
+import { createServiceClient } from "@/lib/supabase/server";
+import { findAdvisor } from "@/lib/zoho/client";
 import type { Json } from "@/lib/database.types";
 
 export type { Result } from "@/lib/actions";
@@ -534,6 +538,128 @@ export async function setUserRole(userId: string, role: string): Promise<Result>
     if (userId === viewer.id && r !== "admin") return { ok: false, error: "You cannot remove your own admin access." };
     const { error } = await supabase.from("profiles").update({ role: r }).eq("id", uuid.parse(userId));
     if (error) throw error;
+    refresh();
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/* ================================================================ invite agents */
+const inviteEmail = z.string().trim().toLowerCase().email("Enter a valid email address.").max(254);
+
+export type InviteLookup =
+  | { status: "member"; agentId: string; name: string | null }
+  | {
+      status: "pending" | "new";
+      agentId?: string;
+      firstName: string;
+      lastName: string;
+      company: string;
+      isIndependent: boolean;
+      /** Where the details came from: an earlier, unopened invite, or Zoho. */
+      source: "hub" | "Contacts" | "Leads" | null;
+    };
+
+/** Before inviting: is this person in the Hub already, and what does Zoho know about them? */
+export async function lookupAgentForInvite(emailRaw: string): Promise<Result<InviteLookup>> {
+  try {
+    await adminClient();
+    const email = inviteEmail.parse(emailRaw);
+    const account = await hubAccount(email);
+    if (account) {
+      const { data: p } = await createServiceClient()
+        .from("profiles")
+        .select("full_name, first_name, last_name, company, is_independent")
+        .eq("id", account.id)
+        .single();
+      if (account.confirmed) return { ok: true, data: { status: "member", agentId: account.id, name: p?.full_name ?? null } };
+      return {
+        ok: true,
+        data: {
+          status: "pending",
+          agentId: account.id,
+          firstName: p?.first_name ?? "",
+          lastName: p?.last_name ?? "",
+          company: p?.company ?? "",
+          isIndependent: Boolean(p?.is_independent),
+          source: "hub",
+        },
+      };
+    }
+    // Zoho is asked live; when it is down or not connected the advisor is simply new.
+    const zoho = await findAdvisor(email);
+    const found = zoho.ok ? zoho.data : null;
+    return {
+      ok: true,
+      data: {
+        status: "new",
+        firstName: found?.firstName ?? "",
+        lastName: found?.lastName ?? "",
+        company: found?.company ?? "",
+        isIndependent: false,
+        source: found?.module ?? null,
+      },
+    };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+const inviteSchema = z
+  .object({
+    email: inviteEmail,
+    first_name: z.string().trim().min(1, "Enter their first name.").max(80),
+    last_name: z.string().trim().min(1, "Enter their last name.").max(80),
+    company: z.string().trim().max(160).optional().default(""),
+    is_independent: z.boolean().optional().default(false),
+  })
+  .refine((v) => v.is_independent || v.company, { message: "Enter their agency, or tick that they work on their own.", path: ["company"] });
+
+/** Creates the advisor's Hub account and emails them the invitation from the TravelXM team. */
+export async function inviteAgent(input: z.input<typeof inviteSchema>): Promise<Result<{ agentId: string | null }>> {
+  try {
+    await adminClient();
+    const v = inviteSchema.parse(input);
+    // Three an hour per address: enough to fix a typo and resend, never a stream of mail to one inbox.
+    if (!(await allow("staff-invite-email", v.email, 3, 60 * 60))) {
+      return { ok: false, error: "This address has had three invitations in the last hour. Try again later." };
+    }
+    const origin = await appOrigin();
+    const sent = await inviteAdvisor(v.email, { firstName: v.first_name, lastName: v.last_name, company: v.company, isIndependent: v.is_independent }, origin);
+    if (!sent.ok) {
+      if (sent.reason === "member") return { ok: false, error: "This person already has a Hub account. They can sign in with their email." };
+      if (sent.reason === "too_soon") return { ok: false, error: "An email went to this address less than a minute ago. Wait a minute, then send again." };
+      if (sent.reason === "rate_limited") return { ok: false, error: "The Hub has sent too many emails in the last hour. Try again in a little while." };
+      return { ok: false, error: "The invitation could not be sent. Try again in a minute." };
+    }
+    refresh();
+    return { ok: true, data: { agentId: sent.agentId } };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/** Sends the invitation again to an account whose owner has not opened it yet. */
+export async function resendAgentInvite(userId: string): Promise<Result> {
+  try {
+    await adminClient();
+    const { data: p, error } = await createServiceClient()
+      .from("profiles")
+      .select("email, first_name, last_name, company, is_independent")
+      .eq("id", uuid.parse(userId))
+      .single();
+    if (error || !p) return { ok: false, error: "This agent no longer exists." };
+    if (!(await allow("staff-invite-email", p.email, 3, 60 * 60))) {
+      return { ok: false, error: "This address has had three invitations in the last hour. Try again later." };
+    }
+    const sent = await inviteAdvisor(p.email, { firstName: p.first_name, lastName: p.last_name, company: p.company, isIndependent: p.is_independent }, await appOrigin());
+    if (!sent.ok) {
+      if (sent.reason === "member") return { ok: false, error: "They have opened their account already. They can sign in with their email." };
+      if (sent.reason === "too_soon") return { ok: false, error: "An email went to this address less than a minute ago. Wait a minute, then send again." };
+      if (sent.reason === "rate_limited") return { ok: false, error: "The Hub has sent too many emails in the last hour. Try again in a little while." };
+      return { ok: false, error: "The invitation could not be sent. Try again in a minute." };
+    }
     refresh();
     return { ok: true };
   } catch (e) {

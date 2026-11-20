@@ -3,9 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Award } from "lucide-react";
 import { isAdmin, requireStaff, ROLE_LABEL } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { AdminHeader, Kpi, Panel, Table, Td, Th } from "@/components/admin/ui";
 import { RoleSelect } from "@/components/admin/role-select";
+import { ResendInvite } from "@/components/admin/invite-agent";
 import { Avatar } from "@/components/shell/user-menu";
 import { Badge, ProgressBar } from "@/components/ui/surface";
 import { formatCompactDuration, formatDate } from "@/lib/utils";
@@ -48,6 +49,11 @@ export default async function AgentPage({ params }: PageProps<"/admin/agents/[id
   ]);
   if (!person) notFound();
 
+  // Admins see whether the owner has opened the account; an invited or unconfirmed one can be sent the link again.
+  const admin = isAdmin(viewer.profile);
+  const auth = admin ? (await createServiceClient().auth.admin.getUserById(person.id)).data.user : null;
+  const unopened = auth && !auth.email_confirmed_at ? { invited: auth.user_metadata?.staff_invite === true, at: auth.confirmation_sent_at ?? auth.created_at } : null;
+
   const crmStatus = crm?.sent_at
     ? `Sent ${formatDate(crm.sent_at)}`
     : crm?.last_error
@@ -84,7 +90,16 @@ export default async function AgentPage({ params }: PageProps<"/admin/agents/[id
                 </div>
               ))}
             </dl>
-            {isAdmin(viewer.profile) ? (
+            {unopened ? (
+              <div className="mt-5 space-y-3 border-t border-line pt-5">
+                <p className="text-[15px] text-ink">
+                  {unopened.invited ? "Invited by the TravelXM team" : "Registered but never confirmed their email"}
+                  {unopened.at ? `, last email ${formatDate(unopened.at)}` : ""}. They have not opened their account yet.
+                </p>
+                <ResendInvite userId={person.id} invited={unopened.invited} />
+              </div>
+            ) : null}
+            {admin ? (
               <div className="mt-5 border-t border-line pt-5">
                 <RoleSelect userId={person.id} role={person.role} />
               </div>

@@ -13,9 +13,10 @@
     sign-in pages (white sheet under the Monteverde canopy photo, pill button).
     Links to /auth/confirm on the app that asked (RedirectTo) with a token
     hash, so it works on any device, not only the browser that signed up.
-    Accounts created from a gift campaign carry signup_campaign in their
-    metadata (.Data) and get the campaign wording; everyone else gets the
-    plain confirmation.
+    Accounts the TravelXM team creates from the admin panel carry
+    staff_invite in their metadata (.Data) and get the invitation wording.
+    Accounts created from a gift campaign carry signup_campaign and get the
+    campaign wording. Everyone else gets the plain confirmation.
     Images live on media.travelxm.com (R2 + CDN). Replace a file under a new
     name (-v2), since that bucket is cached as immutable for a year.
   -->
@@ -43,9 +44,21 @@
                   </tr>
                 </table>
                 <h1 style="margin:28px 0 12px;font-family:'Be Vietnam Pro',Helvetica,Arial,sans-serif;font-size:30px;line-height:1.15;font-weight:700;letter-spacing:-0.02em;color:#1D1A18;">
-                  {{ if .Data.signup_campaign }}Your gift is claimed. Your Agents Hub is ready too{{ else }}Confirm your email{{ end }}
+                  {{ if .Data.staff_invite }}Welcome{{ if .Data.first_name }}, {{ .Data.first_name }}{{ end }}. Your Agents Hub account is ready{{ else if .Data.signup_campaign }}Your gift is claimed. Your Agents Hub is ready too{{ else }}Confirm your email{{ end }}
                 </h1>
-                {{ if .Data.signup_campaign }}
+                {{ if .Data.staff_invite }}
+                <p style="margin:0 0 16px;font-size:17px;line-height:1.55;">
+                  The TravelXM team has created a free Agents Hub account for you, at {{ .Email }}. It is our home for travel advisors who sell Costa Rica. Press the button to open it. No password needed.
+                </p>
+                <p style="margin:0 0 8px;font-size:17px;line-height:1.55;font-weight:600;color:#1D1A18;">Inside the Hub you can:</p>
+                <ul style="margin:0 0 28px;padding:0 0 0 22px;font-size:17px;line-height:1.55;">
+                  <li style="margin:0 0 6px;">Take short masterclasses on selling Costa Rica and earn certificates</li>
+                  <li style="margin:0 0 6px;">See the FAM trips and ask for a place</li>
+                  <li style="margin:0 0 6px;">Download marketing material to share with your clients</li>
+                  <li style="margin:0 0 6px;">Read our destination books and magazines</li>
+                  <li style="margin:0;">Find current offers for your clients</li>
+                </ul>
+                {{ else if .Data.signup_campaign }}
                 <p style="margin:0 0 16px;font-size:17px;line-height:1.55;">
                   Thank you for opening your Thanksgiving gift. We also set up a free TravelXM Agents Hub account for {{ .Email }}. Press the button to open it. No password needed.
                 </p>
@@ -68,7 +81,7 @@
                       <a
                         href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email"
                         style="display:inline-block;padding:15px 30px;font-family:'Be Vietnam Pro',Helvetica,Arial,sans-serif;font-size:16px;line-height:1;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:999px;"
-                        >{{ if .Data.signup_campaign }}Open my Agents Hub{{ else }}Confirm my email{{ end }}</a
+                        >{{ if .Data.staff_invite }}Open the Agents Hub{{ else if .Data.signup_campaign }}Open my Agents Hub{{ else }}Confirm my email{{ end }}</a
                       >
                     </td>
                   </tr>
@@ -84,7 +97,7 @@
                   <a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email" style="color:#2F7031;word-break:break-all;">{{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=email</a>
                 </p>
                 <p style="margin:16px 0 0;font-size:15px;line-height:1.55;color:#6B625C;">
-                  {{ if .Data.signup_campaign }}If you did not open the TravelXM Thanksgiving gift, ignore this email. The account stays closed until this link is opened.{{ else }}If you did not create this account, ignore this email.{{ end }}
+                  {{ if .Data.staff_invite }}This link works for one hour. If it has expired, sign in at {{ .SiteURL }} with this email and we will send you a new one. Not expecting this? Ignore this email: the account stays closed until the link is opened.{{ else if .Data.signup_campaign }}If you did not open the TravelXM Thanksgiving gift, ignore this email. The account stays closed until this link is opened.{{ else }}If you did not create this account, ignore this email.{{ end }}
                 </p>
               </td>
             </tr>
