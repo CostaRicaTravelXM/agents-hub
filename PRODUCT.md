@@ -14,7 +14,7 @@ TravelXM staff (content managers and admins) build courses (masterclasses includ
 
 ## Product Purpose
 
-The TravelXM Agents Hub is the one place an advisor goes for everything TravelXM gives them: the Academy courses and certificates, masterclasses (courses in their own category), FAM trips, current offers, books and marketing assets, plus the door to the Agents Portal. Success means an advisor finds what they came for in one tap, finishes a course and earns a certificate their clients can verify, and tells TravelXM they want to come on a FAM trip.
+The TravelXM Agents Hub is the one place an advisor goes for everything TravelXM gives them: the Academy courses and certificates, masterclasses (courses in their own category), FAM trips, current offers, books and marketing assets. Success means an advisor finds what they came for in one tap, finishes a course and earns a certificate their clients can verify, and tells TravelXM they want to come on a FAM trip.
 
 ## Positioning
 
@@ -31,7 +31,7 @@ Training written by the TravelXM team in San José, the operator that actually r
 - Next.js 16 App Router, Supabase (Auth, Postgres with RLS), Cloudflare R2 media.
 - Interface language: English only, written in plain words for non-technical readers.
 - Roles: travel agent, content manager, admin. The database and the account are shared with the Agents Portal.
-- Modules: Learning, FAM Trips, Current Offers, Books, Marketing Assets, Agents Portal (external), Profile. Phones and iPads show a bottom bar with Home, Learning, Trips, More and Profile, and no top bar.
+- Modules: Learning, FAM Trips, Current Offers, Books, Marketing Assets, Profile. Phones and iPads show a bottom bar with Home, Learning, Trips, More and Profile, and no top bar.
 - Marketing Assets reads the shared Google Drive folder with a server-only API key and shows it inside the Hub. Without the key, or when Google does not answer, the page links out to the folder.
 - Interest forms are Zoho Forms shown inside the Hub with the advisor's details pre-filled; the lead is created in Zoho CRM after sign-up through n8n.
 - Price: the Academy is presented as free for travel advisors. This comes from the app's existing copy (register page, "Free for advisors who sell Costa Rica") and open registration; to be confirmed by TravelXM.

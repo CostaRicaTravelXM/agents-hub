@@ -173,7 +173,7 @@ To change a course's text or quiz later, edit `scripts/masterclasses.mts` and ru
    | `R2_PRIVATE_BUCKET`, `R2_PUBLIC_BUCKET` | `academy-private`, `academy-public` |
    | `NEXT_PUBLIC_MEDIA_URL` | `https://media.travelxm.com` |
 
-   Leave `NEXT_PUBLIC_AUTH_COOKIE_DOMAIN` and `NEXT_PUBLIC_AGENTS_PORTAL_URL` unset: the Hub shares no sign-in with the Portal, and the Portal entry stays hidden. Variables starting with `NEXT_PUBLIC_` are baked in when Vercel builds, so redeploy after changing one.
+   Leave `NEXT_PUBLIC_AUTH_COOKIE_DOMAIN` unset: the Hub shares no sign-in with the Portal. Variables starting with `NEXT_PUBLIC_` are baked in when Vercel builds, so redeploy after changing one.
 5. Deploy. The first build makes a preview at a `vercel.app` address. Add that address to the Supabase redirect URLs (step 4.4) and to `STORAGE_CORS_ORIGINS` (run step 3.4 again).
 6. Settings → Domains → add `hub.travelxm.com`. The DNS record already exists, so Vercel only issues the certificate.
 

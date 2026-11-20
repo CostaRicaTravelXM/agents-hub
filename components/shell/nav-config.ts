@@ -1,7 +1,6 @@
 import {
   BadgePercent,
   BookOpen,
-  Briefcase,
   FolderOpen,
   GraduationCap,
   House,
@@ -16,7 +15,7 @@ import {
  * here and it appears everywhere.
  */
 export type HubNavItem = {
-  id: "home" | "learning" | "fam" | "offers" | "books" | "marketing" | "portal" | "profile";
+  id: "home" | "learning" | "fam" | "offers" | "books" | "marketing" | "profile";
   href: string;
   label: string;
   /** One plain sentence under the label on Home and in the More sheet. */
@@ -34,8 +33,6 @@ export type HubNavItem = {
   mobile: "tab" | "more";
 };
 
-const PORTAL_URL = process.env.NEXT_PUBLIC_AGENTS_PORTAL_URL || "";
-
 const ITEMS: HubNavItem[] = [
   { id: "home", href: "/dashboard", label: "Home", description: "Everything in one place.", icon: House, mobile: "tab" },
   {
@@ -52,19 +49,10 @@ const ITEMS: HubNavItem[] = [
   { id: "offers", href: "/offers", label: "Current Offers", description: "Deals you can sell right now.", icon: BadgePercent, countNoun: ["offer", "offers"], mobile: "more" },
   { id: "books", href: "/books", label: "Books", description: "Guides to read page by page.", icon: BookOpen, match: ["/books", "/read"], countNoun: ["book", "books"], mobile: "more" },
   { id: "marketing", href: "/marketing", label: "Marketing Assets", description: "Photos, videos and materials for your clients.", icon: FolderOpen, mobile: "more" },
-  {
-    id: "portal",
-    href: PORTAL_URL,
-    label: "Agents Portal",
-    description: "Quotes, bookings and commissions.",
-    icon: Briefcase,
-    external: true,
-    mobile: "more",
-  },
   { id: "profile", href: "/profile", label: "Profile", description: "Your name, agency and sign-in details.", icon: UserRound, mobile: "tab" },
 ];
 
-/** Items in display order. The Portal is hidden until its address is configured. */
+/** Items in display order. */
 export const HUB_NAV: HubNavItem[] = ITEMS.filter((i) => !i.external || i.href);
 
 /** Modules shown as tiles on Home: everything except Home itself and Profile. */
@@ -89,6 +77,5 @@ export const MODULE_TINT: Record<HubNavItem["id"], string> = {
   offers: "bg-sunset/20",
   books: "bg-toucan/30",
   marketing: "bg-rose/15",
-  portal: "bg-olive/20",
   profile: "bg-sunken",
 };

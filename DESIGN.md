@@ -234,7 +234,7 @@ A white and ink neutral base with a single deepened green for action, and the br
 - **Brand Lime** (#70a91b): the brand's own green, which gives only 2.85:1 under white text. In the interface it appears only as a tint: the Learning module well and the current lesson row.
 
 ### Secondary
-- **Module Tints**: each section keeps a brand colour as a soft wash behind its ink icon, on Home tiles, in the More sheet and on section pages. Learning is lime at 20%, FAM Trips turquoise at 15%, Current Offers sunset at 20%, Books toucan at 30%, Marketing Assets rose at 15%, Agents Portal olive at 20%. Home, Profile and Admin use Sunken Grey. Ink on any of them stays above 13:1.
+- **Module Tints**: each section keeps a brand colour as a soft wash behind its ink icon, on Home tiles, in the More sheet and on section pages. Learning is lime at 20%, FAM Trips turquoise at 15%, Current Offers sunset at 20%, Books toucan at 30%, Marketing Assets rose at 15%. Home, Profile and Admin use Sunken Grey. Ink on any of them stays above 13:1.
 
 ### Tertiary
 - **Status Colours**: Olive (#489149) for completed marks, Toucan (#ffc300) for warnings, small award and people marks, and the video scrub thumb, Turquoise (#00b4d8) for information. On solid Toucan or Turquoise the text is black.

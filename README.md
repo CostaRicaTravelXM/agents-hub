@@ -9,7 +9,6 @@ The one place TravelXM gives travel advisors. One account (shared with the Agent
 | Current Offers | Promotions with start and end dates, an optional PDF, link or interest form | `/offers` |
 | Books | PDF guides read page by page in a page-turn reader; pages are rendered on the server | `/books`, `/read/…` |
 | Marketing Assets | The shared Google Drive folder inside the Hub: subfolders, thumbnails, search, preview and download. Links out when `GOOGLE_DRIVE_API_KEY` is empty or Google does not answer | `/marketing/…` |
-| Agents Portal | External app at `NEXT_PUBLIC_AGENTS_PORTAL_URL`, same session cookie | nav entry |
 
 Staff manage every module from `/admin`. Registration asks for first name, last name, email, password (or a sign-in link, or Google), an optional agency and an "I am a solo or independent agent" box. After the first sign-in the Hub sends the lead once to the n8n "TravelXM — Agents Hub" workflow (`N8N_AGENTS_WEBHOOK_URL`), which creates it in Zoho CRM.
 

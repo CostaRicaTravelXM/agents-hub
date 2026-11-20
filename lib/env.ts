@@ -27,10 +27,6 @@ export const env = {
   get googleAuth() {
     return process.env.NEXT_PUBLIC_GOOGLE_AUTH === "true";
   },
-  /** The Agents Portal (quotes, bookings, verification). Unset hides its nav entry. */
-  get portalUrl() {
-    return process.env.NEXT_PUBLIC_AGENTS_PORTAL_URL || undefined;
-  },
   /** Reads the marketing folder for the gallery. Server only. Unset: the page links out to Drive instead. */
   get googleDriveApiKey() {
     return process.env.GOOGLE_DRIVE_API_KEY || undefined;
