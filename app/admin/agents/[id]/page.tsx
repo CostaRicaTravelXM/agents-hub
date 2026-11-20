@@ -52,7 +52,7 @@ export default async function AgentPage({ params }: PageProps<"/admin/agents/[id
   // Admins see whether the owner has opened the account; an invited or unconfirmed one can be sent the link again.
   const admin = isAdmin(viewer.profile);
   const auth = admin ? (await createServiceClient().auth.admin.getUserById(person.id)).data.user : null;
-  const unopened = auth && !auth.email_confirmed_at ? { invited: auth.user_metadata?.staff_invite === true, at: auth.confirmation_sent_at ?? auth.created_at } : null;
+  const unopened = auth && !auth.email_confirmed_at ? { invited: auth.user_metadata?.staff_invite === true || auth.user_metadata?.team_invite === true, at: auth.confirmation_sent_at ?? auth.created_at } : null;
 
   const crmStatus = crm?.sent_at
     ? `Sent ${formatDate(crm.sent_at)}`

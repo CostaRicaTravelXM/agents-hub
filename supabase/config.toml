@@ -250,9 +250,9 @@ otp_expiry = 3600
 # sender_name = "TravelXM Academy"
 
 # Sign-up confirmation. Same token-hash pattern as the recovery email below.
-# Staff invitations (staff_invite in the account metadata) get their own subject.
+# Team (team_invite) and staff invitations (staff_invite) get their own subjects.
 [auth.email.template.confirmation]
-subject = "{{ if .Data.staff_invite }}TravelXM created your Agents Hub account{{ else }}Confirm your TravelXM account{{ end }}"
+subject = "{{ if .Data.team_invite }}You're on the TravelXM Agents Hub team{{ else if .Data.staff_invite }}TravelXM created your Agents Hub account{{ else }}Confirm your TravelXM account{{ end }}"
 content_path = "./supabase/templates/confirmation.html"
 
 # Password reset email. Links to /auth/confirm with a token hash so the link

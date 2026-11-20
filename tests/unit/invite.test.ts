@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { advisorMetadata } from "@/lib/hub/invite";
+import { advisorMetadata, teamMetadata } from "@/lib/hub/invite";
 
 describe("advisorMetadata", () => {
   it("skips the finish-your-profile step when name and agency are known", () => {
@@ -20,5 +20,26 @@ describe("advisorMetadata", () => {
     expect(advisorMetadata({ firstName: "Ana", lastName: "Ruiz" }).complete).toBe(false);
     const { data } = advisorMetadata({});
     expect(data).toEqual({ company: null, is_independent: false });
+  });
+});
+
+describe("teamMetadata", () => {
+  it("marks a team invitation with its role and who sent it, and clears the advisor wording", () => {
+    expect(teamMetadata({ firstName: " Ana ", lastName: "Mora" }, "content_manager", "Marta Rojas")).toEqual({
+      first_name: "Ana",
+      last_name: "Mora",
+      full_name: "Ana Mora",
+      company: "TravelXM",
+      is_independent: false,
+      hub_signup: true,
+      team_invite: true,
+      staff_invite: null,
+      team_role_label: "Content manager",
+      invited_by: "Marta Rojas",
+    });
+  });
+
+  it("leaves the sender out when the admin has no name", () => {
+    expect(teamMetadata({ firstName: "Ana", lastName: "Mora" }, "admin", "  ")).toMatchObject({ team_role_label: "Admin", invited_by: null });
   });
 });

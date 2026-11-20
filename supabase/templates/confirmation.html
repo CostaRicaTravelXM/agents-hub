@@ -15,6 +15,8 @@
     hash, so it works on any device, not only the browser that signed up.
     Accounts the TravelXM team creates from the admin panel carry
     staff_invite in their metadata (.Data) and get the invitation wording.
+    Content managers and admins added from Admin → Team carry team_invite, with
+    team_role_label and invited_by, and get the team wording; it is checked first.
     Accounts created from a gift campaign carry signup_campaign and get the
     campaign wording. Everyone else gets the plain confirmation.
     Images live on media.travelxm.com (R2 + CDN). Replace a file under a new
@@ -44,9 +46,16 @@
                   </tr>
                 </table>
                 <h1 style="margin:28px 0 12px;font-family:'Be Vietnam Pro',Helvetica,Arial,sans-serif;font-size:30px;line-height:1.15;font-weight:700;letter-spacing:-0.02em;color:#1D1A18;">
-                  {{ if .Data.staff_invite }}Welcome{{ if .Data.first_name }}, {{ .Data.first_name }}{{ end }}. Your Agents Hub account is ready{{ else if .Data.signup_campaign }}Your gift is claimed. Your Agents Hub is ready too{{ else }}Confirm your email{{ end }}
+                  {{ if .Data.team_invite }}Welcome to the team{{ if .Data.first_name }}, {{ .Data.first_name }}{{ end }}. Your Agents Hub access is ready{{ else if .Data.staff_invite }}Welcome{{ if .Data.first_name }}, {{ .Data.first_name }}{{ end }}. Your Agents Hub account is ready{{ else if .Data.signup_campaign }}Your gift is claimed. Your Agents Hub is ready too{{ else }}Confirm your email{{ end }}
                 </h1>
-                {{ if .Data.staff_invite }}
+                {{ if .Data.team_invite }}
+                <p style="margin:0 0 16px;font-size:17px;line-height:1.55;">
+                  {{ if .Data.invited_by }}{{ .Data.invited_by }} has{{ else }}The TravelXM team has{{ end }} added you to the TravelXM Agents Hub as {{ if .Data.team_role_label }}{{ .Data.team_role_label }}{{ else }}a team member{{ end }}, at {{ .Email }}. Press the button to open it. No password needed.
+                </p>
+                <p style="margin:0 0 28px;font-size:17px;line-height:1.55;">
+                  The button takes you to Admin, where the team looks after the Hub. To sign in with a password next time, set one in Profile once you are in.
+                </p>
+                {{ else if .Data.staff_invite }}
                 <p style="margin:0 0 16px;font-size:17px;line-height:1.55;">
                   The TravelXM team has created a free Agents Hub account for you, at {{ .Email }}. It is our home for travel advisors who sell Costa Rica. Press the button to open it. No password needed.
                 </p>
@@ -81,7 +90,7 @@
                       <a
                         href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email"
                         style="display:inline-block;padding:15px 30px;font-family:'Be Vietnam Pro',Helvetica,Arial,sans-serif;font-size:16px;line-height:1;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:999px;"
-                        >{{ if .Data.staff_invite }}Open the Agents Hub{{ else if .Data.signup_campaign }}Open my Agents Hub{{ else }}Confirm my email{{ end }}</a
+                        >{{ if .Data.team_invite }}Open Admin{{ else if .Data.staff_invite }}Open the Agents Hub{{ else if .Data.signup_campaign }}Open my Agents Hub{{ else }}Confirm my email{{ end }}</a
                       >
                     </td>
                   </tr>
@@ -97,7 +106,7 @@
                   <a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email" style="color:#2F7031;word-break:break-all;">{{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=email</a>
                 </p>
                 <p style="margin:16px 0 0;font-size:15px;line-height:1.55;color:#6B625C;">
-                  {{ if .Data.staff_invite }}This link works for one hour. If it has expired, sign in at {{ .SiteURL }} with this email and we will send you a new one. Not expecting this? Ignore this email: the account stays closed until the link is opened.{{ else if .Data.signup_campaign }}If you did not open the TravelXM Thanksgiving gift, ignore this email. The account stays closed until this link is opened.{{ else }}If you did not create this account, ignore this email.{{ end }}
+                  {{ if .Data.team_invite }}This link works for one hour. If it has expired, ask the admin who added you to send it again, or sign in at {{ .SiteURL }} with this email. Not expecting this? Ignore this email: the account stays closed until the link is opened.{{ else if .Data.staff_invite }}This link works for one hour. If it has expired, sign in at {{ .SiteURL }} with this email and we will send you a new one. Not expecting this? Ignore this email: the account stays closed until the link is opened.{{ else if .Data.signup_campaign }}If you did not open the TravelXM Thanksgiving gift, ignore this email. The account stays closed until this link is opened.{{ else }}If you did not create this account, ignore this email.{{ end }}
                 </p>
               </td>
             </tr>

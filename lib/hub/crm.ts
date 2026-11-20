@@ -1,6 +1,6 @@
 import "server-only";
 import type { Viewer } from "@/lib/auth";
-import { needsWelcome } from "@/lib/auth";
+import { isStaff, needsWelcome } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { createServiceClient } from "@/lib/supabase/server";
 import { buildAgentsHubPayload, buildAgentsHubZohoLead } from "@/lib/hub/crm-payload";
@@ -24,7 +24,8 @@ export { buildAgentsHubPayload, type AgentsHubPayload } from "@/lib/hub/crm-payl
 export async function ensureCrmLead(viewer: Viewer): Promise<void> {
   const direct = zohoConfigured();
   const url = env.n8nAgentsWebhookUrl;
-  if ((!direct && !url) || needsWelcome(viewer.profile)) return;
+  // TravelXM staff are not advisors, so they never become Agents Hub Leads.
+  if ((!direct && !url) || needsWelcome(viewer.profile) || isStaff(viewer.profile)) return;
   try {
     const supabase = createServiceClient();
     const payload = buildAgentsHubPayload(viewer.profile, viewer.email);
