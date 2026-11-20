@@ -28,9 +28,9 @@ test("admin uploads land in the right bucket: photos with the CDN cache rule, bi
     await signIn(page, "admin@travelxm.test");
     await page.goto("/admin/offers/new");
 
-    // A photo: one request to the public bucket, cached for a year at the CDN.
+    // A photo: one request to the public bucket, cached for a year at the CDN. Only the photo field takes AVIF.
     const signed = page.waitForResponse((r) => r.url().endsWith("/api/admin/upload") && r.request().method() === "POST");
-    await page.locator('input[type="file"][accept*="image/webp"]').setInputFiles(path.join(process.cwd(), "public/photos/fam-trips/papagayo.jpg"));
+    await page.locator('input[type="file"][accept*="image/avif"]').setInputFiles(path.join(process.cwd(), "public/photos/fam-trips/papagayo.jpg"));
     const photo = await (await signed).json();
     stored.push({ bucket: buckets.public, key: photo.key });
     expect(photo.bucket).toBe("public");
