@@ -26,12 +26,27 @@ export const UPLOAD_RULES = {
       "application/zip",
       "image/jpeg",
       "image/png",
+      "image/webp",
     ],
   },
   image: { bucket: "public", folder: "images", maxBytes: 15 * 1024 ** 2, types: ["image/jpeg", "image/png", "image/webp", "image/avif"] },
 } as const;
 
 export type UploadKind = keyof typeof UPLOAD_RULES;
+
+const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "webp"];
+
+/** The extension of a file name or storage key, lower case, without the dot. */
+export function fileExtension(name: string | null | undefined) {
+  const match = name?.match(/\.([a-z0-9]+)$/i);
+  return match ? match[1].toLowerCase() : "";
+}
+
+/** True for a picture uploaded in place of a document, such as an offer flyer. Judged by the first name that has an extension. */
+export function isImageFile(...names: (string | null | undefined)[]) {
+  const ext = names.map(fileExtension).find(Boolean);
+  return ext ? IMAGE_EXTENSIONS.includes(ext) : false;
+}
 
 /**
  * Public files never change under the same key (every upload gets a fresh one),

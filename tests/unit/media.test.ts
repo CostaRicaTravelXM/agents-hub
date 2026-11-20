@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { MULTIPART_THRESHOLD, PUBLIC_CACHE_CONTROL, isUploadKey, partSize, uploadDestination } from "@/lib/media";
+import { MULTIPART_THRESHOLD, PUBLIC_CACHE_CONTROL, fileExtension, isImageFile, isUploadKey, partSize, uploadDestination } from "@/lib/media";
 
 const R = "a1b2c3d4";
 
@@ -56,5 +56,26 @@ describe("signed uploads", () => {
     const video = await signedPutUrl("private", "videos/x/a1b2c3d4-x.mp4", "video/mp4");
     expect(video.headers).toEqual({ "Content-Type": "video/mp4" });
     expect(new URL(video.url).searchParams.get("X-Amz-SignedHeaders")).not.toContain("cache-control");
+  });
+});
+
+describe("isImageFile", () => {
+  it("knows a flyer picture from a document by its extension", () => {
+    expect(isImageFile("Flyer.JPG")).toBe(true);
+    expect(isImageFile("rates.webp")).toBe(true);
+    expect(isImageFile("Rates 2027.pdf")).toBe(false);
+    expect(isImageFile("notes.docx")).toBe(false);
+  });
+
+  it("falls back to the storage key when the name has no extension", () => {
+    expect(isImageFile(null, "documents/offers/a1b2c3d4-flyer.png")).toBe(true);
+    expect(isImageFile("Flyer", "documents/offers/a1b2c3d4-flyer.png")).toBe(true);
+    expect(isImageFile("Flyer.pdf", "documents/offers/a1b2c3d4-flyer.png")).toBe(false);
+    expect(isImageFile(null, null)).toBe(false);
+  });
+
+  it("names the file type for a download", () => {
+    expect(fileExtension("documents/offers/x-flyer.JPEG")).toBe("jpeg");
+    expect(fileExtension("no-extension")).toBe("");
   });
 });

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Download, FileText } from "lucide-react";
+import { ArrowRight, Download, FileText, Image as ImageIcon } from "lucide-react";
 import { requireViewer } from "@/lib/auth";
 import { getOffer } from "@/lib/hub/queries";
 import { renderRichText } from "@/lib/rich-text";
@@ -10,6 +10,7 @@ import { DetailLayout, DetailSection } from "@/components/hub/detail-layout";
 import { ExternalLink } from "@/components/hub/external-link";
 import { StickyCta } from "@/components/hub/sticky-cta";
 import { Button } from "@/components/ui/button";
+import { isImageFile } from "@/lib/media";
 import { formatBytes, formatDate } from "@/lib/utils";
 
 export async function generateMetadata({ params }: PageProps<"/offers/[slug]">): Promise<Metadata> {
@@ -30,6 +31,18 @@ export default async function OfferPage({ params }: PageProps<"/offers/[slug]">)
       ? `From ${formatDate(offer.valid_from)}`
       : "Available now";
   const body = renderRichText(offer.body);
+  const fileUrl = `/api/hub/offers/${offer.id}/file`;
+  // A flyer picture is shown on the page; a PDF opens in a new tab.
+  const flyer = offer.file_key ? isImageFile(offer.file_name, offer.file_key) : false;
+  const openFile = flyer ? (
+    <>
+      <ImageIcon aria-hidden /> Open the flyer
+    </>
+  ) : (
+    <>
+      <FileText aria-hidden /> Open the details (PDF)
+    </>
+  );
   const primary = offer.cta_url ? (
     <Button asChild size="lg" block>
       <Link href={`/offers/${offer.slug}/interest`}>
@@ -38,8 +51,8 @@ export default async function OfferPage({ params }: PageProps<"/offers/[slug]">)
     </Button>
   ) : offer.file_key ? (
     <Button asChild size="lg" block>
-      <a href={`/api/hub/offers/${offer.id}/file`} target="_blank" rel="noopener noreferrer">
-        <FileText aria-hidden /> Open the details (PDF)
+      <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+        {openFile}
       </a>
     </Button>
   ) : offer.link_url ? (
@@ -52,19 +65,19 @@ export default async function OfferPage({ params }: PageProps<"/offers/[slug]">)
 
   const secondary = (
     <ul className="space-y-3">
-      {offer.cta_url && offer.file_key ? (
+      {offer.cta_url && offer.file_key && !flyer ? (
         <li>
           <Button asChild variant="secondary" size="lg" block>
-            <a href={`/api/hub/offers/${offer.id}/file`} target="_blank" rel="noopener noreferrer">
-              <FileText aria-hidden /> Open the details (PDF)
+            <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+              {openFile}
             </a>
           </Button>
         </li>
       ) : null}
       {offer.file_key ? (
         <li className="text-[15px] text-muted">
-          <a href={`/api/hub/offers/${offer.id}/file?mode=download`} className="xm-link inline-flex min-h-11 items-center gap-1.5 font-semibold">
-            <Download aria-hidden className="size-4 stroke-[2]" /> Download {offer.file_name ?? "the PDF"}
+          <a href={`${fileUrl}?mode=download`} className="xm-link inline-flex min-h-11 items-center gap-1.5 font-semibold">
+            <Download aria-hidden className="size-4 stroke-[2]" /> Download {flyer ? "the flyer" : (offer.file_name ?? "the PDF")}
             {offer.file_size ? ` (${formatBytes(offer.file_size)})` : ""}
           </a>
         </li>
@@ -101,6 +114,16 @@ export default async function OfferPage({ params }: PageProps<"/offers/[slug]">)
           ) : null
         }
       >
+        {flyer ? (
+          <DetailSection title="The flyer">
+            <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="group block overflow-hidden rounded-lg bg-sunken shadow-card">
+              {/* The file route hands the browser a short-lived link to the private file; next/image cannot follow it. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={fileUrl} alt={`${offer.title}: the flyer`} className="block h-auto w-full transition-[scale] duration-500 ease-standard group-hover:scale-[1.01]" />
+              <span className="sr-only">Opens full size in a new tab</span>
+            </a>
+          </DetailSection>
+        ) : null}
         {body ? (
           <DetailSection title="The offer">
             <div className="xm-prose md:text-[18px]" dangerouslySetInnerHTML={{ __html: body }} />

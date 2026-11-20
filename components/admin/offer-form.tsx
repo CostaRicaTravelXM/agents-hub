@@ -22,7 +22,7 @@ export function OfferForm({ item }: { item?: Offer }) {
   const [from, setFrom] = useState(item?.valid_from ?? "");
   const [until, setUntil] = useState(item?.valid_until ?? "");
   const [file, setFile] = useState<{ key: string; name: string; size: number | null } | null>(
-    item?.file_key ? { key: item.file_key, name: item.file_name ?? "offer.pdf", size: item.file_size ?? null } : null,
+    item?.file_key ? { key: item.file_key, name: item.file_name ?? item.file_key.split("/").pop() ?? item.file_key, size: item.file_size ?? null } : null,
   );
   const [link, setLink] = useState(item?.link_url ?? "");
   const [ctaUrl, setCtaUrl] = useState(item?.cta_url ?? "");
@@ -90,8 +90,8 @@ export function OfferForm({ item }: { item?: Offer }) {
         <Uploader
           kind="document"
           scope="offers"
-          label="PDF"
-          hint="A flyer or rate sheet, up to 200 MB."
+          label="PDF or flyer image"
+          hint="A PDF, or a flyer picture (JPG, PNG or WebP), up to 200 MB. A picture shows on the offer page itself."
           current={file}
           onUploaded={(u) => setFile({ key: u.key, name: u.name, size: u.size })}
           onClear={() => setFile(null)}
