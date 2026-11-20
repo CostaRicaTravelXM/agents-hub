@@ -403,6 +403,33 @@
   }
 }
 
+/* The faded edge of a sideways row while there is more that way (see components/ui/scroll-rail.tsx). */
+@property --xm-fade-start {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --xm-fade-end {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@utility xm-fade-x {
+  transition:
+    --xm-fade-start 200ms var(--ease-standard),
+    --xm-fade-end 200ms var(--ease-standard);
+  &[data-more-start] {
+    --xm-fade-start: 32px;
+  }
+  &[data-more-end] {
+    --xm-fade-end: 56px;
+  }
+  &[data-more-start],
+  &[data-more-end] {
+    mask-image: linear-gradient(to right, transparent, #000 var(--xm-fade-start), #000 calc(100% - var(--xm-fade-end)), transparent);
+  }
+}
+
 @utility scrollbar-none {
   scrollbar-width: none;
   &::-webkit-scrollbar {

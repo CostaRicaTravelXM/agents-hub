@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { ScrollRail } from "@/components/ui/scroll-rail";
 
 const TABS = [
   { href: "/courses", label: "Masterclasses" },
@@ -20,7 +21,7 @@ export function LearningSubnav() {
   if (!TABS.some((t) => t.href === pathname)) return null;
   return (
     <nav aria-label="Learning" className="xm-container pt-[calc(1.5rem+env(safe-area-inset-top))] md:pt-[calc(2rem+env(safe-area-inset-top))] lg:pt-8">
-      <ul className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 md:mx-0 md:px-0">
+      <ScrollRail as="ul" className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 md:mx-0 md:px-0">
         {TABS.map((t) => {
           const active = pathname === t.href;
           return (
@@ -38,7 +39,7 @@ export function LearningSubnav() {
             </li>
           );
         })}
-      </ul>
+      </ScrollRail>
     </nav>
   );
 }

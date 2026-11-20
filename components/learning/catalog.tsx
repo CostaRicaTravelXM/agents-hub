@@ -6,6 +6,7 @@ import type { CourseSummary } from "@/lib/queries";
 import { CourseCard } from "@/components/learning/course-card";
 import { EmptyState } from "@/components/ui/surface";
 import { cn } from "@/lib/utils";
+import { ScrollRail } from "@/components/ui/scroll-rail";
 
 type Status = "all" | "in_progress" | "not_started" | "completed";
 const STATUS: { id: Status; label: string }[] = [
@@ -55,7 +56,7 @@ export function Catalog({ courses, initialCategory }: { courses: CourseSummary[]
   return (
     <div>
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div role="radiogroup" aria-label="Filter by status" className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 md:mx-0 md:px-0">
+        <ScrollRail role="radiogroup" aria-label="Filter by status" className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 md:mx-0 md:px-0">
           {STATUS.map((s) => (
             <button
               key={s.id}
@@ -70,7 +71,7 @@ export function Catalog({ courses, initialCategory }: { courses: CourseSummary[]
               {s.label}
             </button>
           ))}
-        </div>
+        </ScrollRail>
         <label className="relative block md:w-80">
           <span className="sr-only">Search courses</span>
           <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 stroke-[1.75] text-muted" />
@@ -95,7 +96,7 @@ export function Catalog({ courses, initialCategory }: { courses: CourseSummary[]
       </div>
 
       {categories.length > 1 ? (
-        <div className="scrollbar-none -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 md:mx-0 md:px-0" role="tablist" aria-label="Topic">
+        <ScrollRail className="scrollbar-none -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 md:mx-0 md:px-0" role="tablist" aria-label="Topic">
           {[["all", "All topics"] as [string, string], ...categories].map(([slug, name]) => (
             <button
               key={slug}
@@ -110,7 +111,7 @@ export function Catalog({ courses, initialCategory }: { courses: CourseSummary[]
               {name}
             </button>
           ))}
-        </div>
+        </ScrollRail>
       ) : null}
 
       <p className="mt-6 text-[15px] text-muted" aria-live="polite">

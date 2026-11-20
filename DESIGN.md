@@ -91,9 +91,9 @@ typography:
     lineHeight: 1.55
   tab-label:
     fontFamily: "Be Vietnam Pro, Helvetica, Arial, sans-serif"
-    fontSize: "15px"
+    fontSize: "13px"
     fontWeight: 600
-    lineHeight: 1.1
+    lineHeight: 1
   certificate-title:
     fontFamily: "Anton, Arial Narrow, Helvetica, sans-serif"
     fontSize: "32px"
@@ -184,13 +184,13 @@ components:
     textColor: "{colors.page}"
     rounded: "28px"
     padding: "4px"
-    height: "72px"
+    height: "68px"
   tab-active:
     backgroundColor: "{colors.page}"
     textColor: "{colors.ink}"
     typography: "{typography.tab-label}"
     rounded: "{rounded.lg}"
-    height: "64px"
+    height: "60px"
   sidebar-link:
     textColor: "{colors.stone}"
     rounded: "{rounded.pill}"
@@ -285,12 +285,12 @@ The frontmatter holds phone sizes. Sizes step up at 768px. Headings use tight li
 | Lead | 400 | 18px | 20px | 1.55 | The sentence under a page title |
 | Body | 400 | 17px | 17px page default, 18px body role | 1.55 | Running text, inputs at 17px |
 | Small | 400 to 600 | 15px | 15 to 16px | 1.55 | Meta, hints, labels, badges, menu items |
-| Tab label | 600 | 15px, 14px below 360px | 15px | 1.1 | Bottom bar only |
+| Tab label | 600 | 13px, 12px below 360px | 13px | 1 | Bottom bar only |
 
 In the tokens, `--text-*` names are colours and font sizes are `--fs-*`, because the branding file declared `--text-display` and `--text-body` twice and the size silently won. Sizes below 768px are authored for this product.
 
 ### Named Rules
-**The 15px Floor Rule.** No text below 15px, with one exception: the bottom tab labels drop to 14px (tracking -0.03em) under 360px wide, because five labelled tabs do not fit otherwise. Text inputs are 17px, so iOS never zooms on focus. Existing admin screens and one video-scrub time tip are still below the floor; that is debt, not a smaller tier to copy.
+**The 15px Floor Rule.** No text below 15px, with one exception: the bottom tab labels are 13px (12px under 360px wide), because five labelled tabs at 15px crowded into each other on phones. The icon carries the tab; the label confirms it. Text inputs are 17px, so iOS never zooms on focus. Existing admin screens and one video-scrub time tip are still below the floor; that is debt, not a smaller tier to copy.
 
 **The Certificates Only Rule.** Anton and Playfair Display appear on certificates and the public verification page, and nowhere else. They are not preloaded.
 
@@ -358,7 +358,7 @@ Large, pill-shaped and unambiguous; every one says what it does in words.
 
 ### Navigation
 - **One source:** a single list feeds the sidebar, the tab bar, the More sheet and the Home tiles, so a new module appears in all of them.
-- **Bottom bar (below 1024px):** a floating ink bar, 72px high and at most 520px wide, 8 to 12px from the screen edges and 12px above the safe area. Five labelled tabs: Home, Learning, Trips, More, Profile. Each is 64px high, with a 22px icon above the word. Inactive is white at 85% (12.74:1); active is a white pill with ink text.
+- **Bottom bar (below 1024px):** a floating ink bar, 68px high and at most 520px wide, 8 to 12px from the screen edges and 12px above the safe area. Five labelled tabs: Home, Learning, Trips, More, Profile. Each is 60px high, with a 22px icon above a 13px word that never wraps. Inactive is white at 80%; active is a white pill with ink text. The pill is one shared element: when a tab is tapped it stretches toward it, leading edge first (220ms) and trailing edge after (360ms, 60ms later), on the standard curve, before the next page has loaded.
 - **More sheet:** a bottom sheet on phones and a centred dialog from 768px, with tiles at least 76px high holding a 48px tinted icon well, a 16px name and a 15px sentence. External destinations say "Opens in a new tab" in words.
 - **Sidebar (from 1024px):** 48px pill rows with 16px semibold text and 20px icons. Active is an ink pill with white text; hover is Sunken Grey. External links carry an icon and hidden "(opens in a new tab)" text. The account menu sits at the foot.
 

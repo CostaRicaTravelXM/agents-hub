@@ -4,6 +4,7 @@ import * as React from "react";
 import { AlertDialog as RAlert, Dialog as RDialog, DropdownMenu as RMenu, Tabs as RTabs, Tooltip as RTooltip } from "radix-ui";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useEdgeFade } from "@/components/ui/scroll-rail";
 
 /* ---------- Dialog / Sheet ---------- */
 export const Dialog = RDialog.Root;
@@ -119,9 +120,11 @@ export function Confirm({
 /* ---------- Tabs ---------- */
 export const Tabs = RTabs.Root;
 export function TabsList({ className, ...props }: React.ComponentProps<typeof RTabs.List>) {
+  const ref = useEdgeFade<HTMLDivElement>();
   return (
     <RTabs.List
-      className={cn("scrollbar-none flex gap-6 overflow-x-auto border-b border-line", className)}
+      ref={ref}
+      className={cn("xm-fade-x scrollbar-none flex gap-6 overflow-x-auto border-b border-line", className)}
       {...props}
     />
   );

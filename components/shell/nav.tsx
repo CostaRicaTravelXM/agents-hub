@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ExternalLink, LayoutGrid, Settings2, UserRound } from "lucide-react";
@@ -56,53 +57,101 @@ export function SidebarNav({ showAdmin }: { showAdmin: boolean }) {
   );
 }
 
-const tabClass = "flex h-full w-full flex-col items-center justify-center gap-0.5 rounded-[24px] transition-colors duration-200 ease-standard active:scale-[.97]";
-const tabLabel = "font-ui text-[14px] leading-tight font-semibold max-[359px]:tracking-[-0.03em] min-[360px]:text-[15px]";
+const tabClass =
+  "relative z-10 flex h-full w-full min-w-0 flex-col items-center justify-center gap-1 rounded-[24px] transition-[color,scale] duration-200 ease-standard active:scale-[.96]";
+const tabLabel = "max-w-full truncate px-0.5 font-ui text-[13px] leading-none font-semibold whitespace-nowrap max-[359px]:text-[12px]";
+const TAB_COUNT = 5;
 
 function tabState(active: boolean) {
-  return active ? "bg-white text-ink" : "text-white/85 hover:text-white";
+  return active ? "text-ink" : "text-white/80 hover:text-white";
+}
+
+/**
+ * The white pill behind the active tab. It moves when a tab is tapped, before the page
+ * has loaded: the edge in the direction of travel leaves first and the other follows,
+ * so the pill stretches toward the new tab and settles there.
+ */
+function TabPill({ index }: { index: number }) {
+  const [pill, setPill] = useState({ index, dir: 0 });
+  // Adjusting state during render, React's pattern for state derived from a changing prop.
+  if (pill.index !== index) setPill({ index, dir: pill.index < 0 || index < 0 ? 0 : index > pill.index ? 1 : -1 });
+  const lead = "220ms var(--ease-standard)";
+  const trail = "360ms var(--ease-standard) 60ms";
+  const transition = pill.dir > 0 ? `right ${lead}, left ${trail}` : pill.dir < 0 ? `left ${lead}, right ${trail}` : "none";
+  const at = Math.max(index, 0);
+  return (
+    <span
+      aria-hidden
+      className={cn("absolute inset-y-0 rounded-[24px] bg-white", index < 0 && "opacity-0")}
+      style={{ left: `${(at * 100) / TAB_COUNT}%`, right: `${((TAB_COUNT - 1 - at) * 100) / TAB_COUNT}%`, transition }}
+    />
+  );
 }
 
 /**
  * Phones and small tablets: there is no top bar, so the page runs to the top of the
- * screen. A dark bar floats above the page with five large, always labelled tabs.
+ * screen. A dark bar floats above the page with five labelled tabs.
  * Profile holds the sign out button; everything else is one tap away in "More".
  */
 export function BottomTabs({ showAdmin, name, avatarUrl }: { showAdmin: boolean; name: string | null; avatarUrl?: string | null }) {
   const pathname = usePathname();
   const tabs = HUB_NAV.filter((i) => i.mobile === "tab" && i.id !== "profile");
   const profile = HUB_NAV.find((i) => i.id === "profile")!;
-  const moreActive = isMoreActive(pathname);
-  const profileActive = isNavActive(pathname, profile);
+  const moreIndex = tabs.length;
+  const profileIndex = tabs.length + 1;
+  const routeIndex = (() => {
+    const tab = tabs.findIndex((item) => isNavActive(pathname, item));
+    if (tab >= 0) return tab;
+    if (isMoreActive(pathname)) return moreIndex;
+    return isNavActive(pathname, profile) ? profileIndex : -1;
+  })();
+  // A tapped tab lights up straight away; once the new page's path arrives, the route decides again.
+  const [tapped, setTapped] = useState<number | null>(null);
+  const [path, setPath] = useState(pathname);
+  if (path !== pathname) {
+    setPath(pathname);
+    setTapped(null);
+  }
+  const shown = tapped ?? routeIndex;
+  const tap = (index: number) => (e: React.MouseEvent) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || index === routeIndex) return;
+    setTapped(index);
+  };
+
   return (
     <nav
       aria-label="Main"
       className="xm-on-dark fixed inset-x-2 bottom-[calc(12px+env(safe-area-inset-bottom))] z-40 mx-auto max-w-[520px] rounded-[28px] bg-ink p-1 shadow-raised sm:inset-x-3 lg:hidden"
     >
-      <ul className="grid h-[64px] grid-cols-5">
-        {tabs.map((item) => {
-          const active = isNavActive(pathname, item);
+      <ul className="relative grid h-(--tabbar-h) grid-cols-5">
+        <TabPill index={shown} />
+        {tabs.map((item, i) => {
           const Icon = item.icon;
           return (
-            <li key={item.id}>
-              <Link href={item.href} aria-current={active ? "page" : undefined} className={cn(tabClass, tabState(active))}>
-                <Icon aria-hidden className="size-[22px] stroke-[1.75]" />
+            <li key={item.id} className="min-w-0">
+              <Link href={item.href} onClick={tap(i)} aria-current={routeIndex === i ? "page" : undefined} className={cn(tabClass, tabState(shown === i))}>
+                <Icon aria-hidden className="size-[22px] shrink-0 stroke-[1.75]" />
                 <span className={tabLabel}>{item.tabLabel ?? item.label}</span>
               </Link>
             </li>
           );
         })}
-        <li>
+        <li className="min-w-0">
           <MoreSheet showAdmin={showAdmin}>
-            <button type="button" aria-haspopup="dialog" className={cn(tabClass, tabState(moreActive))}>
-              <LayoutGrid aria-hidden className="size-[22px] stroke-[1.75]" />
+            <button type="button" aria-haspopup="dialog" className={cn(tabClass, tabState(shown === moreIndex))}>
+              <LayoutGrid aria-hidden className="size-[22px] shrink-0 stroke-[1.75]" />
               <span className={tabLabel}>More</span>
             </button>
           </MoreSheet>
         </li>
-        <li>
-          <Link href={profile.href} aria-current={profileActive ? "page" : undefined} className={cn(tabClass, tabState(profileActive))}>
-            {avatarUrl ? <Avatar name={name} url={avatarUrl} size={24} /> : <UserRound aria-hidden className="size-[22px] stroke-[1.75]" />}
+        <li className="min-w-0">
+          <Link
+            href={profile.href}
+            onClick={tap(profileIndex)}
+            aria-current={routeIndex === profileIndex ? "page" : undefined}
+            className={cn(tabClass, tabState(shown === profileIndex))}
+          >
+            {avatarUrl ? <Avatar name={name} url={avatarUrl} size={22} /> : <UserRound aria-hidden className="size-[22px] shrink-0 stroke-[1.75]" />}
             <span className={tabLabel}>{profile.label}</span>
           </Link>
         </li>

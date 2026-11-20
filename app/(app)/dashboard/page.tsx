@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/ui/surface";
 import { Cover } from "@/components/learning/cover";
 import { firstName, formatDate } from "@/lib/utils";
+import { ScrollRail } from "@/components/ui/scroll-rail";
 
 export const metadata: Metadata = { title: "Home" };
 
@@ -126,7 +127,10 @@ export default async function DashboardPage() {
         <section aria-labelledby="trips-heading" className="mt-10 md:mt-14">
           <SectionTitle id="trips-heading" title="FAM trips" href="/fam-trips" label="See all FAM trips" />
           {/* Phones scroll sideways with the next trip showing, and "See all" is always there. */}
-          <ul className="scrollbar-none -mx-4 flex snap-x gap-3 overflow-x-auto px-4 md:mx-0 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0">
+          <ScrollRail
+            as="ul"
+            className="scrollbar-none -mx-4 flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 md:mx-0 md:grid md:scroll-px-0 md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0"
+          >
             {trips.slice(0, 6).map((t, i) => (
               <li key={t.id} className={`w-[72%] max-w-[300px] shrink-0 snap-start md:w-auto md:max-w-none ${i > 2 ? "md:hidden" : ""}`}>
                 <Link href={`/fam-trips/${t.slug}`} className="group relative block aspect-[4/5] overflow-hidden rounded-lg bg-inverse">
@@ -142,7 +146,7 @@ export default async function DashboardPage() {
                 </Link>
               </li>
             ))}
-          </ul>
+          </ScrollRail>
         </section>
       ) : null}
 
